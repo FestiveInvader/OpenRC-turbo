@@ -9,7 +9,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -69,7 +68,6 @@ public class MecanumTeleop extends OpMode {
     double BlockerServoUp = .35;
     double BlockerServoDown = .56;
     double JewelServoUpPos = .60;
-    double JewelServoDownPos = .93;
     double JoystickMultiplier = 1; // variable to allow slower driving speeds
     double IntakeSpeed = -.7;
 
@@ -77,11 +75,6 @@ public class MecanumTeleop extends OpMode {
     boolean Dump = false;
     boolean Intake = false;
     boolean BlockerUp = true;
-
-    /* local OpMode members. */
-    public ElapsedTime runtime = new ElapsedTime();
-    private ElapsedTime period = new ElapsedTime();
-
     public void init() {
         // This section gets the hardware maps
         FrontLeft = hardwareMap.dcMotor.get("FrontLeft");
@@ -137,7 +130,6 @@ public class MecanumTeleop extends OpMode {
 
     @Override
     public void start() {
-        runtime.reset();
     }
 
     @Override
@@ -208,10 +200,8 @@ public class MecanumTeleop extends OpMode {
             DumpConveyor.setPower(1);
         } else if(Math.abs(gamepad2.left_stick_x) > .1){
             DumpConveyor.setPower(Range.clip(gamepad2.left_stick_y, -1, 1));
-        }else{
-            {
-                DumpConveyor.setPower(Range.clip(gamepad2.left_stick_y, -1, 1));
-            }
+        }else {
+            DumpConveyor.setPower(.25);
         }
 
         if (gamepad2.a || !BlockerUp || DumpConveyor.getPower() > .5) {

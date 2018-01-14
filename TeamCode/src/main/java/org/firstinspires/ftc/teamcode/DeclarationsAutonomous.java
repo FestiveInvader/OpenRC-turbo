@@ -65,6 +65,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     double P_TURN_COEFF = .2;     // Larger is more responsive, but also less stable
     double P_DRIVE_COEFF = .15;     // Larger is more responsive, but also less stable
     int[] CurrentCryptoBox = new int[]{0,0,0,0,0,0,0,0,0,0,0,0};
+    double cryptoboxHeading = 0;
     int Forward = 1;
     int Reverse = -1;
     int RelicSide = 1;
@@ -529,24 +530,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         //Function that goes to the wall until a range sensor gets a value of < wanted wall distance
         findWall(-.25, 22);
-        findWall(-.15, 20);
+        EncoderDrive(.15, 6,6, Reverse);
+        cryptoboxHeading = getHeading();
+        EncoderDrive(.05, 1,1, Forward);
         findColumn();
         stopDriveMotors();
         EncoderDrive(.015, 2.35, 2.35, Forward);
         //Function that figures out where to place the glyph (dump, or just use the conveyor)
-        //If by some miracle we got enough glyphs for it to be used, this calculates which positions
-        // glyphs are already placed and how to place the current one(s)
+        //If by some miracle we got multiple glyphs so it can be used, this calculates which positions
+        // glyphs are already placed in and how to place the current one(s) the robot possesses
         placeGlyph(CryptoKey);
-        if(RightDistance.getDistance(DistanceUnit.CM) > 0){
-            telemetry.addData("Completed", PylonsToFind);
-        }else{
-            telemetry.addData("Distance sensor not responding,", 0);
-            telemetry.addData("Countermeasures used to ensure points still scored", 0);
-        }
-        telemetry.update();
     }
     public void findColumn(){
-        ElapsedTime Time = new ElapsedTime();
+        ElapsedTime runtime = new ElapsedTime();
         // Set the FoundPylon boolean to false, for the next part of the program in which we use
         // similar methodology as we have to far, but strafing instead of front-to-back motion
         // There's no tolerance code this time because we're pressed right up against the cryptobox
@@ -554,31 +550,33 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // whenever a distance value is less than what the distance is to the wall, that means there's
         // a pylon in that location, and we can assume our position from there
         boolean FoundPylon = false;
-        while(opModeIsActive() && !FoundPylon ){
+        while(opModeIsActive() && !FoundPylon  &&
+                (runtime.seconds() < 3)){
             if((BackDistance.getDistance(DistanceUnit.CM) < 12)){
                 FoundPylon = true;
             }else {
-                moveBy(.025, -.5, 0); //moveBy is a function that handles robot movement
+                moveBy(.025, -.5, getError(cryptoboxHeading)); //moveBy is a function that handles robot movement
                 telemetry.addData("Distance", BackDistance.getDistance(DistanceUnit.CM));
                 telemetry.update();
             }
         }
         if(!FoundPylon){
-            EncoderDrive(.025, 1, 1, Forward);
-        }
-        while(opModeIsActive() && !FoundPylon){
-            if((BackDistance.getDistance(DistanceUnit.CM) < 12)){
-                FoundPylon = true;
-            }else {
-                moveBy(.025, -.5, 0); //moveBy is a function that handles robot movement
-                telemetry.addData("Distance", BackDistance.getDistance(DistanceUnit.CM));
-                telemetry.update();
+            while(opModeIsActive() && !FoundPylon  &&
+                    (runtime.seconds() < 3)){
+                if((BackDistance.getDistance(DistanceUnit.CM) < 12)){
+                    FoundPylon = true;
+                }else {
+                    moveBy(-.025, .5, getError(cryptoboxHeading)); //moveBy is a function that handles robot movement
+                    telemetry.addData("Distance", BackDistance.getDistance(DistanceUnit.CM));
+                    telemetry.update();
+                }
             }
         }
+        //If still !FoundPylon No Idea where we are, just go ahead and just hope something happpens.
     }
 
     public void ramThePit(){
-        EncoderDrive(.75, 36, 36, Forward);
+        EncoderDrive(.75, 24, 24, Forward);
         intakeGlyph();
         findWall(-.25, 22);
         drive(0, .4, .25);
@@ -589,12 +587,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
 
     public void intakeGlyph(){
+        double startingEncoderCount = FrontLeft.getCurrentPosition();
+        double limitEncoderCount = startingEncoderCount + 36*CountsPerInch;
         boolean foundGlyph = false;
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
         TopIntakeServoLeft.setPower(1);
         TopIntakeServoRight.setPower(1);
-        while(!foundGlyph){
+        while(!foundGlyph && FrontLeft.getCurrentPosition() < limitEncoderCount){
             moveBy(.1, 0,0);
             if (IntakeDistance.getDistance(DistanceUnit.CM) > 20) {
                 IntakeServoLeft.setPower(IntakeSpeed);
@@ -602,7 +602,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             } else {
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
-                sleep(750);
+                sleep(1000);
                 foundGlyph = true;
             }
         }
@@ -674,7 +674,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
          figure out which number block(s) is dumping
          decide to either run conveyor or to dump
          */
-        /*if(Column == RelicRecoveryVuMark.LEFT){
+        if(Column == RelicRecoveryVuMark.LEFT){
             BlockPos = 0;//First glyph location in this column
             while (CurrentCryptoBox[BlockPos] != 0 && opModeIsActive()) {
                 BlockPos += 3;
@@ -695,40 +695,25 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }else{
             telemetry.addData("No CryptoKey, zilch, nada", Column);
             telemetry.update();
-        }*/
-        telemetry.addData("In driveAndPlace", 1);
+        }
+        telemetry.addData("Glyph Place position", BlockPos);
         telemetry.update();
-        DumpConveyor.setPower(1);
-        Blocker.setPosition(BlockerServoDown);
-        sleep(2000);
-        /*moveBy(0, .4, 0);
-        sleep(300);
-        moveBy(0, -.4, 0);
-        sleep(500);
-        stopDriveMotors();*/
-        double currentPos = getHeading();
-        EncoderDrive(.025, 5, 5, Forward);
-        EncoderDrive(.025, 10, 10, Reverse);
-        EncoderDrive(.025, 3, 3, Forward);
-        /*drive(0, -.4, 1);
-        drive(0, .4, 1.25);
-        EncoderDrive(.015, 3, 3, Forward);
-        EncoderDrive(.025, 10, 10, Reverse);
-        EncoderDrive(.015, 3, 3, Forward);*/
-        DumpConveyor.setPower(0);
-
-
-    }
+        sleep(3000);
+            }
     public void dump(int BlockPosition){
         if(BlockPosition < 6){
-            telemetry.addData("In coveyoring", 1);
+            telemetry.addData("In conveyoring", 1);
             telemetry.update();
             DumpConveyor.setPower(1);
             Blocker.setPosition(BlockerServoDown);
             sleep(2000);
+            EncoderDrive(.025, 5, 5, Forward);
+            EncoderDrive(.025, 10, 10, Reverse);
+            EncoderDrive(.025, 3, 3, Forward);
+            DumpConveyor.setPower(0);
             telemetry.addData("In end conveyor", 1);
             telemetry.update();
-        }else if (BlockPosition < 12){
+        }else if (BlockPosition >= 6 && BlockPosition < 12){
             telemetry.addData("In Dumping", 1);
             telemetry.update();
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -738,21 +723,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
             sleep(1500);
 
         }else{
-            //move over a column
+            //move over a column, unlikely to ever happen
         }
         telemetry.addData("In set powers to 0", 1);
-        telemetry.update();
-        DumpingMotor.setPower(0);
-        DumpConveyor.setPower(.05);
-        telemetry.addData("set runmode for dumping motor", 1);
-        telemetry.update();
-        DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        /*while(DumperTouchSensorRight.getState() == false && opModeIsActive()){
-            telemetry.addData("In while loop", 1);
-            telemetry.update();
-            DumpingMotor.setPower(.125);
-        }*/
-        telemetry.addData("out of while", 1);
         telemetry.update();
     }
 
