@@ -51,7 +51,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public ModernRoboticsI2cRangeSensor BackDistance;
     public ModernRoboticsI2cRangeSensor RightDistance;
     public DistanceSensor IntakeDistance;
-    public ColorSensor IntakeColor;
+    public DistanceSensor ConveyorDistance;
+    public ColorSensor ConveyorColor;
     public ColorSensor JewelColor;
     public DigitalChannel DumperTouchSensorRight;
     public BNO055IMU IMU;
@@ -139,12 +140,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // Initialize and hardware map Sensors
         DumperTouchSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
         DumperTouchSensorRight.setMode(DigitalChannel.Mode.INPUT);
-
         IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
+        ConveyorDistance = hardwareMap.get(DistanceSensor.class, "ConveyorSensor");
         RightDistance = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "RightDistance");
         BackDistance = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "BackDistance");
-
-        IntakeColor = hardwareMap.get(ColorSensor.class, "IntakeSensor");
+        ConveyorColor = hardwareMap.get(ColorSensor.class, "ConveyorSensor");
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
 
         // Start Init IMU
@@ -164,7 +164,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
         // OR...  Do Not Activate the Camera Monitor View, to save power
-
         parameters.vuforiaLicenseKey = "ASW6AVr/////AAAAGcNlW86HgEydiJgfyCjQwxJ8z/aUm0uGPANypQfjy94MH3+UHpB" +
                 "60bep2E2CIpQCtDevYkE3I9xx1nrU3d9mxfoelhGARuvw7GBwTSjMG0GDQbuSgWGZ1X1IVW35MjOoeg57y/IJGCosxEGz" +
                 "J0VHTFmKLkPoGCHQysZ2M2d8AVQDyG+PobNjbYQeC16TZJ7SJyXHr7MJxpj/MKbRwb/bZ1icAvWdrNWiB48dyRjIESk7MewD" +
@@ -172,22 +171,21 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 "iei9O/4BmYcLw6W7c+Es0sClX/";
         parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
         this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
-
         VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
         VuforiaTrackable relicTemplate = relicTrackables.get(0);
         relicTemplate.setName("relicVuMarkTemplate"); // can help in debugging; otherwise not necessary
         telemetry.addData("Init'd VuForia ", 1);
         telemetry.update();
-
         relicTrackables.activate();
         CryptoKey = RelicRecoveryVuMark.UNKNOWN;
+
         Blocker.setPosition(BlockerServoUp);
         JewelArm.setPosition(JewelServoUpPos);
         while(!isStarted()){
-            telemetry.addData("Looop", 1);
+            telemetry.addData("Ready to start", CryptoKey);
             telemetry.update();
         }
-        while(CryptoKey == RelicRecoveryVuMark.UNKNOWN){
+        while(CryptoKey == RelicRecoveryVuMark.UNKNOWN && runtime.seconds() < 5){
             RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
                 CryptoKey = vuMark;

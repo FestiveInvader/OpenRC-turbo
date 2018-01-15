@@ -121,7 +121,6 @@ public class MecanumTeleop extends OpMode {
         DumperTouchSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
         DumperTouchSensorRight.setMode(DigitalChannel.Mode.INPUT);
         IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
-        LinearSlideDistanceSensor = hardwareMap.get(DistanceSensor.class,"LinearSlideSensor");
     }
 
     @Override
@@ -221,7 +220,7 @@ public class MecanumTeleop extends OpMode {
         }
 
         LinearSlideSpeed = gamepad2.right_stick_y;
-        if (LinearSlideMotor.getCurrentPosition() >= 6500){
+        if (LinearSlideMotor.getCurrentPosition() >= 2600){
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, -1, 0);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         } else if (LinearSlideDistanceSensor.getDistance(DistanceUnit.CM) <= linearSlideDistance) {
@@ -304,5 +303,8 @@ public class MecanumTeleop extends OpMode {
         BackLeft.setPower(BackLeftVal);
         BackRight.setPower(BackRightVal);
         // End Driving Code
+
+        telemetry.addData("LinearSlide Pos", LinearSlideMotor.getCurrentPosition());
+        telemetry.update();
     }
 }
