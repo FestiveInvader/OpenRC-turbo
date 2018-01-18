@@ -1,16 +1,16 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @TeleOp(name="Sensor teleop", group="TESTS")
 public class Sensors extends OpMode {
-    public ModernRoboticsI2cRangeSensor BackDistance;
+    public DistanceSensor BackDistance;
     public void init() {
-        BackDistance = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "RightDistance");
+        BackDistance = hardwareMap.get(DistanceSensor .class, "CryptoboxSensor");
          telemetry.addData("Done with init", 1);
         telemetry.update();
     }

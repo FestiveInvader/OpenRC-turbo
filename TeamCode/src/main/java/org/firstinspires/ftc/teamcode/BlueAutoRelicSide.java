@@ -6,8 +6,10 @@ public class BlueAutoRelicSide extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         knockOffJewel("BLUE");
+        // EncoderDrive(.15, 12,12, Reverse);
         driveAndPlace(CryptoKey, Reverse, RelicSide, 0);
         //ramThePit();
-        //Ram the pit is still under construction
+        telemetry.addData("Cryptokey", CryptoKey);
+        telemetry.update();
     }
 }

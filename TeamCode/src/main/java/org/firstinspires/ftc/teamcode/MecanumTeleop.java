@@ -40,6 +40,7 @@ public class MecanumTeleop extends OpMode {
     public Servo RelicClaw;
     public Servo RelicYAxis;
     public Servo RelicZAxis;
+    public Servo CryptoboxServo;
 
     //Declare Sensors
     public DistanceSensor IntakeDistance;
@@ -70,6 +71,8 @@ public class MecanumTeleop extends OpMode {
     double JewelServoUpPos = .60;
     double JoystickMultiplier = 1; // variable to allow slower driving speeds
     double IntakeSpeed = -.7;
+    double CryptoboxServoInPos = 0;
+    double CryptoboxServoOutPos = 1;
 
     boolean ClawOpen = true;
     boolean Dump = false;
@@ -108,6 +111,7 @@ public class MecanumTeleop extends OpMode {
         RelicClaw = hardwareMap.servo.get("RelicClaw");
         RelicYAxis = hardwareMap.servo.get("RelicYAxis");
         RelicZAxis = hardwareMap.servo.get("RelicZAxis");
+        CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
 
         IntakeServoLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         IntakeServoRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -125,6 +129,9 @@ public class MecanumTeleop extends OpMode {
 
     @Override
     public void init_loop() {
+        Blocker.setPosition(BlockerServoUp);
+        JewelArm.setPosition(JewelServoUpPos);
+
     }
 
     @Override
@@ -133,8 +140,9 @@ public class MecanumTeleop extends OpMode {
 
     @Override
     public void loop() {
-
         JewelArm.setPosition(JewelServoUpPos);
+        CryptoboxServo.setPosition(CryptoboxServoInPos);
+
         // Start Intake Code
         if (gamepad1.a) {
             Intake = !Intake;
@@ -148,10 +156,10 @@ public class MecanumTeleop extends OpMode {
             Intake = false;
         }else{
             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-            if (SensorVal <= 8) {
+            if (SensorVal <= 9) {
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
-            }else if(SensorVal > 8 && SensorVal < 20){
+            }else if(SensorVal > 9 && SensorVal < 20){
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(IntakeSpeed);
             }else if (SensorVal >= 20){
