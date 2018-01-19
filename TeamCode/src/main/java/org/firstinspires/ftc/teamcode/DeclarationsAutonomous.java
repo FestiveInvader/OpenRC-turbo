@@ -228,58 +228,15 @@ public class DeclarationsAutonomous extends LinearOpMode {
        }
         stopDriveMotors();
     }
-    public void EncoderDrive(double speed, double leftInches, double rightInches, int direction) {
-        int NewLeftTarget;
-        int NewRightTarget;
-        boolean Running = true;
-        double Speed = speed;
-
-
+    public void EncoderDrive(double speed, double inches, int direction) {
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-
-        if (Running) {
-            // Determine new target position, and pass to motor controller
-            // Calculates the needed encoder ticks by multiplying a pre-determined amount of CountsPerInches,
-            // and the method input gets the actual distance travel in inches
-            NewLeftTarget = FrontLeft.getCurrentPosition() + (int) (leftInches * CountsPerInch * direction);
-            NewRightTarget = FrontRight.getCurrentPosition() + (int) (rightInches * CountsPerInch * direction);
-            // Gives the encoders the target.
-
-            // This gets the absolute value of the encoder positions at full speed - the current speed, and while it's greater than 0, it will continues increasing the speed.
-            // This allows the robot to accelerate over a set number of inches, which reduces wheel slippage and increases overall reliability
-            while (opModeIsActive() && Running) {// && opModeIsActive
-
-                if(Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) < -1) {
-                    //If absolute value of wanted encoder count at finish -
-                    // the absolute value of current motor is < -1, then stop running.
-                    Running = false;
-                }
-                moveBy(.2*direction, 0,0);
-                telemetry.addData("Runnig", FrontLeft.getCurrentPosition());
-                telemetry.addData("Runnig", FrontRight.getCurrentPosition());
-                telemetry.addData("Runnig", BackLeft.getCurrentPosition());
-                telemetry.addData("Runnig", BackRight.getCurrentPosition());
-                telemetry.update();
+        double targetPos = FrontLeft.getCurrentPosition() + inches*CountsPerInch;
+        if (opModeIsActive()) {
+            while (opModeIsActive() && Math.abs(FrontLeft.getCurrentPosition()) < (Math.abs(targetPos)-50)) {
+                moveBy(speed*direction, 0, 0);
             }
-
-            // Stops all motion
-            // Set to run without encoder, so it's not necessary to declare this every time after the method is used
-            FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            // Set power to 0
-            FrontLeft.setPower(0);
-            FrontRight.setPower(0);
-            BackLeft.setPower(0);
-            BackRight.setPower(0);
+            stopDriveMotors();
         }
     }
     public void EncoderTurn(double speed, double leftInches, double rightInches, int Direction) {
@@ -470,10 +427,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int PylonsToFind = 0;
         double BeginningDistance = RightDistance.getDistance(DistanceUnit.CM);
 
-        FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        BackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        BackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         // This allows us to use one function for all autonomous programs, since this covers all
         // cases of use.
@@ -517,16 +474,16 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
             //make run into cryptobox
         }
-        int DistanceToTravel = 6*PylonsToFind;
-        EncoderDrive(.15, DistanceToTravel, DistanceToTravel, Direction);
+        double DistanceToTravel = 6*PylonsToFind + (1.375*PylonsToFind);
+        EncoderDrive(.2,  DistanceToTravel, Direction);
         if(Direction == Forward){
-            EncoderDrive(.15, 7, 7, Forward);
+            EncoderDrive(.15,  7, Forward);
         }else{
-            //EncoderDrive(.15, 3,3, Reverse);
+            EncoderDrive(.15, 6, Reverse);
         }
         stopDriveMotors();
         if(Placement == RelicSide) {
-            gyroTurn(.215, (-90) + gyroOffset);
+            gyroTurn(.215, (-87) + gyroOffset);
         }else if (Direction == Reverse){
             gyroTurn(.215, 0 + gyroOffset);
         }else{
@@ -535,10 +492,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
         //Function that goes to the wall until a range sensor gets a value of < wanted wall distance
         //CryptoboxServo.setPosition(CryptoboxServoMidPos);
         JewelArm.setPosition(JewelServoDistancePos);
+        CryptoboxServo.setPosition(CryptoboxServoMidPos);
         sleep(500);
-        findWall(-.25, 44);
-        /*EncoderDrive(.15, 6,6, Reverse);
-        EncoderDrive(.05, 1.25,1.25, Forward);*/
+        findWall(-.35, 44);
+        EncoderDrive(.2, 16, Reverse);
+        EncoderDrive(.2, 6, Forward);
+        CryptoboxServo.setPosition(CryptoboxServoOutPos);
+        EncoderDrive(.2, 1.75, Reverse);
+        JewelArm.setPosition(JewelServoUpPos);
         findColumn();
         stopDriveMotors();
         //Function that figures out where to place the glyph (dump, or just use the conveyor)
@@ -565,7 +526,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
 
     public void ramThePit(){
-        EncoderDrive(.75, 24, 24, Forward);
+        EncoderDrive(.75, 24, Forward);
         intakeGlyphs();
         findWall(-.25, 44);
         drive(0, .4, .25);
@@ -579,22 +540,16 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int GlyphsFound = 0;
         double startingEncoderCount = FrontLeft.getCurrentPosition();
         double limitEncoderCount = startingEncoderCount + 36*CountsPerInch;
-
-        ConveyorLeft.setPower(1);
-        ConveyorRight.setPower(1);
-        TopIntakeServoLeft.setPower(1);
-        TopIntakeServoRight.setPower(1);
-
         while(GlyphsFound < 2 && FrontLeft.getCurrentPosition() < limitEncoderCount && runtime.seconds() < 25){
             ConveyorLeft.setPower(1);
             ConveyorRight.setPower(1);
             TopIntakeServoLeft.setPower(1);
             TopIntakeServoRight.setPower(1);
-            if(ConveyorDistance.getDistance(DistanceUnit.CM) < 30){
+            moveBy(.2, 0, 0);
+            if(ConveyorDistance.getDistance(DistanceUnit.CM) < 20){
                 //we have a glyph
                 GlyphsFound += 1;;
             }else {
-                moveBy(.1, 0, 0);
                 double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
                 if (SensorVal <= 9) {
                     IntakeServoLeft.setPower(IntakeSpeed);
@@ -610,6 +565,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
                     IntakeServoRight.setPower(-IntakeSpeed);
                 }
             }
+            stopDriveMotors();
+            //if color is > whatever, it's brown. Otherwise it's grey
         }
         stopDriveMotors();
         ConveyorLeft.setPower(0);
@@ -704,11 +661,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         sleep(2000);
-        EncoderDrive(.025, 2, 2
-                , Forward);
+        EncoderDrive(.2,  2, Forward);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        EncoderDrive(.025, 10, 10, Reverse);
-        EncoderDrive(.025, 3, 3, Forward);
+        EncoderDrive(.2,  10, Reverse);
+        EncoderDrive(.2,  3, Forward);
         DumpConveyor.setPower(0);
         telemetry.addData("In end conveyor", 1);
         telemetry.update();
@@ -719,9 +675,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         sleep(2000);
-        EncoderDrive(.025, 5, 5, Forward);
-        EncoderDrive(.025, 10, 10, Reverse);
-        EncoderDrive(.025, 3, 3, Forward);
+        EncoderDrive(.25,  7, Forward);
+        EncoderDrive(.25,  10, Reverse);
+        EncoderDrive(.25,  4, Forward);
         DumpConveyor.setPower(0);
         telemetry.addData("In end conveyor", 1);
         telemetry.update();
