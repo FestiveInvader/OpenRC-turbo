@@ -44,7 +44,6 @@ public class MecanumTeleop extends OpMode {
 
     //Declare Sensors
     public DistanceSensor IntakeDistance;
-    public DistanceSensor LinearSlideDistanceSensor;
     public DigitalChannel DumperTouchSensorRight;
     public BNO055IMU IMU;
 
@@ -231,7 +230,7 @@ public class MecanumTeleop extends OpMode {
         if (LinearSlideMotor.getCurrentPosition() >= 2600){
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, -1, 0);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
-        } else if (LinearSlideDistanceSensor.getDistance(DistanceUnit.CM) <= linearSlideDistance) {
+        } else if (LinearSlideMotor.getCurrentPosition() < 50) {
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, 0, 1);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         }else{

@@ -496,9 +496,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         sleep(500);
         findWall(-.35, 44);
         EncoderDrive(.2, 16, Reverse);
-        EncoderDrive(.2, 6, Forward);
+        EncoderDrive(.2, 8, Forward);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.2, 1.75, Reverse);
+        EncoderDrive(.2, 3, Reverse);
         JewelArm.setPosition(JewelServoUpPos);
         findColumn();
         stopDriveMotors();
