@@ -143,16 +143,14 @@ public class MecanumTeleop extends OpMode {
         CryptoboxServo.setPosition(CryptoboxServoInPos);
 
         // Start Intake Code
-        if (gamepad1.a) {
+        if (gamepad1.a || gamepad2.y) {
             Intake = !Intake;
         }
         if(Intake) {
-            ConveyorLeft.setPower(0);
-            ConveyorRight.setPower(0);
-            TopIntakeServoLeft.setPower(0);
-            TopIntakeServoRight.setPower(0);
-            Intake = false;
-            Intake = false;
+            ConveyorLeft.setPower(-1);
+            ConveyorRight.setPower(-1);
+            TopIntakeServoLeft.setPower(-1);
+            TopIntakeServoRight.setPower(-1);
         }else{
             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
             if (SensorVal <= 9) {
@@ -204,10 +202,8 @@ public class MecanumTeleop extends OpMode {
 
         if (gamepad1.right_bumper || gamepad2.right_bumper ) {
             DumpConveyor.setPower(1);
-        } else if(Math.abs(gamepad2.left_stick_x) > .1){
-            DumpConveyor.setPower(Range.clip(gamepad2.left_stick_y, -1, 1));
-        }else {
-            DumpConveyor.setPower(.25);
+        } else {
+            DumpConveyor.setPower(.25 +  gamepad2.left_stick_y);
         }
 
         if (gamepad2.a || !BlockerUp || DumpConveyor.getPower() > .5) {

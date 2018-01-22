@@ -229,15 +229,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         stopDriveMotors();
     }
     public void EncoderDrive(double speed, double inches, int direction) {
-        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        double targetPos = FrontLeft.getCurrentPosition() + inches*CountsPerInch;
-        if (opModeIsActive()) {
-            while (opModeIsActive() && Math.abs(FrontLeft.getCurrentPosition()) < (Math.abs(targetPos)-50)) {
-                moveBy(speed*direction, 0, 0);
-            }
-            stopDriveMotors();
-        }
+
     }
     public void EncoderTurn(double speed, double leftInches, double rightInches, int Direction) {
         // Declares variables that are used for this method
@@ -375,7 +367,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return angles.firstAngle;
     }
     public void moveBy(double y, double x, double c) {
-        double FrontLeftVal = -y  +x + c;
+        double FrontLeftVal = -y + x + c;
         double FrontRightVal = -y - x - c;
         double BackLeftVal = -y - x + c;
         double BackRightVal = -y + x - c;
@@ -395,6 +387,26 @@ public class DeclarationsAutonomous extends LinearOpMode {
         BackLeft.setPower(BackLeftVal);
         BackRight.setPower(BackRightVal);
 
+    }
+    public void moveByWithRotation(double y, double x, double C) {
+        double c = getError(C);
+        double FrontLeftVal = -y  +x + c;
+        double FrontRightVal = -y - x - c;
+        double BackLeftVal = -y - x + c;
+        double BackRightVal = -y + x - c;
+        //Move range to between 0 and +1, if not already
+        double[] wheelPowers = {FrontRightVal, FrontLeftVal, BackLeftVal, BackRightVal};
+        Arrays.sort(wheelPowers);
+        if (wheelPowers[3] > 1) {
+            FrontLeftVal /= wheelPowers[3];
+            FrontRightVal /= wheelPowers[3];
+            BackLeftVal /= wheelPowers[3];
+            BackRightVal /= wheelPowers[3];
+        }
+        FrontLeft.setPower(FrontLeftVal);
+        FrontRight.setPower(FrontRightVal);
+        BackLeft.setPower(BackLeftVal);
+        BackRight.setPower(BackRightVal);
     }
     public void fieldOriented(double y, double x, double c, double gyroheading) {
         // X and Y are left joy, C is rotation of right joy
@@ -677,7 +689,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         sleep(2000);
         EncoderDrive(.25,  7, Forward);
         EncoderDrive(.25,  10, Reverse);
-        EncoderDrive(.25,  4, Forward);
+        EncoderDrive(.25,  8, Forward);
         DumpConveyor.setPower(0);
         telemetry.addData("In end conveyor", 1);
         telemetry.update();
@@ -718,7 +730,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         PreviousTime = currentTimeMillis();
         return d;
     }
-    public void EncoderDriveWAccecAndDecel(double speed, double leftInches, double rightInches, double accelerationInches, double decelerationInches, int direction) {
+    public void EncoderDriveWAccecAndDecel(double speed, double Inches, double accelerationInches, double decelerationInches, int direction) {
         // Declares variables that are used for this method
         int NewLeftTarget;
         int NewRightTarget;
@@ -756,8 +768,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
             // Determine new target position, and pass to motor controller
             // Calculates the needed encoder ticks by multiplying a pre-determined amount of CountsPerInches,
             // and the method input gets the actual distance travel in inches
-            NewLeftTarget = FrontRight.getCurrentPosition() + (int) (leftInches * CountsPerInch);
-            NewRightTarget = FrontRight.getCurrentPosition() + (int) (rightInches * CountsPerInch);
+            NewLeftTarget = FrontRight.getCurrentPosition() + (int) (Inches * CountsPerInch);
+            NewRightTarget = FrontRight.getCurrentPosition() + (int) (Inches * CountsPerInch);
             // Gets the current position of the encoders at the beginning of the EncoderDrive method
             FrontLeftPosition = FrontLeft.getCurrentPosition();
             FrontRightPosition = FrontRight.getCurrentPosition();
@@ -766,29 +778,16 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
 
             // Setup for deceleration
-            telemetry.addData("Setup vals for decel", 1);
-            telemetry.update();
             DecelTicks = ((decelerationInches * CountsPerInch));
             SpeedToDecelerate = speed - MinSpeed;
             DistanceBeforeDeceleration = Math.abs(NewLeftTarget) - Math.abs(DecelTicks);
             DecelTickMultiplier = (SpeedToDecelerate/DecelTicks);
 
             // Gives the encoders the target.
-            telemetry.addData("Give targets to motors", 1);
-            telemetry.update();
             FrontLeft.setTargetPosition(NewLeftTarget);
             FrontRight.setTargetPosition(NewRightTarget);
             BackLeft.setTargetPosition(NewLeftTarget);
             BackRight.setTargetPosition(NewRightTarget);
-
-
-            /*// Turn On RUN_TO_POSITION
-            FrontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            FrontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            BackLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            BackRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-*/
-            // reset the timeout time and start motion.
             runtime.reset();
             // This gets where the motor encoders will be at full position when it will be at full speed.
             double LeftEncoderPositionAtFullSpeed = ((accelerationInches*(CountsPerInch)) + FrontLeftPosition);
@@ -804,23 +803,18 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
                     LeftSpeed = (Range.clip(Math.abs((Math.abs(FrontLeft.getCurrentPosition())) / (Math.abs(LeftEncoderPositionAtFullSpeed))), MinSpeed, speed));
                     RightSpeed = (Range.clip(Math.abs((Math.abs(FrontRight.getCurrentPosition())) / (Math.abs(RightEncoderPositionAtFullSpeed))), MinSpeed, speed));
-
                     // This allows the robot to accelerate over a set distance, rather than going full speed.  This reduces wheel slippage and increases reliability.
                 }else if(((Math.abs(NewRightTarget)-Math.abs(Math.abs(FrontRight.getCurrentPosition())) <= Math.abs(DecelTicks)))
                         && (Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) > -1)){
+
                     // Ramp down the power
                     DecelSpeedVar = ((Math.abs(FrontLeft.getCurrentPosition())-Math.abs(DistanceBeforeDeceleration)));
                     double DecelClipVar = DecelSpeedVar* Math.abs(DecelTickMultiplier);
                     LeftSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
                     RightSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
-                    telemetry.addData("Decelerating", LeftSpeed);
-                    telemetry.update();
                 }else{
                     RightSpeed = speed;
                     LeftSpeed = speed;
-                    telemetry.addData("Normal Speed", LeftSpeed);
-                    telemetry.addData("Distance/Inches", FrontLeft.getCurrentPosition()/CountsPerInch);
-                    telemetry.update();
                 }
                 if(Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) < -1 || !FrontLeft.isBusy()) {
                     //If absolute value of wanted encoder count at finish -
@@ -831,8 +825,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 FrontRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
                 BackLeft.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
                 BackRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
-                telemetry.addData("Running", 10);
-                telemetry.update();
             }
 
             // Stops all motion
@@ -842,8 +834,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
             BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             // Set power to 0
-            telemetry.addData("Set power    ", 1);
-            telemetry.update();
             FrontLeft.setPower(0);
             FrontRight.setPower(0);
             BackLeft.setPower(0);
@@ -852,4 +842,3 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
     }
 }
-
