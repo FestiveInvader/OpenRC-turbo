@@ -63,8 +63,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public BNO055IMU IMU;
 
     // Variables used  in functions
-    double CountsPerRev = 537.6;    // Andymark NeveRest 40
-    double GearRatio = .88888888888888889;
+    double CountsPerRev = 537.6;    // Andymark NeveRest 20
+    double GearRatio = .8888888888888888888888888888888888888889;
     double WheelDiameterInches = 4.0;     // For figuring circumference
     double CountsPerInch = ((CountsPerRev / (WheelDiameterInches * 3.1415))*GearRatio);
     double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
@@ -198,7 +198,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             telemetry.update();
         }
         runtime.reset();
-        while(CryptoKey == RelicRecoveryVuMark.UNKNOWN && runtime.seconds() < 5){
+        while(CryptoKey == RelicRecoveryVuMark.UNKNOWN && runtime.seconds() < 1){
             RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
                 CryptoKey = vuMark;
@@ -228,14 +228,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
        }
         stopDriveMotors();
     }
-    public void EncoderDrive(double speed, double inches, int direction) {
-
-    }
     public void EncoderTurn(double speed, double leftInches, double rightInches, int Direction) {
         // Declares variables that are used for this method
         int NewLeftTarget;
         int NewRightTarget;
-        double MinSpeed = .2;
+        double MinSpeed = .1;
         boolean Running = true;
         double Speed = speed;
 
@@ -487,12 +484,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             //make run into cryptobox
         }
         double DistanceToTravel = 6*PylonsToFind + (1.375*PylonsToFind);
-        EncoderDrive(.2,  DistanceToTravel, Direction);
-        if(Direction == Forward){
-            EncoderDrive(.15,  7, Forward);
-        }else{
-            EncoderDrive(.15, 6, Reverse);
-        }
+        EncoderDrive(.2,  DistanceToTravel, 2*PylonsToFind, 2*PylonsToFind, Direction);
         stopDriveMotors();
         if(Placement == RelicSide) {
             gyroTurn(.215, (-87) + gyroOffset);
@@ -507,10 +499,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         sleep(500);
         findWall(-.35, 44);
-        EncoderDrive(.2, 16, Reverse);
-        EncoderDrive(.2, 8, Forward);
+        EncoderDrive(.2, 16, 0,0,Reverse);
+        EncoderDrive(.2, 8, 3,3,Forward);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.2, 3, Reverse);
+        EncoderDrive(.2, 3, 1,1,Reverse);
         JewelArm.setPosition(JewelServoUpPos);
         findColumn();
         stopDriveMotors();
@@ -536,9 +528,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }
         }
     }
-
     public void ramThePit(){
-        EncoderDrive(.75, 24, Forward);
+        EncoderDrive(.75, 24, 6, 6, Forward);
         intakeGlyphs();
         findWall(-.25, 44);
         drive(0, .4, .25);
@@ -547,7 +538,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // if time < needed time go back
         // else pick up another
     }
-
     public void intakeGlyphs(){
         int GlyphsFound = 0;
         double startingEncoderCount = FrontLeft.getCurrentPosition();
@@ -673,10 +663,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         sleep(2000);
-        EncoderDrive(.2,  2, Forward);
+        EncoderDrive(.2,  2, 1,1,Forward);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        EncoderDrive(.2,  10, Reverse);
-        EncoderDrive(.2,  3, Forward);
+        EncoderDrive(.2,  10, 0,0,Reverse);
+        EncoderDrive(.2,  3, 1,1,Forward);
         DumpConveyor.setPower(0);
         telemetry.addData("In end conveyor", 1);
         telemetry.update();
@@ -687,9 +677,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         sleep(2000);
-        EncoderDrive(.25,  7, Forward);
-        EncoderDrive(.25,  10, Reverse);
-        EncoderDrive(.25,  8, Forward);
+        EncoderDrive(.25,  7, 2,2,Forward);
+        EncoderDrive(.25,  10, 2,2,Reverse);
+        EncoderDrive(.25,  8, 2,2,Forward);
         DumpConveyor.setPower(0);
         telemetry.addData("In end conveyor", 1);
         telemetry.update();
@@ -730,7 +720,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         PreviousTime = currentTimeMillis();
         return d;
     }
-    public void EncoderDriveWAccecAndDecel(double speed, double Inches, double accelerationInches, double decelerationInches, int direction) {
+    public void EncoderDrive(double speed, double Inches, double accelerationInches, double decelerationInches, int direction) {
         // Declares variables that are used for this method
         int NewLeftTarget;
         int NewRightTarget;
@@ -746,12 +736,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double DistanceBeforeDeceleration;
         double DecelTickMultiplier;
         double DecelSpeedVar;
-        double MinSpeed = .15;
+        double MinSpeed = .05;
         double SpeedToDecelerate;
 
         boolean Running = true;
-        telemetry.addData("Resetting Encoders", 1);
-        telemetry.update();
         // Resets encoders to 0
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -768,7 +756,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             // Determine new target position, and pass to motor controller
             // Calculates the needed encoder ticks by multiplying a pre-determined amount of CountsPerInches,
             // and the method input gets the actual distance travel in inches
-            NewLeftTarget = FrontRight.getCurrentPosition() + (int) (Inches * CountsPerInch);
+            NewLeftTarget = FrontLeft.getCurrentPosition() + (int) (Inches * CountsPerInch);
             NewRightTarget = FrontRight.getCurrentPosition() + (int) (Inches * CountsPerInch);
             // Gets the current position of the encoders at the beginning of the EncoderDrive method
             FrontLeftPosition = FrontLeft.getCurrentPosition();
@@ -788,7 +776,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
             FrontRight.setTargetPosition(NewRightTarget);
             BackLeft.setTargetPosition(NewLeftTarget);
             BackRight.setTargetPosition(NewRightTarget);
-            runtime.reset();
             // This gets where the motor encoders will be at full position when it will be at full speed.
             double LeftEncoderPositionAtFullSpeed = ((accelerationInches*(CountsPerInch)) + FrontLeftPosition);
             double RightEncoderPositionAtFullSpeed = ((accelerationInches*(CountsPerInch)) + FrontRightPosition);
@@ -797,26 +784,29 @@ public class DeclarationsAutonomous extends LinearOpMode {
             // This allows the robot to accelerate over a set number of inches, which reduces wheel slippage and increases overall reliability
             while (opModeIsActive() && Running) {// && opModeIsActive
                 // While encoders are not at position
-                if ((((Math.abs(speed)) - (Math.abs(FrontLeft.getPower()))) > .05) && (
-                        Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) > -1)
-                        && (Math.abs(LeftEncoderPositionAtFullSpeed)- Math.abs(FrontLeft.getCurrentPosition()) > 10)){
+                if ((Math.abs(speed) - (Math.abs(FrontLeft.getPower())) > .05)){
 
-                    LeftSpeed = (Range.clip(Math.abs((Math.abs(FrontLeft.getCurrentPosition())) / (Math.abs(LeftEncoderPositionAtFullSpeed))), MinSpeed, speed));
-                    RightSpeed = (Range.clip(Math.abs((Math.abs(FrontRight.getCurrentPosition())) / (Math.abs(RightEncoderPositionAtFullSpeed))), MinSpeed, speed));
+                    LeftSpeed = (Range.clip((Math.abs(FrontLeft.getCurrentPosition())/ Math.abs(LeftEncoderPositionAtFullSpeed)), MinSpeed, speed));
+                    RightSpeed = (Range.clip((Math.abs(FrontRight.getCurrentPosition()) / Math.abs(RightEncoderPositionAtFullSpeed)), MinSpeed, speed));
+                    telemetry.addData("Accelerating Encoders", 1);
+                    telemetry.update();
                     // This allows the robot to accelerate over a set distance, rather than going full speed.  This reduces wheel slippage and increases reliability.
-                }else if(((Math.abs(NewRightTarget)-Math.abs(Math.abs(FrontRight.getCurrentPosition())) <= Math.abs(DecelTicks)))
-                        && (Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) > -1)){
+                }else if(Math.abs(FrontLeft.getCurrentPosition()) > Math.abs(DistanceBeforeDeceleration)){
 
                     // Ramp down the power
                     DecelSpeedVar = ((Math.abs(FrontLeft.getCurrentPosition())-Math.abs(DistanceBeforeDeceleration)));
                     double DecelClipVar = DecelSpeedVar* Math.abs(DecelTickMultiplier);
                     LeftSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
                     RightSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
+                    telemetry.addData("Decel Encoders", 1);
+                    telemetry.update();
                 }else{
+                    telemetry.addData("Normal Encoders", 1);
+                    telemetry.update();
                     RightSpeed = speed;
                     LeftSpeed = speed;
                 }
-                if(Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) < -1 || !FrontLeft.isBusy()) {
+                if(Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) < -1) {
                     //If absolute value of wanted encoder count at finish -
                     // the absolute value of current motor is < -1, then stop running.
                     Running = false;
@@ -825,6 +815,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 FrontRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
                 BackLeft.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
                 BackRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
+                telemetry.addData("Setting power", LeftSpeed);
+                telemetry.update();
             }
 
             // Stops all motion
@@ -834,10 +826,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
             BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             // Set power to 0
-            FrontLeft.setPower(0);
-            FrontRight.setPower(0);
-            BackLeft.setPower(0);
-            BackRight.setPower(0);
+            stopDriveMotors();
+            telemetry.addData("Over", 1);
+            telemetry.update();
+            sleep(1000);
 
         }
     }
