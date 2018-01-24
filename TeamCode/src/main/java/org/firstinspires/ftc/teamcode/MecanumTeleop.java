@@ -73,7 +73,8 @@ public class MecanumTeleop extends OpMode {
     double CryptoboxServoInPos = 0;
     double CryptoboxServoOutPos = 1;
 
-    boolean ClawOpen = true;
+    boolean ClawChangePositions = false;
+    boolean RelicYAxisUp = false;
     boolean Dump = false;
     boolean Intake = false;
     boolean BlockerUp = true;
@@ -244,24 +245,25 @@ public class MecanumTeleop extends OpMode {
             double CurrentPos = RelicZAxis.getPosition();
             RelicZAxis.setPosition(CurrentPos);
         }
-
         if(gamepad2.dpad_up){
-            RelicYAxis.setPosition(RelicYAxisUpPosition);
+            RelicYAxisUp = true;
         }else if(gamepad2.dpad_down){
-            RelicYAxis.setPosition(RelicYAxisDownPosition);
+            RelicYAxisUp = false;
+        }
+        if(RelicYAxisUp){
+            RelicYAxis.setPosition(RelicYAxisUpPosition);
         }else{
-            double CurrentPos;
-            CurrentPos = RelicYAxis.getPosition();
-            RelicYAxis.setPosition(CurrentPos);
+            RelicYAxis.setPosition(RelicYAxisDownPosition);
         }
-        if(gamepad2.b){
-            ClawOpen = !ClawOpen;
+
+        if(gamepad1.a && !ClawChangePositions) {
+            if(RelicClaw.getPosition() == RelicClawClosedPos){
+                RelicClaw.setPosition(RelicClawOpenPos);
+            } else {
+                RelicClaw.setPosition(RelicClawClosedPos);
+            }
         }
-        if(ClawOpen){
-            RelicClaw.setPosition(RelicClawOpenPos);
-        }else if(!ClawOpen){
-            RelicClaw.setPosition(RelicClawClosedPos);
-        }
+        ClawChangePositions = gamepad1.a;
         // End Linear Slide/Relic Code
 
         // Start Driving Code
@@ -287,8 +289,7 @@ public class MecanumTeleop extends OpMode {
                 gamepad1.left_stick_y
                 - (gamepad1.left_stick_x*StrafingMultiplier)
                 + -gamepad1.right_stick_x;
-        double BackRightVal =
-                gamepad1.left_stick_y
+        double BackRightVal = gamepad1.left_stick_y
                 + (gamepad1.left_stick_x*StrafingMultiplier)
                 - -gamepad1.right_stick_x;
 
@@ -306,8 +307,5 @@ public class MecanumTeleop extends OpMode {
         BackLeft.setPower(BackLeftVal);
         BackRight.setPower(BackRightVal);
         // End Driving Code
-
-        telemetry.addData("LinearSlide Pos", LinearSlideMotor.getCurrentPosition());
-        telemetry.update();
     }
 }

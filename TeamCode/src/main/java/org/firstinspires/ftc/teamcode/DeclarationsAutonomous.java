@@ -70,7 +70,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
     double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     double P_TURN_COEFF = .2;     // Larger is more responsive, but also less stable
     double P_DRIVE_COEFF = .15;     // Larger is more responsive, but also less stable
-    int[] CurrentCryptoBox = new int[]{0,0,0,0,0,0,0,0,0,0,0,0};
+    //empty is 0, grey is 1, brown is 2,
+    int[] CurrentCryptobox = new int[]{0,0,0,0,0,0,0,0,0,0,0,0};
+    int[] FrogCypherBrownMid = new int[]{1,2,1,2,1,2,1,2,1,2,1,2};
+    int[] FrogCypherGreyMid = new int[]{2,1,2,1,2,1,2,1,2,1,2,1};
     double cryptoboxHeading = 0;
     int Forward = 1;
     int Reverse = -1;
@@ -84,7 +87,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
-    int EncoderTicksToDump = DumpingEncoderTicksPerRevolution/FractionOfRevolutionToDump;
 
 
     double BlockerServoUp = .35;
@@ -227,6 +229,120 @@ public class DeclarationsAutonomous extends LinearOpMode {
            telemetry.update();
        }
         stopDriveMotors();
+    }
+    public void EncoderDrive(double speed, double Inches, double accelerationInches, double decelerationInches, int Direction) {
+        // Declares variables that are used for this method
+        int NewLeftTarget;
+        int NewRightTarget;
+        int FrontLeftPosition;
+        int FrontRightPosition;
+        int BackLeftPosition;
+        int BackRightPosition;
+        int direction = -Direction;
+
+        double DecelTicks;
+        double Speed = speed;
+        double LeftSpeed;
+        double RightSpeed;
+        double DistanceBeforeDeceleration;
+        double DecelTickMultiplier;
+        double DecelSpeedVar;
+        double MinSpeed = .05;
+        double SpeedToDecelerate;
+
+        boolean Running = true;
+        // Resets encoders to 0
+        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        BackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        BackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+        if (Running) {
+            // Determine new target position, and pass to motor controller
+            // Calculates the needed encoder ticks by multiplying a pre-determined amount of CountsPerInches,
+            // and the method input gets the actual distance travel in inches
+            NewLeftTarget = FrontLeft.getCurrentPosition() + (int) (Inches * CountsPerInch);
+            NewRightTarget = FrontRight.getCurrentPosition() + (int) (Inches * CountsPerInch);
+            // Gets the current position of the encoders at the beginning of the EncoderDrive method
+            FrontLeftPosition = FrontLeft.getCurrentPosition();
+            FrontRightPosition = FrontRight.getCurrentPosition();
+            BackLeftPosition = BackLeft.getCurrentPosition();
+            BackRightPosition = BackRight.getCurrentPosition();
+
+
+            // Setup for deceleration
+            DecelTicks = ((decelerationInches * CountsPerInch));
+            SpeedToDecelerate = speed - MinSpeed;
+            DistanceBeforeDeceleration = Math.abs(NewLeftTarget) - Math.abs(DecelTicks);
+            DecelTickMultiplier = (SpeedToDecelerate/DecelTicks);
+
+            // Gives the encoders the target.
+            FrontLeft.setTargetPosition(NewLeftTarget);
+            FrontRight.setTargetPosition(NewRightTarget);
+            BackLeft.setTargetPosition(NewLeftTarget);
+            BackRight.setTargetPosition(NewRightTarget);
+            // This gets where the motor encoders will be at full position when it will be at full speed.
+            double LeftEncoderPositionAtFullSpeed = ((accelerationInches*(CountsPerInch)) + FrontLeftPosition);
+            double RightEncoderPositionAtFullSpeed = ((accelerationInches*(CountsPerInch)) + FrontRightPosition);
+
+            // This gets the absolute value of the encoder positions at full speed - the current speed, and while it's greater than 0, it will continues increasing the speed.
+            // This allows the robot to accelerate over a set number of inches, which reduces wheel slippage and increases overall reliability
+            while (opModeIsActive() && Running) {// && opModeIsActive
+                // While encoders are not at position
+                if ((Math.abs(speed) - (Math.abs(FrontLeft.getPower())) > .05)){
+
+                    LeftSpeed = (Range.clip((Math.abs(FrontLeft.getCurrentPosition())/ Math.abs(LeftEncoderPositionAtFullSpeed)), MinSpeed, speed));
+                    RightSpeed = (Range.clip((Math.abs(FrontRight.getCurrentPosition()) / Math.abs(RightEncoderPositionAtFullSpeed)), MinSpeed, speed));
+                    telemetry.addData("Accelerating Encoders", 1);
+                    telemetry.update();
+                    // This allows the robot to accelerate over a set distance, rather than going full speed.  This reduces wheel slippage and increases reliability.
+                }else if(Math.abs(FrontLeft.getCurrentPosition()) > Math.abs(DistanceBeforeDeceleration)){
+
+                    // Ramp down the power
+                    DecelSpeedVar = ((Math.abs(FrontLeft.getCurrentPosition())-Math.abs(DistanceBeforeDeceleration)));
+                    double DecelClipVar = DecelSpeedVar* Math.abs(DecelTickMultiplier);
+                    LeftSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
+                    RightSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
+                    telemetry.addData("Decel Encoders", 1);
+                    telemetry.update();
+                }else{
+                    telemetry.addData("Normal Encoders", 1);
+                    telemetry.update();
+                    RightSpeed = speed;
+                    LeftSpeed = speed;
+                }
+                if(Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) < -1) {
+                    //If absolute value of wanted encoder count at finish -
+                    // the absolute value of current motor is < -1, then stop running.
+                    Running = false;
+                }
+                FrontLeft.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
+                FrontRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
+                BackLeft.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
+                BackRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
+                telemetry.addData("Setting power", LeftSpeed);
+                telemetry.update();
+            }
+
+            // Stops all motion
+            // Set to run without encoder, so it's not necessary to declare this every time after the method is used
+            FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            // Set power to 0
+            stopDriveMotors();
+            telemetry.addData("Over", 1);
+            telemetry.update();
+            sleep(1000);
+
+        }
     }
     public void EncoderTurn(double speed, double leftInches, double rightInches, int Direction) {
         // Declares variables that are used for this method
@@ -484,7 +600,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             //make run into cryptobox
         }
         double DistanceToTravel = 6*PylonsToFind + (1.375*PylonsToFind);
-        EncoderDrive(.2,  DistanceToTravel, 2*PylonsToFind, 2*PylonsToFind, Direction);
+        EncoderDrive(.5,  DistanceToTravel + 2, 2*PylonsToFind, 2*PylonsToFind, Direction);
         stopDriveMotors();
         if(Placement == RelicSide) {
             gyroTurn(.215, (-87) + gyroOffset);
@@ -499,10 +615,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         sleep(500);
         findWall(-.35, 44);
-        EncoderDrive(.2, 16, 0,0,Reverse);
-        EncoderDrive(.2, 8, 3,3,Forward);
+        EncoderDrive(.5, 12, 6,0,Reverse);
+        EncoderDrive(.3, 8, 1,2,Forward);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.2, 3, 1,1,Reverse);
+        EncoderDrive(.3, 3, 1,1,Reverse);
         JewelArm.setPosition(JewelServoUpPos);
         findColumn();
         stopDriveMotors();
@@ -580,7 +696,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     // Motor and servo methods
     public void knockOffJewel(String AllianceColor){
         JewelArm.setPosition(JewelServoDownPos);
-        //sleep(200);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         telemetry.addData("KnockingJewel", 10);
         telemetry.update();
@@ -684,7 +799,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("In end conveyor", 1);
         telemetry.update();
     }
-
     public double deriv(int counts) {
         // We messed around with PID in the offseason, but we decided there was no good application
         // for it in this years challenge.
@@ -719,118 +833,5 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         PreviousTime = currentTimeMillis();
         return d;
-    }
-    public void EncoderDrive(double speed, double Inches, double accelerationInches, double decelerationInches, int direction) {
-        // Declares variables that are used for this method
-        int NewLeftTarget;
-        int NewRightTarget;
-        int FrontLeftPosition;
-        int FrontRightPosition;
-        int BackLeftPosition;
-        int BackRightPosition;
-
-        double DecelTicks;
-        double Speed = speed;
-        double LeftSpeed;
-        double RightSpeed;
-        double DistanceBeforeDeceleration;
-        double DecelTickMultiplier;
-        double DecelSpeedVar;
-        double MinSpeed = .05;
-        double SpeedToDecelerate;
-
-        boolean Running = true;
-        // Resets encoders to 0
-        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        BackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        BackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-        if (Running) {
-            // Determine new target position, and pass to motor controller
-            // Calculates the needed encoder ticks by multiplying a pre-determined amount of CountsPerInches,
-            // and the method input gets the actual distance travel in inches
-            NewLeftTarget = FrontLeft.getCurrentPosition() + (int) (Inches * CountsPerInch);
-            NewRightTarget = FrontRight.getCurrentPosition() + (int) (Inches * CountsPerInch);
-            // Gets the current position of the encoders at the beginning of the EncoderDrive method
-            FrontLeftPosition = FrontLeft.getCurrentPosition();
-            FrontRightPosition = FrontRight.getCurrentPosition();
-            BackLeftPosition = BackLeft.getCurrentPosition();
-            BackRightPosition = BackRight.getCurrentPosition();
-
-
-            // Setup for deceleration
-            DecelTicks = ((decelerationInches * CountsPerInch));
-            SpeedToDecelerate = speed - MinSpeed;
-            DistanceBeforeDeceleration = Math.abs(NewLeftTarget) - Math.abs(DecelTicks);
-            DecelTickMultiplier = (SpeedToDecelerate/DecelTicks);
-
-            // Gives the encoders the target.
-            FrontLeft.setTargetPosition(NewLeftTarget);
-            FrontRight.setTargetPosition(NewRightTarget);
-            BackLeft.setTargetPosition(NewLeftTarget);
-            BackRight.setTargetPosition(NewRightTarget);
-            // This gets where the motor encoders will be at full position when it will be at full speed.
-            double LeftEncoderPositionAtFullSpeed = ((accelerationInches*(CountsPerInch)) + FrontLeftPosition);
-            double RightEncoderPositionAtFullSpeed = ((accelerationInches*(CountsPerInch)) + FrontRightPosition);
-
-            // This gets the absolute value of the encoder positions at full speed - the current speed, and while it's greater than 0, it will continues increasing the speed.
-            // This allows the robot to accelerate over a set number of inches, which reduces wheel slippage and increases overall reliability
-            while (opModeIsActive() && Running) {// && opModeIsActive
-                // While encoders are not at position
-                if ((Math.abs(speed) - (Math.abs(FrontLeft.getPower())) > .05)){
-
-                    LeftSpeed = (Range.clip((Math.abs(FrontLeft.getCurrentPosition())/ Math.abs(LeftEncoderPositionAtFullSpeed)), MinSpeed, speed));
-                    RightSpeed = (Range.clip((Math.abs(FrontRight.getCurrentPosition()) / Math.abs(RightEncoderPositionAtFullSpeed)), MinSpeed, speed));
-                    telemetry.addData("Accelerating Encoders", 1);
-                    telemetry.update();
-                    // This allows the robot to accelerate over a set distance, rather than going full speed.  This reduces wheel slippage and increases reliability.
-                }else if(Math.abs(FrontLeft.getCurrentPosition()) > Math.abs(DistanceBeforeDeceleration)){
-
-                    // Ramp down the power
-                    DecelSpeedVar = ((Math.abs(FrontLeft.getCurrentPosition())-Math.abs(DistanceBeforeDeceleration)));
-                    double DecelClipVar = DecelSpeedVar* Math.abs(DecelTickMultiplier);
-                    LeftSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
-                    RightSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
-                    telemetry.addData("Decel Encoders", 1);
-                    telemetry.update();
-                }else{
-                    telemetry.addData("Normal Encoders", 1);
-                    telemetry.update();
-                    RightSpeed = speed;
-                    LeftSpeed = speed;
-                }
-                if(Math.abs(NewLeftTarget) - Math.abs(FrontLeft.getCurrentPosition()) < -1) {
-                    //If absolute value of wanted encoder count at finish -
-                    // the absolute value of current motor is < -1, then stop running.
-                    Running = false;
-                }
-                FrontLeft.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
-                FrontRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
-                BackLeft.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
-                BackRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
-                telemetry.addData("Setting power", LeftSpeed);
-                telemetry.update();
-            }
-
-            // Stops all motion
-            // Set to run without encoder, so it's not necessary to declare this every time after the method is used
-            FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            // Set power to 0
-            stopDriveMotors();
-            telemetry.addData("Over", 1);
-            telemetry.update();
-            sleep(1000);
-
-        }
     }
 }

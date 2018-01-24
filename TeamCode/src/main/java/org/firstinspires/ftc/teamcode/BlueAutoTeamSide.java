@@ -7,9 +7,9 @@ public class BlueAutoTeamSide extends DeclarationsAutonomous {
         super.runOpMode();
         knockOffJewel("BLUE");
         findWall(-.2, 18);
-        EncoderDrive(.05,  2, Forward);
+        EncoderDrive(.25,  21,3,3, Forward);
         gyroTurn(.215, 89);
-        EncoderDrive(.05,    4, Forward);
+        EncoderDrive(.15,    4, 1,1, Forward);
         driveAndPlace(CryptoKey, Reverse, TeamSide, 0);
     }
 }
