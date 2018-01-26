@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -52,7 +51,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public Servo JewelArm = null;           // Rev SRS
     public Servo CryptoboxServo = null;
 
-    public ModernRoboticsI2cRangeSensor RightDistance;
     public DistanceSensor IntakeDistance;
     public DistanceSensor ConveyorDistance;
     public DistanceSensor CryptoboxDistance;
@@ -60,10 +58,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public ColorSensor JewelColor;
     public DigitalChannel DumperTouchSensorRight;
     public BNO055IMU IMU;
+    public I2CXLv2 BackDistance;
+    public I2CXLv2 RightDistance;
 
     // Variables used  in functions
-    double CountsPerRev = 537.6;    // Andymark NeveRest 20
-    double GearRatio = .8888888888888888888888888888888888888889;
+    double CountsPerRev = 537.6;    // Andymark NeveRest 20 encoder counts per revolution
+    double GearRatio = .889;
     double WheelDiameterInches = 4.0;     // For figuring circumference
     double CountsPerInch = ((CountsPerRev / (WheelDiameterInches * 3.1415))*GearRatio);
     double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
@@ -154,7 +154,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
         ConveyorDistance = hardwareMap.get(DistanceSensor.class, "ConveyorSensor");
         CryptoboxDistance = hardwareMap.get(DistanceSensor.class, "CryptoboxSensor");
-        RightDistance = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "RightDistance");
+        RightDistance = hardwareMap.get(I2CXLv2.class, "RightDistance");
+        BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
         ConveyorColor = hardwareMap.get(ColorSensor.class, "ConveyorSensor");
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
 
@@ -540,7 +541,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int Tolerance = 4;
         // PylonsToFind controls our while loop, as well as lets us know how many more pylons there are
         int PylonsToFind = 0;
-        double BeginningDistance = RightDistance.getDistance(DistanceUnit.CM);
+        double BeginningDistance = RightDistance.getDistance();
 
         FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -578,8 +579,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         while (opModeIsActive() && !foundPylon) {
             // If the current distance is within a certain tolerance margin of which pylon values
             // would extend out of, then drive.  Else, we know we've found a pylon
-            if(RightDistance.getDistance(DistanceUnit.CM) > BeginningDistance - Tolerance
-                    && RightDistance.getDistance(DistanceUnit.CM) < BeginningDistance + Tolerance) {
+            if(RightDistance.getDistance() > BeginningDistance - Tolerance
+                    && RightDistance.getDistance() < BeginningDistance + Tolerance) {
                 moveBy(.15 * Direction, 0, 0);
             }else{
                 foundPylon = true;
@@ -630,6 +631,16 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 FoundPylon = true;
             }else {
                 moveBy(.025, -.5, 0); //moveBy is a function that handles robot movement
+            }
+        }
+    }
+    public void findWall(double speed, double distance){
+        boolean foundWall = false;
+        while (opModeIsActive() && !foundWall) {
+            if(BackDistance.getDistance() > distance){
+                moveBy(speed, 0, 0);
+            }else{
+                foundWall = true;
             }
         }
     }

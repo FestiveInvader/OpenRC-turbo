@@ -62,8 +62,8 @@ public class MecanumTeleop extends OpMode {
     double LinearSlideSpeedMultiplier = 1;
     double RelicYAxisUpPosition = .8;
     double RelicYAxisDownPosition = .31;;
-    double RelicClawOpenPos = .8;
-    double RelicClawClosedPos = .15;
+    double RelicClawOpenPos = 1;
+    double RelicClawClosedPos = .375;
     double StrafingMultiplier = 2;
     double BlockerServoUp = .35;
     double BlockerServoDown = .56;
@@ -172,8 +172,13 @@ public class MecanumTeleop extends OpMode {
             TopIntakeServoLeft.setPower(1);
             TopIntakeServoRight.setPower(1);
         }
-        if(gamepad2.left_bumper){
+        if(gamepad2.b){
             TopIntakeServoRight.setPower(-1);
+            TopIntakeServoLeft.setPower(-1);
+            ConveyorLeft.setPower(-1);
+            ConveyorRight.setPower(-1);
+            IntakeServoLeft.setPower(-IntakeSpeed);
+            IntakeServoRight.setPower(IntakeSpeed);
         }
         // End Intake and Conveyor code
 
@@ -217,13 +222,7 @@ public class MecanumTeleop extends OpMode {
         // End Dumping Code
 
         // Start Linear Slide/Relic Code
-        if(gamepad2.left_trigger > .1){
-            LinearSlideSpeedMultiplier = .15;
-            LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        }else{
-            LinearSlideSpeedMultiplier = 1;
-            LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        }
+
 
         LinearSlideSpeed = gamepad2.right_stick_y;
         if (LinearSlideMotor.getCurrentPosition() >= 2700){
@@ -239,10 +238,10 @@ public class MecanumTeleop extends OpMode {
 
         if(gamepad1.dpad_left || gamepad2.dpad_left){
             double CurrentPos = RelicZAxis.getPosition();
-            RelicZAxis.setPosition(CurrentPos + .025);
+            RelicZAxis.setPosition(CurrentPos + .02);
         }else if(gamepad1.dpad_right || gamepad2.dpad_right){
             double CurrentPos = RelicZAxis.getPosition();
-            RelicZAxis.setPosition(CurrentPos - .025);
+            RelicZAxis.setPosition(CurrentPos - .02);
         }else{
             double CurrentPos = RelicZAxis.getPosition();
             RelicZAxis.setPosition(CurrentPos);
@@ -258,14 +257,12 @@ public class MecanumTeleop extends OpMode {
             RelicYAxis.setPosition(RelicYAxisDownPosition);
         }
 
-        if(gamepad2.b && !ClawChangePositions) {
-            if(RelicClaw.getPosition() == RelicClawClosedPos){
-                RelicClaw.setPosition(RelicClawOpenPos);
-            } else {
-                RelicClaw.setPosition(RelicClawClosedPos);
-            }
+
+        if(gamepad2.left_trigger > .1){
+            RelicClaw.setPosition(RelicClawClosedPos);
+        }else{
+            RelicClaw.setPosition(RelicClawOpenPos);
         }
-        ClawChangePositions = gamepad2.b;
         // End Linear Slide/Relic Code
 
         // Start Driving Code
