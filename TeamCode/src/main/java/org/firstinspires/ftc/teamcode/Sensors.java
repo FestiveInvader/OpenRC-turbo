@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 public class Sensors extends OpMode {
     public ColorSensor BackDistance;
     public void init() {
-        BackDistance = hardwareMap.get(ColorSensor .class, "ConveyorSensor");
+        BackDistance = hardwareMap.get(ColorSensor .class, "RightDistance");
          telemetry.addData("Done with init", 1);
         telemetry.update();
     }

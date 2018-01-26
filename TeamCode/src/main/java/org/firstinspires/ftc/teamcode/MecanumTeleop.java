@@ -203,8 +203,10 @@ public class MecanumTeleop extends OpMode {
 
         if (gamepad1.right_bumper || gamepad2.right_bumper ) {
             DumpConveyor.setPower(1);
-        } else {
-            DumpConveyor.setPower(.25 +  gamepad2.left_stick_y);
+        } else if(Math.abs(gamepad2.left_stick_y) > .1 ){
+            DumpConveyor.setPower(gamepad2.left_stick_y);
+        }else{
+            DumpConveyor.setPower(.45);
         }
 
         if (gamepad2.a || !BlockerUp || DumpConveyor.getPower() > .5) {
@@ -224,7 +226,7 @@ public class MecanumTeleop extends OpMode {
         }
 
         LinearSlideSpeed = gamepad2.right_stick_y;
-        if (LinearSlideMotor.getCurrentPosition() >= 2600){
+        if (LinearSlideMotor.getCurrentPosition() >= 2700){
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, -1, 0);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         } else if (LinearSlideMotor.getCurrentPosition() < 50) {
@@ -256,14 +258,14 @@ public class MecanumTeleop extends OpMode {
             RelicYAxis.setPosition(RelicYAxisDownPosition);
         }
 
-        if(gamepad1.a && !ClawChangePositions) {
+        if(gamepad2.b && !ClawChangePositions) {
             if(RelicClaw.getPosition() == RelicClawClosedPos){
                 RelicClaw.setPosition(RelicClawOpenPos);
             } else {
                 RelicClaw.setPosition(RelicClawClosedPos);
             }
         }
-        ClawChangePositions = gamepad1.a;
+        ClawChangePositions = gamepad2.b;
         // End Linear Slide/Relic Code
 
         // Start Driving Code

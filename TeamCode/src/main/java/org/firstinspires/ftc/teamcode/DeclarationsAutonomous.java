@@ -52,7 +52,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public Servo JewelArm = null;           // Rev SRS
     public Servo CryptoboxServo = null;
 
-    public ModernRoboticsI2cRangeSensor BackDistance;
     public ModernRoboticsI2cRangeSensor RightDistance;
     public DistanceSensor IntakeDistance;
     public DistanceSensor ConveyorDistance;
@@ -156,7 +155,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         ConveyorDistance = hardwareMap.get(DistanceSensor.class, "ConveyorSensor");
         CryptoboxDistance = hardwareMap.get(DistanceSensor.class, "CryptoboxSensor");
         RightDistance = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "RightDistance");
-        BackDistance = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "BackDistance");
         ConveyorColor = hardwareMap.get(ColorSensor.class, "ConveyorSensor");
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
 
@@ -535,15 +533,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         BackLeft.setPower(0);
         BackRight.setPower(0);
     }
-    public void findWall(double speed, int Distance){
-        JewelArm.setPosition(JewelServoDistancePos);
-        sleep(500);
-        while(opModeIsActive() && BackDistance.getDistance(DistanceUnit.CM) > Distance){
-            moveBy(speed, 0, 0);
-        }
-        JewelArm.setPosition(JewelServoUpPos);
-        stopDriveMotors();
-    }
+
     public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset){
         // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
         // and while knocking the jewel off
@@ -552,10 +542,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int PylonsToFind = 0;
         double BeginningDistance = RightDistance.getDistance(DistanceUnit.CM);
 
-        FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        BackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        BackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // This allows us to use one function for all autonomous programs, since this covers all
         // cases of use.
@@ -599,8 +589,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
             //make run into cryptobox
         }
-        double DistanceToTravel = 6*PylonsToFind + (1.375*PylonsToFind);
-        EncoderDrive(.5,  DistanceToTravel + 2, 2*PylonsToFind, 2*PylonsToFind, Direction);
+        double DistanceToTravel = 6*PylonsToFind + (2*PylonsToFind);
+        EncoderDrive(.2,  DistanceToTravel, 3*PylonsToFind, 3*PylonsToFind, Direction);
         stopDriveMotors();
         if(Placement == RelicSide) {
             gyroTurn(.215, (-87) + gyroOffset);
@@ -614,11 +604,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         JewelArm.setPosition(JewelServoDistancePos);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         sleep(500);
-        findWall(-.35, 44);
-        EncoderDrive(.5, 12, 6,0,Reverse);
-        EncoderDrive(.3, 8, 1,2,Forward);
+        EncoderDrive(.2, 16, 6,0,Reverse);
+        EncoderDrive(.2, 3.5, 1,1,Forward);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.3, 3, 1,1,Reverse);
+        EncoderDrive(.2, 2, 1,1,Reverse);
         JewelArm.setPosition(JewelServoUpPos);
         findColumn();
         stopDriveMotors();
@@ -647,8 +636,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void ramThePit(){
         EncoderDrive(.75, 24, 6, 6, Forward);
         intakeGlyphs();
-        findWall(-.25, 44);
-        drive(0, .4, .25);
+        EncoderDrive(.75, 36, 6, 6, Reverse);
         findColumn();
         placeGlyph(CryptoKey);
         // if time < needed time go back
