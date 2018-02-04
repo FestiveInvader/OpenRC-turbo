@@ -222,10 +222,8 @@ public class MecanumTeleop extends OpMode {
         // End Dumping Code
 
         // Start Linear Slide/Relic Code
-
-
         LinearSlideSpeed = gamepad2.right_stick_y;
-        if (LinearSlideMotor.getCurrentPosition() >= 2700){
+        if (LinearSlideMotor.getCurrentPosition() >= 2900){
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, -1, 0);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         } else if (LinearSlideMotor.getCurrentPosition() < 50) {

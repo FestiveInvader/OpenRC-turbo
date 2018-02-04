@@ -297,7 +297,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 if ((Math.abs(speed) - (Math.abs(FrontLeft.getPower())) > .05)){
 
                     LeftSpeed = (Range.clip((Math.abs(FrontLeft.getCurrentPosition())/ Math.abs(LeftEncoderPositionAtFullSpeed)), MinSpeed, speed));
-                    RightSpeed = (Range.clip((Math.abs(FrontRight.getCurrentPosition()) / Math.abs(RightEncoderPositionAtFullSpeed)), MinSpeed, speed));
                     telemetry.addData("Accelerating Encoders", 1);
                     telemetry.update();
                     // This allows the robot to accelerate over a set distance, rather than going full speed.  This reduces wheel slippage and increases reliability.
@@ -307,7 +306,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
                     DecelSpeedVar = ((Math.abs(FrontLeft.getCurrentPosition())-Math.abs(DistanceBeforeDeceleration)));
                     double DecelClipVar = DecelSpeedVar* Math.abs(DecelTickMultiplier);
                     LeftSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
-                    RightSpeed = Range.clip(((Math.abs(speed) - Math.abs(DecelClipVar))), MinSpeed, speed);
                     telemetry.addData("Decel Encoders", 1);
                     telemetry.update();
                 }else{
@@ -322,9 +320,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
                     Running = false;
                 }
                 FrontLeft.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
-                FrontRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
+                FrontRight.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
                 BackLeft.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
-                BackRight.setPower(Range.clip(Math.abs(RightSpeed), MinSpeed*direction,direction*speed));
+                BackRight.setPower(Range.clip(Math.abs(LeftSpeed), MinSpeed*direction,direction*speed));
                 telemetry.addData("Setting power", LeftSpeed);
                 telemetry.update();
             }
@@ -339,8 +337,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
             stopDriveMotors();
             telemetry.addData("Over", 1);
             telemetry.update();
-            sleep(1000);
-
         }
     }
     public void EncoderTurn(double speed, double leftInches, double rightInches, int Direction) {
@@ -538,15 +534,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset){
         // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
         // and while knocking the jewel off
-        int Tolerance = 4;
+        int Tolerance = 3;
         // PylonsToFind controls our while loop, as well as lets us know how many more pylons there are
         int PylonsToFind = 0;
         double BeginningDistance = RightDistance.getDistance();
-
-        FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        double LastLoopDistance = BeginningDistance;
 
         // This allows us to use one function for all autonomous programs, since this covers all
         // cases of use.
@@ -576,29 +568,37 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.update();
         //if(RightDistance.getDistance(DistanceUnit.CM) > 0) {
         boolean foundPylon = false;
-        while (opModeIsActive() && !foundPylon) {
-            // If the current distance is within a certain tolerance margin of which pylon values
-            // would extend out of, then drive.  Else, we know we've found a pylon
-            if(RightDistance.getDistance() > BeginningDistance - Tolerance
-                    && RightDistance.getDistance() < BeginningDistance + Tolerance) {
-                moveBy(.15 * Direction, 0, 0);
-            }else{
-                foundPylon = true;
-            }
-            // if there's more than one pylon left to find, or basically, if this is the last one
-            // till the target column
 
-            //make run into cryptobox
+        while (opModeIsActive() && !foundPylon) {
+            int ThisLoopDistance = RightDistance.getDistance();
+            if(Math.abs(ThisLoopDistance - LastLoopDistance) >= Tolerance){
+                telemetry.addData("Current Distance", ThisLoopDistance);
+                telemetry.addData("Last loops Distance", LastLoopDistance);
+                telemetry.addData("Difference", Math.abs(ThisLoopDistance - LastLoopDistance));
+                telemetry.update();
+                foundPylon = true;
+            } else if(ThisLoopDistance > 200){
+                //sensor val is bad, skip this loop
+            }else{
+                moveBy(.15 * Direction, 0, 0);
+            }
+            LastLoopDistance = ThisLoopDistance;
         }
-        double DistanceToTravel = 6*PylonsToFind + (2*PylonsToFind);
-        EncoderDrive(.2,  DistanceToTravel, 3*PylonsToFind, 3*PylonsToFind, Direction);
+
+        if(Direction == Reverse) {
+            double DistanceToTravel = (8 * PylonsToFind) + 2;
+            EncoderDrive(.15, DistanceToTravel, 3 * PylonsToFind, 1 * PylonsToFind, Direction);
+        }else{
+            double DistanceToTravel = 6 * PylonsToFind;
+            EncoderDrive(.15, DistanceToTravel, 3 * PylonsToFind, 3 * PylonsToFind, Direction);
+        }
         stopDriveMotors();
         if(Placement == RelicSide) {
-            gyroTurn(.215, (-87) + gyroOffset);
+            gyroTurn(.25, (-90) + gyroOffset);
         }else if (Direction == Reverse){
-            gyroTurn(.215, 0 + gyroOffset);
+            gyroTurn(.25, 0 + gyroOffset);
         }else{
-            gyroTurn(.215, 180 + gyroOffset);
+            gyroTurn(.25, 180 + gyroOffset);
         }
         //Function that goes to the wall until a range sensor gets a value of < wanted wall distance
         //CryptoboxServo.setPosition(CryptoboxServoMidPos);
@@ -608,7 +608,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         EncoderDrive(.2, 16, 6,0,Reverse);
         EncoderDrive(.2, 3.5, 1,1,Forward);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.2, 2, 1,1,Reverse);
+        EncoderDrive(.2, 1, 1,0,Reverse);
         JewelArm.setPosition(JewelServoUpPos);
         findColumn();
         stopDriveMotors();
@@ -648,43 +648,37 @@ public class DeclarationsAutonomous extends LinearOpMode {
         EncoderDrive(.75, 24, 6, 6, Forward);
         intakeGlyphs();
         EncoderDrive(.75, 36, 6, 6, Reverse);
+        findWall(.2, 30);
         findColumn();
         placeGlyph(CryptoKey);
         // if time < needed time go back
         // else pick up another
     }
     public void intakeGlyphs(){
-        int GlyphsFound = 0;
         double startingEncoderCount = FrontLeft.getCurrentPosition();
         double limitEncoderCount = startingEncoderCount + 36*CountsPerInch;
-        while(GlyphsFound < 2 && FrontLeft.getCurrentPosition() < limitEncoderCount && runtime.seconds() < 25){
+        while(ConveyorDistance.getDistance(DistanceUnit.CM) < 30 && FrontLeft.getCurrentPosition() < limitEncoderCount && runtime.seconds() < 25){
             ConveyorLeft.setPower(1);
             ConveyorRight.setPower(1);
-            TopIntakeServoLeft.setPower(1);
-            TopIntakeServoRight.setPower(1);
             moveBy(.2, 0, 0);
-            if(ConveyorDistance.getDistance(DistanceUnit.CM) < 20){
-                //we have a glyph
-                GlyphsFound += 1;;
-            }else {
-                double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-                if (SensorVal <= 9) {
-                    IntakeServoLeft.setPower(IntakeSpeed);
-                    IntakeServoRight.setPower(-IntakeSpeed);
-                }else if(SensorVal > 9 && SensorVal < 20){
-                    IntakeServoLeft.setPower(IntakeSpeed);
-                    IntakeServoRight.setPower(IntakeSpeed);
-                }else if (SensorVal >= 20){
-                    IntakeServoLeft.setPower(-IntakeSpeed);
-                    IntakeServoRight.setPower(-IntakeSpeed);
-                }else{
-                    IntakeServoLeft.setPower(IntakeSpeed);
-                    IntakeServoRight.setPower(-IntakeSpeed);
-                }
+            double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+            if (SensorVal <= 9) {
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }else if(SensorVal > 9 && SensorVal < 20){
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(IntakeSpeed);
+            }else if (SensorVal >= 20){
+                IntakeServoLeft.setPower(-IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }else{
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
             }
-            stopDriveMotors();
             //if color is > whatever, it's brown. Otherwise it's grey
         }
+        TopIntakeServoLeft.setPower(1);
+        TopIntakeServoRight.setPower(1);
         stopDriveMotors();
         ConveyorLeft.setPower(0);
         ConveyorRight.setPower(0);

@@ -5,8 +5,10 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp(name="Sensor teleop", group="TESTS")
 public class Sensors extends OpMode {
+    public I2CXLv2 RightDistance;
     public I2CXLv2 BackDistance;
     public void init() {
+        RightDistance = hardwareMap.get(I2CXLv2.class, "RightDistance");
         BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
         telemetry.addData("Done with init", 1);
         telemetry.update();
@@ -24,8 +26,10 @@ public class Sensors extends OpMode {
     @Override
     public void loop() {
         // Start Telemetry
-        telemetry.addData("Back Distance: ", BackDistance.getDistance());
+        telemetry.addData("Right Distance, ", RightDistance.getDistance());
+        telemetry.addData("Back Distance, ", BackDistance.getDistance());
         telemetry.update();
+
         // End Telemetry
     }
 }
