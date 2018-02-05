@@ -356,7 +356,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             BackLeft.setPower((speed* direction));
             BackRight.setPower((speed * direction));
 
-            while (opModeIsActive() && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 10) {
+            while (opModeIsActive() && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 50) {
                 moveBy(speed * direction, 0, 0);
             }
             stopDriveMotors();
@@ -557,7 +557,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset){
         // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
         // and while knocking the jewel off
-        int Tolerance = 5;
+        int Tolerance = 6;
         // PylonsToFind controls our while loop, as well as lets us know how many more pylons there are
         int PylonsToFind = 0;
 
@@ -597,18 +597,24 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }else{
                 moveBy(.15 * Direction, 0, 0);
             }
-
+            telemetry.addData("This loop" , ThisLoopDistance);
+            telemetry.addData("Last loop" , LastLoopDistance);
+            telemetry.addData("Difference", Math.abs(ThisLoopDistance - LastLoopDistance));
+            telemetry.addData("Vumark", CryptoKey);
+            telemetry.update();
             LastLoopDistance = ThisLoopDistance;
         }
         stopDriveMotors();
+        sleep(3000);
         if(Direction == Reverse) {
-            double DistanceToTravel = (10 * PylonsToFind);
-            EncoderDrive(.25, DistanceToTravel, Direction);
+            double DistanceToTravel = (10 * PylonsToFind) + 2;
+            EncoderDrive(.2, DistanceToTravel, Direction);
         }else{
             double DistanceToTravel = 6 * PylonsToFind;
             EncoderDrive(.15, DistanceToTravel,  Direction);
         }
         stopDriveMotors();
+        CryptoboxServo.setPosition(CryptoboxServoMidPos);
         if(Placement == RelicSide) {
             gyroTurn(turningSpeed, (-87) + gyroOffset);
         }else if (Direction == Reverse){
@@ -618,12 +624,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         //Function that goes to the wall until a range sensor gets a value of < wanted wall distance
         //CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        JewelArm.setPosition(JewelServoDistancePos);
-        CryptoboxServo.setPosition(CryptoboxServoMidPos);
         sleep(500);
+        drive(-.2, 0, 1);
+        EncoderDrive(.2, 6, Forward);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        findWall(.15, 36);
-        JewelArm.setPosition(JewelServoUpPos);
+        sleep(500);
+        EncoderDrive(.2, 2.5, Reverse);
         findColumn();
         stopDriveMotors();
         //Function that figures out where to place the glyph (dump, or just use the conveyor)
@@ -641,10 +647,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // a pylon in that location, and we can assume our position from there
         boolean FoundPylon = false;
         while(opModeIsActive() && !FoundPylon){
-            if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 7){
+            if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 8){
                 FoundPylon = true;
             }else {
-                moveBy(.035, -.5, 0); //moveBy is a function that handles robot movement
+                moveBy(.05, -.5, 0); //moveBy is a function that handles robot movement
             }
         }
     }
