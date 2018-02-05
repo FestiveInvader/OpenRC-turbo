@@ -557,7 +557,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset){
         // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
         // and while knocking the jewel off
-        int Tolerance = 6;
+        int MinTol = 6;
+        int MaxTol = 10;
         // PylonsToFind controls our while loop, as well as lets us know how many more pylons there are
         int PylonsToFind = 0;
 
@@ -592,7 +593,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
             int ThisLoopDistance = RightDistance.getDistance();
             if(ThisLoopDistance > 100 || ThisLoopDistance < 25 || LastLoopDistance > 100 || LastLoopDistance < 25){
                 //sensor val is bad, skip this loop
-            }else if(Math.abs(ThisLoopDistance - LastLoopDistance) >= Tolerance){
+            }else if(Math.abs(ThisLoopDistance - LastLoopDistance) >= MinTol &&
+                    Math.abs(ThisLoopDistance - LastLoopDistance) <= MaxTol){
                 foundPylon = true;
             }else{
                 moveBy(.15 * Direction, 0, 0);
@@ -790,11 +792,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.update();
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
-        sleep(2000);
-        EncoderDrive(.2,  2, Forward);
+        sleep(1000);
+        EncoderDrive(.2,  4, Forward);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        EncoderDrive(.2,  10, Reverse);
-        EncoderDrive(.2,  3, Forward);
+        drive(-.2, 0, 1);
+        EncoderDrive(.2,  6, Forward);
         DumpConveyor.setPower(0);
         telemetry.addData("In end conveyor", 1);
         telemetry.update();
