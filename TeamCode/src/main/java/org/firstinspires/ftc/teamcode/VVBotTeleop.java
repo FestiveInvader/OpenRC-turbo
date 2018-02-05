@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode;
 
 //@Author Eric Adams, Co-Captain and Lead Programmer for Team 8417, The Lectric Legends
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,7 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-
+@Disabled
 @TeleOp(name="VVTELEOP", group="TELEOP")
 
 public class VVBotTeleop extends OpMode {
