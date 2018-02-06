@@ -557,7 +557,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset){
         // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
         // and while knocking the jewel off
-        int MinTol = 6;
+        int MinTol = 5;
         int MaxTol = 10;
         // PylonsToFind controls our while loop, as well as lets us know how many more pylons there are
         int PylonsToFind = 0;
@@ -608,15 +608,30 @@ public class DeclarationsAutonomous extends LinearOpMode {
             LastLoopDistance = ThisLoopDistance;
         }
         stopDriveMotors();
+        double DistanceToTravel = 0;
         if(Direction == Reverse) {
             // Blue side
-            double DistanceToTravel = (10 * PylonsToFind) + 1.25;
-            EncoderDrive(.15, DistanceToTravel, Direction);
+            if(PylonsToFind == 0){
+                DistanceToTravel = 2;
+                //4?
+            }else if(PylonsToFind == 1){
+                DistanceToTravel = 12;
+
+            }else if(PylonsToFind == 2){
+                //18?
+                DistanceToTravel = 22;
+            }
         }else{
             // Red Side
-            double DistanceToTravel = (8 * PylonsToFind);
-            EncoderDrive(.15, DistanceToTravel,  Direction);
+            if(PylonsToFind == 0){
+                DistanceToTravel = 7;
+            }else if(PylonsToFind == 1){
+                DistanceToTravel = 17;
+            }else if(PylonsToFind == 2){
+                DistanceToTravel = 27;
+            }
         }
+        EncoderDrive(.15, DistanceToTravel, Direction);
         stopDriveMotors();
         if(Placement == RelicSide) {
             gyroTurn(turningSpeed, (-87) + gyroOffset);
@@ -636,6 +651,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         //If by some miracle we got multiple glyphs so it can be used, this calculates which positions
         // glyphs are already placed in and how to place the current one(s) the robot possesses
         placeGlyph(CryptoKey);
+        telemetry.addData("Vumark", CryptoKey);
+        telemetry.update();
+        sleep(3000);
     }
     public void findColumn(){
         //outdated:
@@ -794,7 +812,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.update();
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
-        sleep(1000);
+        sleep(2000);
         EncoderDrive(.2,  8, Forward);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         drive(-.2, 0, 1.5);

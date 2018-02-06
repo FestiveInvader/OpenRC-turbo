@@ -57,6 +57,8 @@ public class MecanumTeleop extends OpMode {
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
     int EncoderTicksToDump = DumpingEncoderTicksPerRevolution/FractionOfRevolutionToDump;
     int linearSlideDistance = 8;
+    int intakeValLeft = 9;
+    int intakeValRight = 20;
 
     double LinearSlideSpeed = 0;
     double LinearSlideSpeedMultiplier = 1;
@@ -147,6 +149,7 @@ public class MecanumTeleop extends OpMode {
         if (gamepad1.a || gamepad2.y) {
             Intake = !Intake;
         }
+
         if(Intake) {
             ConveyorLeft.setPower(-1);
             ConveyorRight.setPower(-1);
@@ -154,13 +157,13 @@ public class MecanumTeleop extends OpMode {
             TopIntakeServoRight.setPower(-1);
         }else{
             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-            if (SensorVal <= 9) {
+            if (SensorVal <= intakeValLeft) {
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
-            }else if(SensorVal > 9 && SensorVal < 20){
+            }else if(SensorVal > intakeValLeft && SensorVal < intakeValRight){
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(IntakeSpeed);
-            }else if (SensorVal >= 20){
+            }else if (SensorVal >= intakeValRight){
                 IntakeServoLeft.setPower(-IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
             }else{
@@ -184,7 +187,7 @@ public class MecanumTeleop extends OpMode {
 
         // Start Dumping Code
         Dump = gamepad2.right_trigger > .1;
-        double dumpingPower = .25;
+        double dumpingPower = .35;
         if (Dump && !DumperTouchSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - EncoderTicksToDump);
