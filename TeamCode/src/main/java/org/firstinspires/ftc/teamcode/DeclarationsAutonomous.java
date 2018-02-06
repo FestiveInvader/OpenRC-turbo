@@ -598,7 +598,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                     Math.abs(ThisLoopDistance - LastLoopDistance) <= MaxTol){
                 foundPylon = true;
             }else{
-                moveBy(.15 * Direction, 0, 0);
+                moveBy(.125 * Direction, 0, 0);
             }
             telemetry.addData("This loop" , ThisLoopDistance);
             telemetry.addData("Last loop" , LastLoopDistance);
@@ -609,10 +609,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         stopDriveMotors();
         if(Direction == Reverse) {
+            // Blue side
             double DistanceToTravel = (10 * PylonsToFind) + 1.25;
             EncoderDrive(.15, DistanceToTravel, Direction);
         }else{
-            double DistanceToTravel = 6 * PylonsToFind;
+            // Red Side
+            double DistanceToTravel = (8 * PylonsToFind);
             EncoderDrive(.15, DistanceToTravel,  Direction);
         }
         stopDriveMotors();
@@ -625,8 +627,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         drive(-.25, 0, 1.5);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.2, 6, Forward);
-        EncoderDrive(.2, 2, Reverse);
+        EncoderDrive(.2, 6.5, Forward);
+        sleep(250);
+        EncoderDrive(.2, 2.5, Reverse);
         findColumn();
         stopDriveMotors();
         //Function that figures out where to place the glyph (dump, or just use the conveyor)
@@ -792,10 +795,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         sleep(1000);
-        EncoderDrive(.2,  4, Forward);
+        EncoderDrive(.2,  8, Forward);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        drive(-.2, 0, 1);
-        EncoderDrive(.2,  6, Forward);
+        drive(-.2, 0, 1.5);
+        EncoderDrive(.2,  8, Forward);
         DumpConveyor.setPower(0);
         telemetry.addData("In end conveyor", 1);
         telemetry.update();
