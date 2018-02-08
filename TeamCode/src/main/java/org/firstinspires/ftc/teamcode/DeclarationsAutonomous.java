@@ -98,7 +98,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     double IntakeSpeed = 1;
     double CryptoboxServoInPos = .1;
     double CryptoboxServoOutPos = .985;
-    double CryptoboxServoMidPos = .5;
+    double CryptoboxServoMidPos = .65;
 
     VuforiaLocalizer vuforia;
     RelicRecoveryVuMark CryptoKey;
@@ -558,7 +558,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
         // and while knocking the jewel off
         int MinTol = 5;
-        int MaxTol = 10;
+        int MaxTol = 12;
         // PylonsToFind controls our while loop, as well as lets us know how many more pylons there are
         int PylonsToFind = 0;
 
@@ -567,14 +567,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // If we travel forward to get to the cryptobox.  Since the distance sensor is on
         // the right, this means we can set values based on which direction we're going
         if (CryptoKey.equals(RelicRecoveryVuMark.LEFT) && Direction == Forward) {
-            PylonsToFind = 3;
-        } else if (CryptoKey.equals(RelicRecoveryVuMark.CENTER) && Direction == Forward) {
             PylonsToFind = 2;
-        } else if (CryptoKey.equals(RelicRecoveryVuMark.RIGHT) && Direction == Forward) {
+        } else if (CryptoKey.equals(RelicRecoveryVuMark.CENTER) && Direction == Forward) {
             PylonsToFind = 1;
+        } else if (CryptoKey.equals(RelicRecoveryVuMark.RIGHT) && Direction == Forward) {
+            PylonsToFind = 0;
         } else if(CryptoKey.equals(RelicRecoveryVuMark.UNKNOWN)&& Direction == Forward){
             // No target, Vumark failed recognition.  Put in Near column
-            PylonsToFind = 1;
+            PylonsToFind = 0;
         } else if (CryptoKey.equals(RelicRecoveryVuMark.LEFT) && Direction == Reverse) {
             // Else, we're traveling backwards, which means we are on the blue alliance
             PylonsToFind = 0;
@@ -619,14 +619,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
             }else if(PylonsToFind == 2){
                 //18?
-                DistanceToTravel = 22;
+                DistanceToTravel = 20;
             }
         }else{
             // Red Side
             if(PylonsToFind == 0){
-                DistanceToTravel = 7;
+                DistanceToTravel = 8;
             }else if(PylonsToFind == 1){
-                DistanceToTravel = 17;
+                DistanceToTravel = 16;
             }else if(PylonsToFind == 2){
                 DistanceToTravel = 27;
             }
@@ -644,16 +644,23 @@ public class DeclarationsAutonomous extends LinearOpMode {
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         EncoderDrive(.2, 6.5, Forward);
         sleep(250);
-        EncoderDrive(.2, 2.5, Reverse);
+        EncoderDrive(.2, 3, Reverse);
         findColumn();
         stopDriveMotors();
         //Function that figures out where to place the glyph (dump, or just use the conveyor)
         //If by some miracle we got multiple glyphs so it can be used, this calculates which positions
         // glyphs are already placed in and how to place the current one(s) the robot possesses
         placeGlyph(CryptoKey);
+        EncoderDrive(.2, 7, Forward);
+        JewelArm.setPosition(JewelServoDownPos);
+        sleep(750);
+        CryptoboxServo.setPosition(CryptoboxServoInPos);
+        sleep(500);
+        JewelArm.setPosition(JewelServoUpPos);
         telemetry.addData("Vumark", CryptoKey);
         telemetry.update();
         sleep(3000);
+
     }
     public void findColumn(){
         //outdated:
@@ -810,6 +817,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }*/
         telemetry.addData("In conveyoring", 1);
         telemetry.update();
+        EncoderDrive(.15, .5, Forward);
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         sleep(2000);
