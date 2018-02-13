@@ -14,5 +14,7 @@ public class BlueAutoTeamSide extends DeclarationsAutonomous {
         gyroTurn(.225, 89);
         EncoderDrive(.2, 6, Forward);
         driveAndPlace(CryptoKey, Reverse, TeamSide, 0);
+        endAuto();
+
     }
 }

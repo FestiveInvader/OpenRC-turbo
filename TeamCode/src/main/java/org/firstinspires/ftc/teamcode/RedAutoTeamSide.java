@@ -10,6 +10,8 @@ public class RedAutoTeamSide extends DeclarationsAutonomous {
         gyroTurn(.215, -90);
         EncoderDrive(.2,  12, Reverse);
         driveAndPlace(CryptoKey, Forward, TeamSide, 0);
+        endAuto();
+
 
     }
 }

@@ -7,5 +7,6 @@ public class RedAutoRelicSide extends DeclarationsAutonomous {
         super.runOpMode();
         knockOffJewel("RED");
         driveAndPlace(CryptoKey, Forward, RelicSide, 0);
+        endAuto();
     }
 }
