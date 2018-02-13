@@ -57,7 +57,7 @@ public class MecanumTeleop extends OpMode {
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
     int EncoderTicksToDump = DumpingEncoderTicksPerRevolution/FractionOfRevolutionToDump;
     int linearSlideDistance = 8;
-    int intakeValLeft = 9;
+    int intakeValLeft = 11;
     int intakeValRight = 20;
 
     double LinearSlideSpeed = 0;
@@ -159,12 +159,9 @@ public class MecanumTeleop extends OpMode {
             if (SensorVal <= intakeValLeft) {
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
-            }else if(SensorVal > intakeValLeft && SensorVal < intakeValRight){
+            }else if(SensorVal > intakeValLeft){
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(IntakeSpeed);
-            }else if (SensorVal >= intakeValRight){
-                IntakeServoLeft.setPower(-IntakeSpeed);
-                IntakeServoRight.setPower(-IntakeSpeed);
             }else{
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
