@@ -696,8 +696,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void ramThePit(){
         EncoderDrive(.75, 24,  Forward);
         intakeGlyphs();
-        EncoderDrive(.75, 36,  Reverse);
-        findWall(.2, 30);
+        findWall(.4, 40);
+        drive(-.2, 0, 1.5);
         findColumn();
         placeGlyph(CryptoKey);
         // if time < needed time go back
@@ -706,9 +706,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void intakeGlyphs(){
         double startingEncoderCount = FrontLeft.getCurrentPosition();
         double limitEncoderCount = startingEncoderCount + 36*CountsPerInch;
-        while(ConveyorDistance.getDistance(DistanceUnit.CM) < 30 && FrontLeft.getCurrentPosition() < limitEncoderCount && runtime.seconds() < 25){
+        while(IntakeDistance.getDistance(DistanceUnit.CM) < 10 && FrontLeft.getCurrentPosition() < limitEncoderCount && runtime.seconds() < 25){
             ConveyorLeft.setPower(1);
             ConveyorRight.setPower(1);
+            TopIntakeServoLeft.setPower(1);
+            TopIntakeServoRight.setPower(1);
             moveBy(.2, 0, 0);
             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
             if (SensorVal <= 9) {
@@ -726,13 +728,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }
             //if color is > whatever, it's brown. Otherwise it's grey
         }
-        TopIntakeServoLeft.setPower(1);
-        TopIntakeServoRight.setPower(1);
         stopDriveMotors();
-        ConveyorLeft.setPower(0);
-        ConveyorRight.setPower(0);
-        TopIntakeServoLeft.setPower(0);
-        TopIntakeServoRight.setPower(0);
+        sleep(1000);
+        IntakeServoLeft.setPower(0);
+        IntakeServoRight.setPower(0);
+        EncoderDrive(.25, Math.abs(FrontLeft.getCurrentPosition()) - Math.abs(startingEncoderCount), Reverse);
     }
     // End movement methods
     // Motor and servo methods
@@ -743,10 +743,25 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.update();
         // sleep to allow the jewel arm to go down
         sleep(800);
-        // Decide which way to turn via a function
-        double TurningAngle = 3*jewelDirection(AllianceColor);
-        // Turn to knock off the jewel
-        gyroTurn(.25, TurningAngle);
+        //Knock off the jewel.  If the jewel is the way we go to get the cryptobox, we drive forward
+        // To knock off, otherwise we turn.  This is to
+        int Direction = jewelDirection(AllianceColor);
+        if(AllianceColor == "RED") {
+            if(Direction == -1) {
+                double TurningAngle = 3 * jewelDirection(AllianceColor);
+                gyroTurn(.25, TurningAngle);
+            }else{
+                EncoderDrive(.15, 5, Forward);
+            }
+
+        }else{
+            if(Direction == 1) {
+                double TurningAngle = 3 * jewelDirection(AllianceColor);
+                gyroTurn(.25, TurningAngle);
+            }else{
+                EncoderDrive(.15, 5, Reverse);
+            }
+        }
         JewelArm.setPosition(JewelServoUpPos);
         // Turn back to the original robot orientation
         gyroTurn(RegularTurnSpeed, 0);
