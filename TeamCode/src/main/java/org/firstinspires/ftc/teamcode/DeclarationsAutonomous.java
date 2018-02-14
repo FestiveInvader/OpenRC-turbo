@@ -25,6 +25,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 //@Author Eric Adams, Team 8417 'Lectric Legends
 
@@ -228,6 +229,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
        }
         stopDriveMotors();
     }
+    public void driveWStrafe(double yspeed, double xspeed, double time){
+        double startingHeading = getHeading();
+        double timeStarted = runtime.time();
+        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        while(opModeIsActive() && runtime.time() - timeStarted < time) {
+            moveBy(yspeed, xspeed, 0);
+        }
+        stopDriveMotors();
+    }
     public void EncoderDrive(double speed, double Inches, int direction) {
         double startingRotation = getHeading();
         double target;
@@ -415,7 +429,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             int ThisLoopDistance = RightDistance.getDistance();
             if(ThisLoopDistance > 100 || ThisLoopDistance < 21 || LastLoopDistance > 100 || LastLoopDistance < 21){
                 //sensor val is bad, skip this loop
-                moveBy(.15 * Direction, 0, 0);
+                gyroDrive(0, .125, Direction);
             }else if(Math.abs(ThisLoopDistance - LastLoopDistance) >= MinTol &&
                     Math.abs(ThisLoopDistance - LastLoopDistance) <= MaxTol){
                 foundPylon = true;
@@ -434,14 +448,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(Direction == Reverse) {
             // Blue side
             if(PylonsToFind == 0){
-                DistanceToTravel = 2;
+                DistanceToTravel = 0;
                 //4?
             }else if(PylonsToFind == 1){
-                DistanceToTravel = 12;
+                DistanceToTravel = 7.5;
 
             }else if(PylonsToFind == 2){
                 //18?
-                DistanceToTravel = 20;
+                DistanceToTravel = 15;
             }
         }else{
             // Red Side
@@ -496,7 +510,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // a pylon in that location, and we can assume our position from there
         boolean FoundPylon = false;
         while(opModeIsActive() && !FoundPylon){
-            if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 7){
+            if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6) {
+                moveBy(-.05, .3, 0); //moveBy is a function that handles robot movement
+            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 7){
                 FoundPylon = true;
             }else {
                 moveBy(.075, -.5, 0); //moveBy is a function that handles robot movement
@@ -521,11 +537,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void ramThePit(){
         EncoderDrive(.75, 24,  Forward);
+        Blocker.setPosition(BlockerServoUp);
         intakeGlyphs();
+        DumpConveyor.setPower(1);
         JewelArm.setPosition(JewelServoDistancePos);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        findWall(.5, 40);
-        drive(.2, Reverse, 1.5);
+        findWall(1, 45);
+        driveWStrafe(-.2, .3, .5);
+        //determine which column to go to/how many to move over
         findColumn();
         placeGlyph(CryptoKey);
         // if time < needed time go back
@@ -538,6 +557,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double startingEncoderCount = FrontLeft.getCurrentPosition();
         double limitEncoderCount = startingEncoderCount + 36*CountsPerInch;
+        DumpConveyor.setPower(1);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
         TopIntakeServoLeft.setPower(1);
@@ -563,7 +583,25 @@ public class DeclarationsAutonomous extends LinearOpMode {
             //if color is > whatever, it's brown. Otherwise it's grey
         }
         stopDriveMotors();
-        sleep(500);
+        double timeLimit = runtime.time(TimeUnit.SECONDS);
+        while(runtime.seconds() - timeLimit < 1){
+            double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+            if (SensorVal <= 11) {
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+                haveGlyph = true;
+            }else if(SensorVal > 11 && SensorVal < 20){
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(IntakeSpeed);
+            }else if (SensorVal >= 20){
+                IntakeServoLeft.setPower(-IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }else{
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }
+            //if color is > whatever, it's brown. Otherwise it's grey
+        }
     }
     // End movement methods
     // Motor and servo methods
@@ -603,18 +641,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return Direction;
     }
     public void placeGlyph(RelicRecoveryVuMark Column){
+        EncoderDrive(.15, .5, Forward);
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         sleep(1000);
-        moveBy(-.05, .5, 0);
-        sleep(100);
-        moveBy(.05, -.5, 0);
-        sleep(100);
+        findColumn();
         stopDriveMotors();
-        EncoderDrive(.2,  8, Forward);
+        sleep(300);
+        EncoderDrive(.135,  5, Forward);
+        drive(-.15, Reverse, .5);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        drive(.2, Reverse, 1.5);
-        EncoderDrive(.2,  8, Forward);
-        DumpConveyor.setPower(0);
+        drive(.2, Reverse, 1);
+            DumpConveyor.setPower(0);
     }
 }

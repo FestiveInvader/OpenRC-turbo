@@ -100,7 +100,7 @@ public class MecanumTeleop extends OpMode {
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         ConveyorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         ConveyorRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         // Hardware maps for servos
         IntakeServoLeft = hardwareMap.crservo.get("IntakeServoLeft");
