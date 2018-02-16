@@ -53,7 +53,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public DistanceSensor IntakeDistance;
     public DistanceSensor ConveyorDistance;
     public DistanceSensor CryptoboxDistance;
-    public ColorSensor ConveyorColor;
+    public ColorSensor IntakeColor;
     public ColorSensor JewelColor;
     public DigitalChannel DumperTouchSensorRight;
     public BNO055IMU IMU;
@@ -158,7 +158,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         CryptoboxDistance = hardwareMap.get(DistanceSensor.class, "CryptoboxSensor");
         RightDistance = hardwareMap.get(I2CXLv2.class, "RightDistance");
         BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
-        ConveyorColor = hardwareMap.get(ColorSensor.class, "ConveyorSensor");
+        IntakeColor = hardwareMap.get(ColorSensor.class, "IntakeSensor");
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
 
         // Start Init IMU
@@ -584,7 +584,31 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         stopDriveMotors();
         double timeLimit = runtime.time(TimeUnit.SECONDS);
-        while(runtime.seconds() - timeLimit < 1){
+        while(runtime.seconds() - timeLimit < .25){
+            double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+            if (SensorVal <= 11) {
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+                haveGlyph = true;
+            }else if(SensorVal > 11 && SensorVal < 20){
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(IntakeSpeed);
+            }else if (SensorVal >= 20){
+                IntakeServoLeft.setPower(-IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }else{
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }
+            //if color is > whatever, it's brown. Otherwise it's grey
+        }
+        if(IntakeColor.alpha() > 130){
+            telemetry.addData("Grey", IntakeColor.alpha());
+        }else{
+            telemetry.addData("Brown", IntakeColor.alpha());
+        }
+        double time = runtime.time(TimeUnit.SECONDS);
+        while(runtime.seconds() - time < .25){
             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
             if (SensorVal <= 11) {
                 IntakeServoLeft.setPower(IntakeSpeed);
