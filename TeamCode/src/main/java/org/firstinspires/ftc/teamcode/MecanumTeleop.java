@@ -236,13 +236,12 @@ public class MecanumTeleop extends OpMode {
         if(gamepad1.dpad_left || gamepad2.dpad_left){
             double CurrentPos = RelicZAxis.getPosition();
             RelicZAxis.setPosition(CurrentPos + .02);
-        }else if(gamepad1.dpad_right || gamepad2.dpad_right){
+        }
+        if(gamepad1.dpad_right || gamepad2.dpad_right){
             double CurrentPos = RelicZAxis.getPosition();
             RelicZAxis.setPosition(CurrentPos - .02);
-        }else{
-            double CurrentPos = RelicZAxis.getPosition();
-            RelicZAxis.setPosition(CurrentPos);
         }
+
         if(gamepad2.dpad_up){
             RelicYAxisUp = true;
         }else if(gamepad2.dpad_down){
