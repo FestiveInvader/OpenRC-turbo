@@ -6,7 +6,7 @@ public class BlueAutoRelicSide extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         knockOffJewel("BLUE");
-        driveAndPlace(CryptoKey, Reverse, RelicSide, 0);
+        driveAndPlace(CryptoKey, Reverse, RelicSide, 0,1);
         ramThePit();
         endAuto();
     }

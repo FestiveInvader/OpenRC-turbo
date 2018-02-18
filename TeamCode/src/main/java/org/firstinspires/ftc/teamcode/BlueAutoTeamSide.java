@@ -13,7 +13,7 @@ public class BlueAutoTeamSide extends DeclarationsAutonomous {
         JewelArm.setPosition(JewelServoUpPos);
         gyroTurn(.225, 89);
         EncoderDrive(.2, 6, Forward);
-        driveAndPlace(CryptoKey, Reverse, TeamSide, 0);
+        driveAndPlace(CryptoKey, Reverse, TeamSide, 0, 2);
         endAuto();
 
     }
