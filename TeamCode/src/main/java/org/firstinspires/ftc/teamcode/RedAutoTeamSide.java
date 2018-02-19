@@ -8,7 +8,6 @@ public class RedAutoTeamSide extends DeclarationsAutonomous {
         knockOffJewel("RED", 3);
         EncoderDrive(.2,  24, Forward);
         gyroTurn(.215, -90);
-        EncoderDrive(.2,  12, Reverse);
         driveAndPlace(CryptoKey, Forward, TeamSide, 0, 3);
         endAuto();
 
