@@ -397,33 +397,67 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void driveToCrypotboxEncoders(int Direction) {
         int PylonsToFind = cryptoboxPylonsToGo(Direction);
         double DistanceToTravel = 0;
-        if (Direction == Reverse) {
             // Blue side
+        if(Direction == Reverse){
             if (PylonsToFind == 0) {
                 DistanceToTravel = 2;
+                //4?
+            } else if (PylonsToFind == 1) {
+                DistanceToTravel = 10;
+
+            } else if (PylonsToFind == 2) {
+                //18?
+                DistanceToTravel = 18;
+            }
+        }else{
+            if (PylonsToFind == 0) {
+                DistanceToTravel = 4;
                 //4?
             } else if (PylonsToFind == 1) {
                 DistanceToTravel = 12;
 
             } else if (PylonsToFind == 2) {
                 //18?
-                DistanceToTravel = 22;
+                DistanceToTravel = 20;
             }
-        } else {
-            // Red Side
+        }
+        if(Direction == Reverse) {
+            if (knockedCryptoboxSideJewel) {
+                EncoderDrive(.15, 16 + DistanceToTravel, Direction);
+            } else {
+                EncoderDrive(.15, 21 + DistanceToTravel, Direction);
+            }
+        }else{
+            if (knockedCryptoboxSideJewel) {
+                EncoderDrive(.15, 16 + DistanceToTravel, Direction);
+            } else {
+                EncoderDrive(.15, 22 + DistanceToTravel, Direction);
+            }
+        }
+    }
+    public void driveToCryptoboxDistanceSensor(int Direction){
+        int PylonsToFind = cryptoboxPylonsToGo(Direction);
+        if(Direction == Reverse) {
             if (PylonsToFind == 0) {
-                DistanceToTravel = 6;
+                //offset is 7 inches, or 18
+                goToDistance(.2, 27, BackDistance);
             } else if (PylonsToFind == 1) {
-                DistanceToTravel = 14;
-            } else if (PylonsToFind == 2) {
-                DistanceToTravel = 24;
+                goToDistance(.2, 35, BackDistance);
+
+            } else {
+                goToDistance(.2, 43, BackDistance);
+
+            }
+        }else{
+            if (PylonsToFind == 0) {
+                goToDistance(.2, 32, BackDistance);
+            } else if (PylonsToFind == 1) {
+                goToDistance(.2, 38, BackDistance);
+            } else {
+                goToDistance(.2, 46, BackDistance);
             }
         }
-        if (knockedCryptoboxSideJewel) {
-            EncoderDrive(.15, 16 + DistanceToTravel, Direction);
-        } else {
-            EncoderDrive(.15, 21 + DistanceToTravel, Direction);
-        }
+
     }
     public int cryptoboxPylonsToGo(int Direction){
         int PylonsToFind = 0;
@@ -552,10 +586,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         placeGlyph(CryptoKey);
     }
     public void endAuto(){
-        JewelArm.setPosition(JewelServoDownPos);
+        JewelArm.setPosition(JewelServoDistancePos);
         EncoderDrive(.75, 8, Forward);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
-        sleep(150);
+        sleep(200);
         JewelArm.setPosition(JewelServoUpPos);
         telemetry.addData("Vumark", CryptoKey);
         telemetry.addData("Color", color);
@@ -574,13 +608,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
         boolean FoundPylon = false;
         while(opModeIsActive() && !FoundPylon){
             if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6) {
-                moveBy(-.05, .35, 0); //moveBy is a function that handles robot movement
+                moveBy(-.05, .4, 0); //moveBy is a function that handles robot movement
             }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 8){
                 FoundPylon = true;
             }else {
-                moveBy(.075, -.35, 0); //moveBy is a function that handles robot movement
+                moveBy(-.05, -.4, 0); //moveBy is a function that handles robot movement
             }
         }
+        stopDriveMotors();
     }
     public void findWall(double speed, double distance){
         double startHeading = getHeading();
@@ -628,17 +663,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         sleep(500);
         findWall(1, 50);
-        gyroTurn(.215, -87);
-        driveWStrafe(0, .3, .5);
-        gyroTurn(.215, -87);
-        //strafes enough to re-line up with the same column that the first glyph went into
+        driveWStrafe(0, .35, .35);
         driveWStrafe(-.2, 0, 1);
-        //determine which column to go to/how many to move over
-        //findColumn();
         placeGlyph(CryptoKey);
-
-        // if time < needed time go back
-        // else pick up another
+        // add if time < needed time go back
+        // else pick up another?
     }
     public void intakeGlyphs(){
         boolean haveGlyph = false;
@@ -727,7 +756,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     // End movement methods
     // Motor and servo methods
-    public void knockOffJewel(String AllianceColor){
+    public void knockOffJewel(String AllianceColor, int startingPosition){
         JewelArm.setPosition(JewelServoDownPos);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         telemetry.addData("KnockingJewel", 10);
@@ -737,9 +766,22 @@ public class DeclarationsAutonomous extends LinearOpMode {
         //Knock off the jewel.  If the jewel is the way we go to get the cryptobox, we drive forward
         // To knock off, otherwise we turn.  This is to
         int Direction = jewelDirection(AllianceColor);
-        if(Direction == 1) {
-            knockedCryptoboxSideJewel = true;
-            EncoderDrive(.5, 5, -Direction);
+        if(startingPosition == 1){
+            if(Direction == Forward) {
+                knockedCryptoboxSideJewel = true;
+                EncoderDrive(.5, 5, Reverse);
+            }else{
+                double TurningAngle = 3 * Direction;
+                gyroTurn(.25, TurningAngle);
+            }
+        }else if (startingPosition == 4){
+            if(Direction == Reverse) {
+                knockedCryptoboxSideJewel = true;
+                EncoderDrive(.5, 5, Forward);
+            }else{
+                double TurningAngle = 3 * Direction;
+                gyroTurn(.25, TurningAngle);
+            }
         }else{
             double TurningAngle = 3 * Direction;
             gyroTurn(.25, TurningAngle);
@@ -767,13 +809,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return Direction;
     }
     public void placeGlyph(RelicRecoveryVuMark Column){
-        //EncoderDrive(.15, 1, Forward);
+        EncoderDrive(.15, 1.5, Forward);
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
-        findColumn();
-        sleep(1250);
-        stopDriveMotors();
-        sleep(250);
+        //findColumn();
+        sleep(1000);
         EncoderDrive(.15,  4, Forward);
         drive(-.15, Reverse, .5);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
