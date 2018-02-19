@@ -650,7 +650,21 @@ public class DeclarationsAutonomous extends LinearOpMode {
             telemetry.update();
         }
     }
-    public void ramThePit(){
+    public void ramThePitRelicSide(){
+        EncoderDrive(.75, 22,  Forward);
+        Blocker.setPosition(BlockerServoUp);
+        intakeGlyphs();
+        DumpConveyor.setPower(1);
+        JewelArm.setPosition(JewelServoDistancePos);
+        CryptoboxServo.setPosition(CryptoboxServoOutPos);
+        sleep(500);
+        findWall(1, 50);
+        driveWStrafe(0, .35, .35);
+        driveWStrafe(-.2, 0, 1);
+        placeGlyph(CryptoKey);
+        // add if time < needed time go back
+        // else pick up another?
+    } public void ramThePitTeamSide(){
         EncoderDrive(.75, 22,  Forward);
         Blocker.setPosition(BlockerServoUp);
         intakeGlyphs();
