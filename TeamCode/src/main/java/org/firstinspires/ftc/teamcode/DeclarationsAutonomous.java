@@ -554,10 +554,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         gyroTurn(turningSpeed, heading);
     }
     public void extendCryptoboxArmForFirstGlyph(){
-        drive(.25, Reverse, 1.5);
+        drive(.25, Reverse, 1);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         EncoderDrive(.2, 6.5, Forward);
-        sleep(250);
+        sleep(300);
         EncoderDrive(.2, 3, Reverse);
     }
     public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset, int startingPosition){
@@ -664,15 +664,23 @@ public class DeclarationsAutonomous extends LinearOpMode {
         placeGlyph(CryptoKey);
         // add if time < needed time go back
         // else pick up another?
-    } public void ramThePitTeamSide(){
+    }
+    public void ramThePitTeamSide(int startingPosition){
+        double startingRotation = getHeading();
+        if( startingPosition == 2){
+            gyroTurn(turningSpeed, -45);
+        }else{
+            gyroTurn(turningSpeed, -135);
+        }
         EncoderDrive(.75, 22,  Forward);
         Blocker.setPosition(BlockerServoUp);
-        intakeGlyphs();
         DumpConveyor.setPower(1);
+        intakeGlyphs();
         JewelArm.setPosition(JewelServoDistancePos);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         sleep(500);
-        findWall(1, 50);
+        EncoderDrive(.75, 22,  Reverse);
+        gyroTurn(turningSpeed, startingRotation);
         driveWStrafe(0, .35, .35);
         driveWStrafe(-.2, 0, 1);
         placeGlyph(CryptoKey);
@@ -763,6 +771,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }
             //if color is > whatever, it's brown. Otherwise it's grey
         }
+        double inchesToDrive = Math.abs(Math.abs(FrontLeft.getCurrentPosition()) - Math.abs(startingEncoderCount));
+        EncoderDrive(.8, inchesToDrive, Reverse);
     }
     // End movement methods
     // Motor and servo methods
