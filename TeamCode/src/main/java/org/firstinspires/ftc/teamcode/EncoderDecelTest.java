@@ -7,6 +7,7 @@ public class EncoderDecelTest extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
-        goToDistance(.3, 140, BackDistance);
+        ramThePitTeamSide(3, Forward);
+        endAuto();
     }
 }

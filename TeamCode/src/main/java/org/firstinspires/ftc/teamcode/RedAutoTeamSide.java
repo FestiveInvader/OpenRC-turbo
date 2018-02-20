@@ -6,9 +6,10 @@ public class RedAutoTeamSide extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         knockOffJewel("RED", 3);
-        EncoderDrive(.2,  24, Forward);
+        EncoderDrive(.2,  22, Forward, stayOnHeading);
         gyroTurn(.215, -90);
         driveAndPlace(CryptoKey, Forward, TeamSide, 0, 3);
+        ramThePitTeamSide(3, Forward);
         endAuto();
 
 
