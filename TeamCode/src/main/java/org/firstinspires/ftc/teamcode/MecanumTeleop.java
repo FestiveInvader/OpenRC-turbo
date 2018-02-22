@@ -133,6 +133,7 @@ public class MecanumTeleop extends OpMode {
     public void init_loop() {
         Blocker.setPosition(BlockerServoUp);
         JewelArm.setPosition(JewelServoUpPos);
+        CryptoboxServo.setPosition(CryptoboxServoInPos);
     }
 
     @Override
