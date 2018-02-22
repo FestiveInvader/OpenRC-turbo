@@ -7,7 +7,10 @@ public class EncoderDecelTest extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
-        ramThePitTeamSide(3, Forward);
-        endAuto();
+        //ramThePitTeamSide(3, Forward);
+        moveBy(0, .4, 0);
+        moveBy(0, .4, 0);
+        moveBy(0, .4, 0);
+        moveBy(0, .4, 0);
     }
 }

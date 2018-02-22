@@ -573,10 +573,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 2 || startingPosition == 3){
             if(Direction == Forward){
                 // Red side, far stone
-                goToDistance(.3, 70, BackDistance);
+                goToDistance(.3, 64, BackDistance);
             }else{
                 //blue side, far stone
-                goToDistance(.3, 56, BackDistance);
+                goToDistance(.3, 54, BackDistance);
             }
         }
         driveToCrypotboxEncoders(Direction, startingPosition);
@@ -611,11 +611,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         boolean FoundPylon = false;
         while(opModeIsActive() && !FoundPylon){
             if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6) {
-                moveBy(.05, .4, 0); //moveBy is a function that handles robot movement
+                moveBy(.075, .5, 0); //moveBy is a function that handles robot movement
             }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 8){
                 FoundPylon = true;
             }else {
-                moveBy(.05, -.4, 0); //moveBy is a function that handles robot movement
+                moveBy(.075, -.5, 0); //moveBy is a function that handles robot movement
             }
         }
         stopDriveMotors();
@@ -646,7 +646,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 //sensor val is bad, skip this loop
             }else if(ThisLoopDistance > distance + 1 || ThisLoopDistance < distance - 1){
                 int Direction = (int) Range.clip(error, -1, 1);
-                gyroDrive(startHeading, Range.clip(Math.abs(error/200), .115, targetSpeed), Direction);
+                gyroDrive(startHeading, Range.clip(Math.abs(error/70), .125, targetSpeed), Direction);
             }else{
                 stopDriveMotors();
                 foundTarget = true;
@@ -679,19 +679,18 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double angleMultiplier = cryptoboxPylonsToGo(-direction);
         EncoderDrive(.2, 4, Forward, stayOnHeading);
         if( startingPosition == 2){
-            gyroTurn(turningSpeed, -55 - 5*angleMultiplier);
+            gyroTurn(turningSpeed, -30 - 5*angleMultiplier);
         }else{
             gyroTurn(turningSpeed, -150 + 8*angleMultiplier);
         }
-        EncoderDrive(.75, 30,  Forward, stayOnHeading);
+        EncoderDrive(.75, 34,  Forward, stayOnHeading);
         Blocker.setPosition(BlockerServoUp);
         DumpConveyor.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         intakeGlyphs();
-        EncoderDrive(.75, 30,  Reverse, stayOnHeading);
+        EncoderDrive(.75, 28,  Reverse, stayOnHeading);
         gyroTurn(turningSpeed, startingRotation);
         findWall(.3, 50);
-        driveWStrafe(0, .35, .35);
         driveWStrafe(-.2, 0, 1);
         placeGlyph(CryptoKey);
         // add if time < needed time go back
