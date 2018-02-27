@@ -98,7 +98,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     double JewelServoDownPos = .14; //.2 really
     double RegularTurnSpeed = .165;
     double IntakeSpeed = -.7;
-    double CryptoboxServoInPos = .3;
+    double CryptoboxServoInPos = 0;
     double CryptoboxServoOutPos = 1;
     double CryptoboxServoMidPos = .65;
     double programStartOrientation;
@@ -260,7 +260,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             Heading = heading;
         }
         double target;
-        if (opModeIsActive() && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
+        if (opModeIsActive() ) {
             FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
             FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -270,7 +270,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
             target = FrontLeft.getCurrentPosition() + (int) (Inches * CountsPerInch * direction);
 
-            while (opModeIsActive() && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 25) {
+            while (opModeIsActive() && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 25
+                    && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
                 gyroDrive(Heading, speed, direction);
             }
             stopDriveMotors();
@@ -820,11 +821,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
     // Motor and servo methods
     public void knockOffJewel(String AllianceColor, int startingPosition){
         JewelArm.setPosition(JewelServoDownPos);
-        CryptoboxServo.setPosition(CryptoboxServoOutPos);
         telemetry.addData("KnockingJewel", 10);
         telemetry.update();
         // sleep to allow the jewel arm to go down
         sleep(1000);
+        CryptoboxServo.setPosition(CryptoboxServoOutPos);
         //Knock off the jewel.  If the jewel is the way we go to get the cryptobox, we drive forward
         // To knock off, otherwise we turn.  This is to
         int Direction = jewelDirection(AllianceColor);

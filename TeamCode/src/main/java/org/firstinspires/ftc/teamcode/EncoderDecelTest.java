@@ -6,9 +6,12 @@ public class EncoderDecelTest extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         //ramThePitTeamSide(3, Forward);
-        moveBy(0, .4, 0);
-        moveBy(0, .4, 0);
-        moveBy(0, .4, 0);
-        moveBy(0, .4, 0);
+        CryptoboxServo.setPosition(1);
+        sleep(3000);
+        CryptoboxServo.setPosition(0);
+sleep(3000);
+        CryptoboxServo.setPosition(1);
+
+
     }
 }
