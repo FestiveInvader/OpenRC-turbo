@@ -438,7 +438,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             if(Direction == Forward){
                 //red
                 if (PylonsToFind == 0) {
-                    DistanceToTravel = 3;
+                    DistanceToTravel = 2;
                 } else if (PylonsToFind == 1) {
                     DistanceToTravel = 10.5;
                 } else if (PylonsToFind == 2) {
@@ -548,7 +548,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         gyroTurn(turningSpeed, heading);
     }
     public void extendCryptoboxArmForFirstGlyph(){
-        drive(.325, Reverse, 1.15);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         EncoderDrive(.2, 6.5, Forward, stayOnHeading, 5);
         sleep(300);
@@ -563,13 +562,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 goToDistance(.3, 59, BackDistance, 2);
             }else{
                 //blue side, far stone
-                goToDistance(.3, 59, BackDistance, 2  );
+                goToDistance(.3, 57, BackDistance, 2  );
             }
         }
         driveToCrypotboxEncoders(Direction, startingPosition);
 
         stopDriveMotors();
         turnToCryptobox(startingPosition);
+        if(Direction == Reverse) {
+            drive(.25, Reverse, 1);
+        }else{
+            drive(.325, Reverse, 1.15);
+
+        }
         extendCryptoboxArmForFirstGlyph();
         findColumn(1.5);
         stopDriveMotors();
@@ -600,11 +605,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         boolean FoundPylon = false;
         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
             if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 8 ) {
-                moveBy(0, .425, 0); //moveBy is a function that handles robot movement
+                moveBy(.015, .425, 0); //moveBy is a function that handles robot movement
             }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 10){
                 FoundPylon = true;
             }else {
-                moveBy(0, -.425, 0); //moveBy is a function that handles robot movement
+                moveBy(.015, -.425, 0); //moveBy is a function that handles robot movement
             }
         }
         stopDriveMotors();
