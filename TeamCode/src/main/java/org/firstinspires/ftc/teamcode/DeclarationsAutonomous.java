@@ -503,11 +503,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 DistanceToTravel = 0;
                 //4?
             } else if (PylonsToFind == 1) {
-                DistanceToTravel = 7.325;
+                DistanceToTravel = 6.5;
 
             } else if (PylonsToFind == 2) {
                 //18?
-                DistanceToTravel = 14.65;
+                DistanceToTravel = 13;
             }
         } else {
             // Red Side
@@ -579,10 +579,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 2 || startingPosition == 3){
             if(Direction == Forward){
                 // Red side, far stone
-                goToDistance(.3, 64, BackDistance, 4);
+                goToDistance(.3, 64, BackDistance, 2.5);
             }else{
                 //blue side, far stone
-                goToDistance(.3, 62, BackDistance, 3);
+                goToDistance(.3, 59, BackDistance, 1.5  );
             }
         }
         driveToCrypotboxEncoders(Direction, startingPosition);
@@ -618,12 +618,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // a pylon in that location, and we can assume our position from there
         boolean FoundPylon = false;
         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
-            if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6) {
-                moveBy(.1, .5, 0); //moveBy is a function that handles robot movement
-            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 8.25){
+            if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 8 ) {
+                moveBy(0, .425, 0); //moveBy is a function that handles robot movement
+            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 10){
                 FoundPylon = true;
             }else {
-                moveBy(.1, -.5, 0); //moveBy is a function that handles robot movement
+                moveBy(0, -.425, 0); //moveBy is a function that handles robot movement
             }
         }
         stopDriveMotors();
@@ -653,10 +653,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
             int ThisLoopDistance = distanceSensor.getDistance();
             double error = distance - ThisLoopDistance;
             if(ThisLoopDistance > 500 || ThisLoopDistance < 21){
-                //sensor val is bad, skip this loop
+                stopDriveMotors();
+                //sensor val is bad, stop bot so it doesn't go too far
             }else if(ThisLoopDistance > distance + 1 || ThisLoopDistance < distance - 1){
                 int Direction = (int) Range.clip(error, -1, 1);
-                gyroDrive(startHeading, Range.clip(Math.abs(error/70), .125, targetSpeed), Direction);
+                gyroDrive(startHeading, Range.clip(Math.abs(error/70), .135, targetSpeed), Direction);
             }else{
                 stopDriveMotors();
                 foundTarget = true;
@@ -821,11 +822,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
     // Motor and servo methods
     public void knockOffJewel(String AllianceColor, int startingPosition){
         JewelArm.setPosition(JewelServoDownPos);
+        CryptoboxServo.setPosition(CryptoboxServoOutPos);
         telemetry.addData("KnockingJewel", 10);
         telemetry.update();
         // sleep to allow the jewel arm to go down
         sleep(1000);
-        CryptoboxServo.setPosition(CryptoboxServoOutPos);
         //Knock off the jewel.  If the jewel is the way we go to get the cryptobox, we drive forward
         // To knock off, otherwise we turn.  This is to
         int Direction = jewelDirection(AllianceColor);
@@ -872,12 +873,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return Direction;
     }
     public void placeGlyph(RelicRecoveryVuMark Column){
-        EncoderDrive(.15, 1.5, Forward, stayOnHeading, 2);
+        EncoderDrive(.15, .5, Forward, stayOnHeading, 2);
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         //findColumn();
         sleep(1000);
-        EncoderDrive(.15,  3, Forward, stayOnHeading, 2);
+        EncoderDrive(.15,  5, Forward, stayOnHeading, 2);
         drive(-.15, Reverse, .5);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         drive(.2, Reverse, 1);
