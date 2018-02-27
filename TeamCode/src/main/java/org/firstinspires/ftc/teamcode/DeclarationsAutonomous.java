@@ -435,15 +435,26 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 }
             }
         }else{
-            if (PylonsToFind == 0) {
-                DistanceToTravel = 0;
-                //4?
-            } else if (PylonsToFind == 1) {
-                DistanceToTravel = 8;
+            if(Direction == Forward){
+                //red
+                if (PylonsToFind == 0) {
+                    DistanceToTravel = 3;
+                } else if (PylonsToFind == 1) {
+                    DistanceToTravel = 10.5;
+                } else if (PylonsToFind == 2) {
+                    DistanceToTravel = 18;
+                }
+            }else{
+                if (PylonsToFind == 0) {
+                    DistanceToTravel = 2;
+                    //4?
+                } else if (PylonsToFind == 1) {
+                    DistanceToTravel = 10;
 
-            } else if (PylonsToFind == 2) {
-                //18?
-                DistanceToTravel = 16;
+                } else if (PylonsToFind == 2) {
+                    //18?
+                    DistanceToTravel = 18;
+                }
             }
         }
 
@@ -494,37 +505,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         return PylonsToFind;
     }
-    public void driveToCrpytoboxDistance(int Direction){
-        int PylonsToFind = cryptoboxPylonsToGo(Direction);
-        double DistanceToTravel = 0;
-        if (Direction == Reverse) {
-            // Blue side
-            if (PylonsToFind == 0) {
-                DistanceToTravel = 0;
-                //4?
-            } else if (PylonsToFind == 1) {
-                DistanceToTravel = 6.5;
 
-            } else if (PylonsToFind == 2) {
-                //18?
-                DistanceToTravel = 13;
-            }
-        } else {
-            // Red Side
-            if (PylonsToFind == 0) {
-                DistanceToTravel = 0;
-            } else if (PylonsToFind == 1) {
-                DistanceToTravel = 8;
-            } else if (PylonsToFind == 2) {
-                DistanceToTravel = 16;
-            }
-        }
-        if (knockedCryptoboxSideJewel) {
-            EncoderDrive(.15, 15 + DistanceToTravel, Direction, stayOnHeading, 5);
-        } else {
-            EncoderDrive(.15, 20 + DistanceToTravel, Direction, stayOnHeading, 5);
-        }
-    }
     public void driveToCryptoboxDistanceVariance(int Direction){
         int MinTol = 6;
         int MaxTol = 20;
@@ -579,10 +560,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 2 || startingPosition == 3){
             if(Direction == Forward){
                 // Red side, far stone
-                goToDistance(.3, 64, BackDistance, 2.5);
+                goToDistance(.3, 59, BackDistance, 2);
             }else{
                 //blue side, far stone
-                goToDistance(.3, 59, BackDistance, 1.5  );
+                goToDistance(.3, 59, BackDistance, 2  );
             }
         }
         driveToCrypotboxEncoders(Direction, startingPosition);
