@@ -57,7 +57,7 @@ public class MecanumTeleop extends OpMode {
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
     int EncoderTicksToDump = DumpingEncoderTicksPerRevolution/FractionOfRevolutionToDump;
     int linearSlideDistance = 8;
-    int intakeValLeft = 11;
+    int intakeValLeft = 14;
     int intakeValRight = 20;
 
     double LinearSlideSpeed = 0;
@@ -160,7 +160,7 @@ public class MecanumTeleop extends OpMode {
             if (SensorVal <= intakeValLeft) {
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
-            }else if(SensorVal > intakeValLeft){
+            }else if(SensorVal > intakeValLeft && SensorVal < 50){
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(IntakeSpeed);
             }else{
@@ -172,7 +172,8 @@ public class MecanumTeleop extends OpMode {
             TopIntakeServoLeft.setPower(1);
             TopIntakeServoRight.setPower(1);
         }
-        if(gamepad2.b){
+
+        if(gamepad2.b || gamepad1.left_trigger > .15){
             TopIntakeServoRight.setPower(-1);
             TopIntakeServoLeft.setPower(-1);
             ConveyorLeft.setPower(-1);
@@ -263,16 +264,6 @@ public class MecanumTeleop extends OpMode {
         // End Linear Slide/Relic Code
 
         // Start Driving Code
-        if (gamepad1.left_trigger > .1) {
-            JoystickMultiplier = .1;
-            StrafingMultiplier = 2;
-        } else if (gamepad1.right_trigger > .1){
-            JoystickMultiplier = .4;
-            StrafingMultiplier = 2;
-        } else{
-            JoystickMultiplier = 1;
-            StrafingMultiplier = 2;
-        }
         double FrontLeftVal =
                 gamepad1.left_stick_y
                 + (gamepad1.left_stick_x*StrafingMultiplier)
@@ -303,5 +294,8 @@ public class MecanumTeleop extends OpMode {
         BackLeft.setPower(BackLeftVal);
         BackRight.setPower(BackRightVal);
         // End Driving Code
+
+        telemetry.addData("IntakeSensor Val", IntakeDistance.getDistance(DistanceUnit.CM));
+        telemetry.update();
     }
 }

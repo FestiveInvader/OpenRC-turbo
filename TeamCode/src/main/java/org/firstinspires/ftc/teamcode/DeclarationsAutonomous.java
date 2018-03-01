@@ -54,6 +54,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public DistanceSensor IntakeDistance;
     public DistanceSensor ConveyorDistance;
     public DistanceSensor CryptoboxDistance;
+    public DistanceSensor FrontLeftDistance;
+    public DistanceSensor FrontRightDistance;
     public ColorSensor IntakeColor;
     public ColorSensor JewelColor;
     public DigitalChannel DumperTouchSensorRight;
@@ -89,6 +91,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
+    int glyphs;
+
 
 
     double BlockerServoUp = .35;
@@ -162,8 +166,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumperTouchSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
         DumperTouchSensorRight.setMode(DigitalChannel.Mode.INPUT);
         IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
-        ConveyorDistance = hardwareMap.get(DistanceSensor.class, "ConveyorSensor");
         CryptoboxDistance = hardwareMap.get(DistanceSensor.class, "CryptoboxSensor");
+        FrontLeftDistance = hardwareMap.get(DistanceSensor.class, "FrontLeftDistance");
+        FrontRightDistance = hardwareMap.get(DistanceSensor.class, "FrontRightDistance");
         RightDistance = hardwareMap.get(I2CXLv2.class, "RightDistance");
         BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
         IntakeColor = hardwareMap.get(ColorSensor.class, "IntakeSensor");
@@ -582,7 +587,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void endAuto(){
         JewelArm.setPosition(JewelServoDistancePos);
-        EncoderDrive(.95, 5, Forward, stayOnHeading, 2);
+        drive(.15, Forward, .75);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
         sleep(200);
         JewelArm.setPosition(JewelServoUpPos);
@@ -692,7 +697,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             turningAngle =  -150 + 5*angleMultiplier;
         }
         gyroTurn(turningSpeed, turningAngle);
-        EncoderDrive(.95, 36,  Forward, stayOnHeading, 5);
+        EncoderDrive(.95, 36,  Forward, stayOnHeading, 2.5);
         Blocker.setPosition(BlockerServoUp);
         DumpConveyor.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
@@ -705,10 +710,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(CryptoKey.equals(RelicRecoveryVuMark.CENTER)){
             time = 1;
         }
-        driveWStrafe(0, -.4*direction, time);
-        CryptoboxServo.setPosition(CryptoboxServoOutPos);
+        driveWStrafe(-.2, -.4*direction, time);
         gyroTurn(turningSpeed, startingRotation);
-        driveWStrafe(-.2, 0, .5);
+        driveWStrafe(-.2, 0, .35);
+        extendCryptoboxArmForFirstGlyph();
         findColumn(1);
         stopDriveMotors();
         placeSecondGlyph();
@@ -732,11 +737,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
             gyroDrive(startingHeading, .2, Forward);
             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-            if (SensorVal <= 11) {
+            if (SensorVal <= 14) {
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
                 haveGlyph = true;
-            }else if(SensorVal > 11 && SensorVal < 20){
+            }else if(SensorVal > 14 && SensorVal < 20){
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(IntakeSpeed);
             }else if (SensorVal >= 20){
