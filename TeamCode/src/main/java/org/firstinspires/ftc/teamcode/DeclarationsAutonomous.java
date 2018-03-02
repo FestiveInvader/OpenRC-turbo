@@ -62,6 +62,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public BNO055IMU IMU;
     public I2CXLv2 BackDistance;
     public I2CXLv2 RightDistance;
+    public I2CXLv2 FrontDistance;
 
     // Variables used  in functions
     double CountsPerRev = 537.6;    // Andymark NeveRest 20 encoder counts per revolution
@@ -71,7 +72,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     double P_TURN_COEFF = .2;     // Larger is more responsive, but also less stable
     double P_DRIVE_COEFF = .15;     // Larger is more responsive, but also less stable
-    double turningSpeed = .215;
+    double turningSpeed = .21;
     //empty is 0, grey is 1, brown is 2,
     int[] CurrentLeft = new int[]{0,0,0,0};
     int[] CurrentCenter = new int[]{0,0,0,0};
@@ -167,10 +168,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumperTouchSensorRight.setMode(DigitalChannel.Mode.INPUT);
         IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
         CryptoboxDistance = hardwareMap.get(DistanceSensor.class, "CryptoboxSensor");
-        FrontLeftDistance = hardwareMap.get(DistanceSensor.class, "FrontLeftDistance");
-        FrontRightDistance = hardwareMap.get(DistanceSensor.class, "FrontRightDistance");
-        RightDistance = hardwareMap.get(I2CXLv2.class, "RightDistance");
+        FrontLeftDistance = hardwareMap.get(DistanceSensor.class, "FrontLeftSensor");
+        FrontRightDistance = hardwareMap.get(DistanceSensor.class, "FrontRightSensor");
         BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
+        FrontDistance = hardwareMap.get(I2CXLv2.class, "FrontDistance");
         IntakeColor = hardwareMap.get(ColorSensor.class, "IntakeSensor");
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
 
@@ -282,9 +283,18 @@ public class DeclarationsAutonomous extends LinearOpMode {
             stopDriveMotors();
         }
     }
-    public void gyroTurn ( double speed, double angle) {
+    public void gyroTurn(double speed, double angle) {
         // keep looping while we are still active, and not on heading.
         while (opModeIsActive() && !onHeading(speed, -angle, P_TURN_COEFF)) {
+            // Update telemetry & Allow time for other processes to run.
+            telemetry.addData("Target Rot", angle);
+            telemetry.addData("Current Rot", getHeading());
+            telemetry.update();
+        }
+    }
+    public void gyroTurnNotNegative ( double speed, double angle) {
+        // keep looping while we are still active, and not on heading.
+        while (opModeIsActive() && !onHeading(speed, angle, P_TURN_COEFF)) {
             // Update telemetry & Allow time for other processes to run.
             telemetry.update();
         }
@@ -311,7 +321,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             // as more accurate turning when using the GyroSensor
             PosOrNeg = Range.clip((int)error, -1, 1);
             steer = getSteer(error, PCoeff);
-            leftSpeed  = Range.clip(speed + Math.abs(error/150) , speed, .5)* PosOrNeg;
+            leftSpeed  = Range.clip(.2 + Math.abs(error/150) , .2, .5)* PosOrNeg;
 
             rightSpeed = -leftSpeed;
         }
@@ -626,9 +636,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
             int ThisLoopDistance = BackDistance.getDistance();
             if(ThisLoopDistance > 200 || ThisLoopDistance < 21){
                 //sensor val is bad, skip this loop
-                gyroDrive(startHeading, .2, Reverse);
+                moveBy(-1, 0, 0);
             }else if(BackDistance.getDistance() > distance){
-                gyroDrive(startHeading, .2, Reverse);
+                moveBy(-1, 0, 0);
             }else{
                 stopDriveMotors();
                 foundWall = true;
@@ -666,17 +676,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
         Blocker.setPosition(BlockerServoUp);
         DumpConveyor.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        intakeGlyphs(24);
-        EncoderDrive(.85, 18,  Reverse, stayOnHeading, 4);
-        double time = .75;
-        if(CryptoKey.equals(RelicRecoveryVuMark.CENTER)){
-            time = 1.5;
-        }
-
-        driveWStrafe(0, .4, time);
-        driveWStrafe(-.2, 0, .75);
-        extendCryptoboxArmForFirstGlyph();
+        driveToGlyphs(startingPosition);
+        turnToCryptobox(startingPosition);
+        EncoderDrive(.95, 20,  Reverse, stayOnHeading, 3);
+        goToDistance(.85, 40, BackDistance, 5);
+        double time = 1;
+        //Add for which columns it goes which next column
+        CryptoboxServo.setPosition(CryptoboxServoMidPos);
+        driveWStrafe(0, .5, time);
+        turnToCryptobox(startingPosition);
+        driveWStrafe(-.35, 0, 1);
+        CryptoboxServo.setPosition(CryptoboxServoOutPos);
         EncoderDrive(.15, 2, Reverse, stayOnHeading, 1);
+
         findColumn(1);
         stopDriveMotors();
 
@@ -684,6 +696,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // add if time < needed time go back
         // else pick up another?
     }
+
     public void ramThePitTeamSide(int startingPosition, int direction){
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -719,6 +732,127 @@ public class DeclarationsAutonomous extends LinearOpMode {
         placeSecondGlyph();
         // add if time < needed time go back
         // else pick up another?
+    }
+
+    public void driveToGlyphs(int startingPosition){
+        int glyphs = 0;
+        double timer;
+        boolean wentLeft = false;
+        boolean wentRight = false;
+
+        while(runtime.seconds() < 25 && glyphs < 2 && opModeIsActive()){
+            boolean linedUp = false;
+            FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            double startingEncoderCount = FrontLeft.getCurrentPosition();
+            double limitEncoderCount = startingEncoderCount + 10*CountsPerInch;
+
+            while(!linedUp && opModeIsActive() && runtime.seconds() < 25)  {
+
+                /*if(glyphs = 0){
+                    //we want a brown glyph
+                }else{
+                    //we want a grey glyph
+                }*/
+
+                if (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1) {
+                    timer = runtime.seconds();
+                    while (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1 && opModeIsActive()
+                            && FrontDistance.getDistance() > 25 ) {
+                        moveBy(0,0,.25);
+                        smartIntake();
+                    }
+                    wentLeft = true;
+                } else if (FrontRightDistance.getDistance(DistanceUnit.CM) > 1) {
+                    timer = runtime.seconds();
+                    while (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1 && opModeIsActive()
+                            && FrontDistance.getDistance() > 25) {
+                        moveBy(0,0,-.25);
+                        smartIntake();
+                    }
+                    wentRight = true;
+                } else{
+                    moveBy(.3, 0, 0);
+                }
+                if(FrontDistance.getDistance() <= 24 && FrontDistance.getDistance() > 20 ){
+                    linedUp = true;
+                }
+                smartIntake();
+                telemetry.addData("Lining Up", 0);
+                telemetry.update();
+
+            }
+            intakeGlyph();
+            glyphs += 1;
+        }
+    }
+    public boolean haveGlyph(){
+        boolean haveGlyph = false;
+        double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+        if (SensorVal <= 14) {
+            haveGlyph = true;
+        }
+        return  haveGlyph;
+    }
+    public void smartIntake(){
+        double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+        if (SensorVal <= 14) {
+            IntakeServoLeft.setPower(IntakeSpeed);
+            IntakeServoRight.setPower(-IntakeSpeed);
+        }else if(SensorVal > 14 && SensorVal < 20){
+            IntakeServoLeft.setPower(IntakeSpeed);
+            IntakeServoRight.setPower(IntakeSpeed);
+        }else if (SensorVal >= 20){
+            IntakeServoLeft.setPower(-IntakeSpeed);
+            IntakeServoRight.setPower(-IntakeSpeed);
+        }else{
+            IntakeServoLeft.setPower(IntakeSpeed);
+            IntakeServoRight.setPower(-IntakeSpeed);
+        }
+    }
+    public void smartIntakeDelay(double delay){
+        double timeLimit = runtime.time(TimeUnit.SECONDS);
+        while(runtime.seconds() - timeLimit < delay){
+            smartIntake();
+        }
+    }
+    public void intakeGlyph() {
+        boolean haveGlyph = false;
+        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        double startingEncoderCount = FrontLeft.getCurrentPosition();
+        double limitEncoderCount = startingEncoderCount + 6*CountsPerInch;
+        DumpConveyor.setPower(1);
+        ConveyorLeft.setPower(1);
+        ConveyorRight.setPower(1);
+        TopIntakeServoLeft.setPower(1);
+        TopIntakeServoRight.setPower(1);
+        while(!haveGlyph && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) && runtime.seconds() < 26){
+            if(IntakeDistance.getDistance(DistanceUnit.CM) < 14){
+                stopDriveMotors();
+                haveGlyph = true;
+            }else {
+                moveBy(.25, 0, 0);
+                smartIntake();
+            }
+        }
+        moveBy(.1, 0, 0);
+        smartIntakeDelay(.5);
+        telemetry.addData("Have Glyph", 0);
+        telemetry.update();
+        stopDriveMotors();
+        smartIntakeDelay(.5);
+        IntakeServoLeft.setPower(IntakeSpeed);
+        IntakeServoRight.setPower(-IntakeSpeed);
+        double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
+        EncoderDrive(1, Math.abs(inchesToDrive) + 6, Reverse, stayOnHeading, 3);
+        /*if(IntakeColor.alpha() > 130){
+            telemetry.addData("Grey", IntakeColor.alpha());
+            color = 1;
+        }else{
+            telemetry.addData("Brown", IntakeColor.alpha());
+            color = 2;
+        }*/
     }
     public void intakeGlyphs(int inches){
         boolean haveGlyph = false;
