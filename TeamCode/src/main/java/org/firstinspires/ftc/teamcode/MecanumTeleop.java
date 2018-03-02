@@ -35,11 +35,11 @@ public class MecanumTeleop extends OpMode {
     public CRServo TopIntakeServoLeft = null;   // Rev SRS
     public CRServo TopIntakeServoRight = null;  // Rev SRS
     public CRServo DumpConveyor = null;         // Rev SRS
-    public Servo Blocker;                // Rev SRS  Heh, block-er, cause it keeps glyphs from falling out
-    public Servo JewelArm;               // Rev SRS
+    public CRServo RelicZAxis;                  // Rev SRS
+    public Servo Blocker;                       // Rev SRS  Heh, block-er, cause it keeps glyphs from falling out
+    public Servo JewelArm;                      // Rev SRS
     public Servo RelicClaw;
     public Servo RelicYAxis;
-    public Servo RelicZAxis;
     public Servo CryptoboxServo;
 
     //Declare Sensors
@@ -107,12 +107,12 @@ public class MecanumTeleop extends OpMode {
         IntakeServoRight = hardwareMap.crservo.get("IntakeServoRight");
         TopIntakeServoLeft = hardwareMap.crservo.get("TopIntakeServoLeft");
         TopIntakeServoRight = hardwareMap.crservo.get("TopIntakeServoRight");
+        RelicZAxis = hardwareMap.crservo.get("RelicZAxis");
         DumpConveyor = hardwareMap.crservo.get("DumpConveyor");
         Blocker = hardwareMap.servo.get("Blocker");
         JewelArm = hardwareMap.servo.get("JewelServo");
         RelicClaw = hardwareMap.servo.get("RelicClaw");
         RelicYAxis = hardwareMap.servo.get("RelicYAxis");
-        RelicZAxis = hardwareMap.servo.get("RelicZAxis");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
 
         IntakeServoLeft.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -134,6 +134,7 @@ public class MecanumTeleop extends OpMode {
         Blocker.setPosition(BlockerServoUp);
         JewelArm.setPosition(JewelServoUpPos);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
+
     }
 
     @Override
@@ -207,11 +208,11 @@ public class MecanumTeleop extends OpMode {
             BlockerUp = true;
         }
 
-        if (gamepad1.right_bumper || gamepad2.right_bumper ) {
+        if (gamepad1.right_bumper || gamepad2.right_bumper){
             DumpConveyor.setPower(1);
-        } else if(Math.abs(gamepad2.left_stick_y) > .1 ){
-            DumpConveyor.setPower(gamepad2.left_stick_y);
-        }else{
+        } else if(gamepad2.left_bumper){
+            DumpConveyor.setPower(-1);
+        }else {
             DumpConveyor.setPower(.45);
         }
 
@@ -223,6 +224,7 @@ public class MecanumTeleop extends OpMode {
         // End Dumping Code
 
         // Start Linear Slide/Relic Code
+
         LinearSlideSpeed = gamepad2.right_stick_y;
         if (LinearSlideMotor.getCurrentPosition() >= 2900){
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, -1, 0);
@@ -235,14 +237,11 @@ public class MecanumTeleop extends OpMode {
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         }
 
-        if(gamepad1.dpad_left || gamepad2.dpad_left){
-            double CurrentPos = RelicZAxis.getPosition();
-            RelicZAxis.setPosition(CurrentPos + .02);
-        }
-        if(gamepad1.dpad_right || gamepad2.dpad_right){
-            double CurrentPos = RelicZAxis.getPosition();
-            RelicZAxis.setPosition(CurrentPos - .02);
-        }
+        int relicTurningDirection = Range.clip((int) gamepad2.left_stick_x*100, -1, 1);
+        double clawTurningSpeed = 0;
+        clawTurningSpeed = relicTurningDirection * (gamepad2.left_stick_x*gamepad2.left_stick_x);
+
+        RelicZAxis.setPower(-clawTurningSpeed);
 
         if(gamepad2.dpad_up){
             RelicYAxisUp = true;
@@ -254,6 +253,8 @@ public class MecanumTeleop extends OpMode {
         }else{
             RelicYAxis.setPosition(RelicYAxisDownPosition);
         }
+        //Right joystick for relic claw rotation
+        //left bumper super secret switcher
 
 
         if(gamepad2.left_trigger > .1){
