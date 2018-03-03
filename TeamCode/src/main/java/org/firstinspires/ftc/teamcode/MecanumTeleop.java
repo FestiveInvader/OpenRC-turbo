@@ -265,21 +265,27 @@ public class MecanumTeleop extends OpMode {
         // End Linear Slide/Relic Code
 
         // Start Driving Code
+        double DrivingMultiplier = 1;
+        if(gamepad1.right_trigger > .1){
+            DrivingMultiplier = .35;
+        }else{
+            DrivingMultiplier = 1;
+        }
         double FrontLeftVal =
-                gamepad1.left_stick_y
-                + (gamepad1.left_stick_x*StrafingMultiplier)
-                + -gamepad1.right_stick_x;
+                gamepad1.left_stick_y*DrivingMultiplier
+                + (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
+                + -gamepad1.right_stick_x*DrivingMultiplier;
         double FrontRightVal =
-                gamepad1.left_stick_y
-                - (gamepad1.left_stick_x*StrafingMultiplier)
-                - -gamepad1.right_stick_x;
+                gamepad1.left_stick_y*DrivingMultiplier
+                - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
+                - -gamepad1.right_stick_x*DrivingMultiplier;
         double BackLeftVal =
-                gamepad1.left_stick_y
+                gamepad1.left_stick_y*DrivingMultiplier
                 - (gamepad1.left_stick_x*StrafingMultiplier)
-                + -gamepad1.right_stick_x;
-        double BackRightVal = gamepad1.left_stick_y
-                + (gamepad1.left_stick_x*StrafingMultiplier)
-                - -gamepad1.right_stick_x;
+                + -gamepad1.right_stick_x*DrivingMultiplier;
+        double BackRightVal = gamepad1.left_stick_y*DrivingMultiplier
+                + (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
+                - -gamepad1.right_stick_x*DrivingMultiplier;
 
         //Move range to between 0 and +1, if not already
         double[] wheelPowers = {FrontRightVal, FrontLeftVal, BackLeftVal, BackRightVal};

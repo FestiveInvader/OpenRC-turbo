@@ -72,7 +72,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     double P_TURN_COEFF = .2;     // Larger is more responsive, but also less stable
     double P_DRIVE_COEFF = .15;     // Larger is more responsive, but also less stable
-    double turningSpeed = .21;
+    double turningSpeed = .195;
     //empty is 0, grey is 1, brown is 2,
     int[] CurrentLeft = new int[]{0,0,0,0};
     int[] CurrentCenter = new int[]{0,0,0,0};
@@ -92,7 +92,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
-    int glyphs;
+    int glyphs = 0;
+
 
 
 
@@ -168,6 +169,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumperTouchSensorRight.setMode(DigitalChannel.Mode.INPUT);
         IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
         CryptoboxDistance = hardwareMap.get(DistanceSensor.class, "CryptoboxSensor");
+        ConveyorDistance = hardwareMap.get(DistanceSensor.class, "ConveyorSensor");
         FrontLeftDistance = hardwareMap.get(DistanceSensor.class, "FrontLeftSensor");
         FrontRightDistance = hardwareMap.get(DistanceSensor.class, "FrontRightSensor");
         BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
@@ -279,6 +281,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             while (opModeIsActive() && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 25
                     && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
                 gyroDrive(Heading, speed, direction);
+                smartIntake();
             }
             stopDriveMotors();
         }
@@ -321,7 +324,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             // as more accurate turning when using the GyroSensor
             PosOrNeg = Range.clip((int)error, -1, 1);
             steer = getSteer(error, PCoeff);
-            leftSpeed  = Range.clip(.2 + Math.abs(error/150) , .2, .5)* PosOrNeg;
+            leftSpeed  = Range.clip(speed + Math.abs(error/175) , .185, .5)* PosOrNeg;
 
             rightSpeed = -leftSpeed;
         }
@@ -597,12 +600,13 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void endAuto(){
         JewelArm.setPosition(JewelServoDistancePos);
-        drive(.15, Forward, .75);
+        drive(.5, Forward, .35);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
         sleep(200);
         JewelArm.setPosition(JewelServoUpPos);
         telemetry.addData("Vumark", CryptoKey);
         telemetry.addData("Color", color);
+        telemetry.addData("No Glyphs", glyphs);
         telemetry.update();
         sleep(3000);
 
@@ -674,22 +678,38 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         EncoderDrive(.95, 20,  Forward, stayOnHeading, 5);
         Blocker.setPosition(BlockerServoUp);
-        DumpConveyor.setPower(1);
+        DumpConveyor.setPower(.75);
+        ConveyorLeft.setPower(1);
+        ConveyorRight.setPower(1);
+        TopIntakeServoLeft.setPower(1);
+        TopIntakeServoRight.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         driveToGlyphs(startingPosition);
         turnToCryptobox(startingPosition);
-        EncoderDrive(.95, 20,  Reverse, stayOnHeading, 3);
-        goToDistance(.85, 40, BackDistance, 5);
-        double time = 1;
-        //Add for which columns it goes which next column
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        driveWStrafe(0, .5, time);
+        EncoderDrive(.75, 4,  Reverse, stayOnHeading, 3);
+        double time =.5;
+        //Add for which columns it goes which next column
+        int PylonsToFind = cryptoboxPylonsToGo(direction);
+        if(cryptoboxPylonsToGo(PylonsToFind) == 1) {
+            if (startingPosition == 1) {
+                gyroTurn(turningSpeed, -150);
+            } else {
+                //red
+                gyroTurn(turningSpeed, -150);
+            }
+        }else if (PylonsToFind == 0){
+            gyroTurn(turningSpeed, direction* 150);
+        }else{
+            gyroTurn(turningSpeed, -direction *150);
+        }
+        EncoderDrive(.3, 10, Reverse, stayOnHeading, 1);
         turnToCryptobox(startingPosition);
-        driveWStrafe(-.35, 0, 1);
-        CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.15, 2, Reverse, stayOnHeading, 1);
-
-        findColumn(1);
+        driveWStrafe(-.25, 0, 1);
+        turnToCryptobox(startingPosition);
+        extendCryptoboxArmForFirstGlyph();
+        EncoderDrive(.175, 2.5, Reverse, stayOnHeading, 1);
+        findColumn(.3);
         stopDriveMotors();
 
         placeSecondGlyph();
@@ -735,12 +755,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
 
     public void driveToGlyphs(int startingPosition){
-        int glyphs = 0;
         double timer;
         boolean wentLeft = false;
         boolean wentRight = false;
-
-        while(runtime.seconds() < 25 && glyphs < 2 && opModeIsActive()){
+        boolean gotGlyph = false;
+        while(runtime.seconds() < 25 && !gotGlyph && opModeIsActive()){
             boolean linedUp = false;
             FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -758,23 +777,23 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 if (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1) {
                     timer = runtime.seconds();
                     while (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1 && opModeIsActive()
-                            && FrontDistance.getDistance() > 25 ) {
-                        moveBy(0,0,.25);
+                            && FrontDistance.getDistance() > 25 && runtime.seconds() - timer < 2) {
+                        moveBy(0,0,-.25);
                         smartIntake();
                     }
                     wentLeft = true;
                 } else if (FrontRightDistance.getDistance(DistanceUnit.CM) > 1) {
                     timer = runtime.seconds();
                     while (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1 && opModeIsActive()
-                            && FrontDistance.getDistance() > 25) {
-                        moveBy(0,0,-.25);
+                            && FrontDistance.getDistance() > 25 && runtime.seconds() - timer < 2) {
+                        moveBy(0,0,.25);
                         smartIntake();
                     }
                     wentRight = true;
                 } else{
                     moveBy(.3, 0, 0);
                 }
-                if(FrontDistance.getDistance() <= 24 && FrontDistance.getDistance() > 20 ){
+                if(FrontDistance.getDistance() <= 25 && FrontDistance.getDistance() > 20 ){
                     linedUp = true;
                 }
                 smartIntake();
@@ -784,6 +803,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }
             intakeGlyph();
             glyphs += 1;
+            EncoderDrive(.75, 10, Reverse, stayOnHeading, 1.5);
+            turnToCryptobox(startingPosition);
+            gotGlyph = true;
         }
     }
     public boolean haveGlyph(){
@@ -810,10 +832,26 @@ public class DeclarationsAutonomous extends LinearOpMode {
             IntakeServoRight.setPower(-IntakeSpeed);
         }
     }
-    public void smartIntakeDelay(double delay){
+    public void smartIntakeDelayWConveyorSensor(double delay, double speed){
+        double timeLimit = runtime.time(TimeUnit.SECONDS);
+        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        double startingEncoderCount = FrontLeft.getCurrentPosition();
+        double limitEncoderCount = startingEncoderCount + 8*CountsPerInch;
+        while(runtime.seconds() - timeLimit < delay && ConveyorDistance.getDistance(DistanceUnit.CM) > 1 && runtime.seconds() < 25){
+            if((Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount))) {
+                smartIntake();
+                moveBy(speed, 0, 0);
+            }else{
+                smartIntake();
+            }
+        }
+    }
+    public void smartIntakeDelay(double delay, double speed){
         double timeLimit = runtime.time(TimeUnit.SECONDS);
         while(runtime.seconds() - timeLimit < delay){
             smartIntake();
+            moveBy(speed, 0, 0);
         }
     }
     public void intakeGlyph() {
@@ -821,31 +859,27 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double startingEncoderCount = FrontLeft.getCurrentPosition();
-        double limitEncoderCount = startingEncoderCount + 6*CountsPerInch;
+        double limitEncoderCount = startingEncoderCount + 18*CountsPerInch;
         DumpConveyor.setPower(1);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
         TopIntakeServoLeft.setPower(1);
         TopIntakeServoRight.setPower(1);
-        while(!haveGlyph && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) && runtime.seconds() < 26){
-            if(IntakeDistance.getDistance(DistanceUnit.CM) < 14){
+        while(!haveGlyph && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) && runtime.seconds() <= 25){
+            if(ConveyorDistance.getDistance(DistanceUnit.CM) > 1){
                 stopDriveMotors();
                 haveGlyph = true;
             }else {
-                moveBy(.25, 0, 0);
+                moveBy(.175, 0, 0);
                 smartIntake();
             }
         }
-        moveBy(.1, 0, 0);
-        smartIntakeDelay(.5);
-        telemetry.addData("Have Glyph", 0);
-        telemetry.update();
+        if(!haveGlyph){
+            smartIntakeDelayWConveyorSensor(1.5, 0);
+        }
         stopDriveMotors();
-        smartIntakeDelay(.5);
-        IntakeServoLeft.setPower(IntakeSpeed);
-        IntakeServoRight.setPower(-IntakeSpeed);
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
-        EncoderDrive(1, Math.abs(inchesToDrive) + 6, Reverse, stayOnHeading, 3);
+        EncoderDrive(1, Math.abs(inchesToDrive + 6), Reverse, stayOnHeading, 1.5);
         /*if(IntakeColor.alpha() > 130){
             telemetry.addData("Grey", IntakeColor.alpha());
             color = 1;
@@ -961,7 +995,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 EncoderDrive(.5, 5, Reverse, stayOnHeading, 5);
             }else{
                 double TurningAngle = 3 * Direction;
-                gyroTurn(.25, TurningAngle);
+                gyroTurn(turningSpeed, TurningAngle);
             }
         }else if (startingPosition == 4){
             if(Direction == Reverse) {
@@ -969,15 +1003,15 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 EncoderDrive(.5, 5, Forward, stayOnHeading, 5);
             }else{
                 double TurningAngle = 3 * Direction;
-                gyroTurn(.25, TurningAngle);
+                gyroTurn(turningSpeed, TurningAngle);
             }
         }else{
             double TurningAngle = 3 * Direction;
-            gyroTurn(.25, TurningAngle);
+            gyroTurn(turningSpeed, TurningAngle);
         }
         JewelArm.setPosition(JewelServoUpPos);
         // Turn back to the original robot orientation
-        gyroTurn(RegularTurnSpeed, 0);
+        gyroTurn(turningSpeed, 0);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
     }
     public int jewelDirection(String AllianceColor){
@@ -1008,15 +1042,16 @@ public class DeclarationsAutonomous extends LinearOpMode {
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         drive(.2, Reverse, 1);
     }
-    public void placeSecondGlyph(){
-        EncoderDrive(.15, 3, Forward, stayOnHeading, 2);
+    public void placeSecondGlyph() {
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         //findColumn();
-        sleep(1000);
-        EncoderDrive(.15,  2, Forward, stayOnHeading, 2);
+        sleep(500);
         drive(.2, Reverse, .5);
+        sleep(500);
+        EncoderDrive(.15, 4, Forward, stayOnHeading, 2);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
+        drive(.2, Reverse, .5);
         drive(.2, Forward, .5);
         drive(.2, Reverse, .5);
     }

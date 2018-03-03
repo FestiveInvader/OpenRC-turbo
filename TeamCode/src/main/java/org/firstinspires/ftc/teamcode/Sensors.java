@@ -12,11 +12,13 @@ public class Sensors extends OpMode {
     public I2CXLv2 BackDistance;
     public I2CXLv2 FrontDistance;
     public DistanceSensor FrontLeftDistance;
+    public DistanceSensor ConveyorDistance;
     public DistanceSensor FrontRightDistance;
     public ColorSensor IntakeColor;
     public DistanceSensor IntakeDistance;
     public void init() {
         BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
+        ConveyorDistance = hardwareMap.get(DistanceSensor.class, "ConveyorSensor");
         FrontDistance = hardwareMap.get(I2CXLv2.class, "FrontDistance");
         IntakeColor = hardwareMap.get(ColorSensor.class, "IntakeSensor");
         IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
@@ -39,6 +41,7 @@ public class Sensors extends OpMode {
     public void loop() {
         // Start Telemetry
         telemetry.addData("Back Distance, ", BackDistance.getDistance());
+        telemetry.addData("Conveyor Distance, ", ConveyorDistance.getDistance(DistanceUnit.CM));
         telemetry.addData("Front Distance, ", FrontDistance.getDistance());
         telemetry.addData("Intake Distance", IntakeDistance.getDistance(DistanceUnit.CM));
         telemetry.addData("FrontLeft Distance", FrontLeftDistance.getDistance(DistanceUnit.CM));
