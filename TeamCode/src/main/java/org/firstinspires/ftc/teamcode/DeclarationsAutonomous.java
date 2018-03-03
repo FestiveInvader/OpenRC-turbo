@@ -36,20 +36,20 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public DcMotor BackLeft = null;               // NeveRest Orbital 20
     public DcMotor FrontRight = null;             // NeveRest Orbital 20
     public DcMotor BackRight = null;              // NeveRest Orbital 20
-    public DcMotor ConveyorLeft = null;   // Rev HD Hex Motor
-    public DcMotor ConveyorRight = null;  // Rev HD Hex Motor
+    public DcMotor ConveyorLeft = null;           // Rev HD Hex Motor
+    public DcMotor ConveyorRight = null;          // Rev HD Hex Motor
     public DcMotor DumpingMotor = null;           // NeveRest 60
-    public DcMotor LinearSlideMotor = null;           // NeveRest 20
+    public DcMotor LinearSlideMotor = null;       // NeveRest 20
 
     // Declare Servos
-    public CRServo IntakeServoLeft = null;  // VEX 393
-    public CRServo IntakeServoRight = null; // VEX 393
-    public CRServo TopIntakeServoLeft = null;
-    public CRServo TopIntakeServoRight = null;
-    public CRServo DumpConveyor = null;     // Rev SRS
-    public Servo Blocker = null;            // Rev SRS  Heh, block-er
-    public Servo JewelArm = null;           // Rev SRS
-    public Servo CryptoboxServo = null;
+    public CRServo IntakeServoLeft = null;        // VEX 393
+    public CRServo IntakeServoRight = null;       // VEX 393
+    public CRServo TopIntakeServoLeft = null;     // Rev SRS
+    public CRServo TopIntakeServoRight = null;    // Rev SRS
+    public CRServo DumpConveyor = null;           // Rev SRS
+    public Servo Blocker = null;                  // Rev SRS  Heh, block-er
+    public Servo JewelArm = null;                 // Rev SRS
+    public Servo CryptoboxServo = null;           // Rev SRS
 
     public DistanceSensor IntakeDistance;
     public DistanceSensor ConveyorDistance;
@@ -87,11 +87,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     int DumpingGearDriven = 40; // Gear connected to dumping motor
     int DumpingGearDriving = 80; // Gear connected to dumping assembly
-    int DumpingDegreesOfTravel = 85; // Wanted degrees of the dump to travel
+    int DumpingDegreesOfTravel = 70; // Wanted degrees of the dump to travel
     int FractionOfRevolutionToDump = 360/DumpingDegreesOfTravel;
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
+    int EncoderTicksToDump = DumpingEncoderTicksPerRevolution/FractionOfRevolutionToDump;
     int glyphs = 0;
 
 
@@ -600,7 +601,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void endAuto(){
         JewelArm.setPosition(JewelServoDistancePos);
-        drive(.5, Forward, .35);
+        drive(.75, Forward, .15);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
         sleep(200);
         JewelArm.setPosition(JewelServoUpPos);
@@ -623,12 +624,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // a pylon in that location, and we can assume our position from there
         boolean FoundPylon = false;
         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
-            if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 8 ) {
-                moveBy(.015, .425, 0); //moveBy is a function that handles robot movement
-            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 9.5){
+            if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 7 ) {
+                moveBy(.015, .4, 0); //moveBy is a function that handles robot movement
+            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 9){
                 FoundPylon = true;
             }else {
-                moveBy(.015, -.425, 0); //moveBy is a function that handles robot movement
+                moveBy(.015, -.4, 0); //moveBy is a function that handles robot movement
             }
         }
         stopDriveMotors();
@@ -685,6 +686,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         TopIntakeServoRight.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         driveToGlyphs(startingPosition);
+        driveToGlyphs(startingPosition);
         turnToCryptobox(startingPosition);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         EncoderDrive(.75, 4,  Reverse, stayOnHeading, 3);
@@ -700,15 +702,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
             EncoderDrive(.3, 10, Reverse, stayOnHeading, 1);
         }else if (PylonsToFind == 0){
             if(direction == Forward){
-                gyroTurn(turningSpeed, -80);
-            }else {
                 gyroTurn(turningSpeed, -100);
+            }else {
+                //blue
+                gyroTurn(turningSpeed, -80);
             }
             EncoderDrive(.3, 10, Reverse, stayOnHeading, 1);
         }else{
             if(direction == Forward){
                 gyroTurn(turningSpeed, -30);
             }else{
+                //blue
                 gyroTurn(turningSpeed, -150);
             }
             EncoderDrive(.3, 20, Reverse, stayOnHeading, 1);
@@ -717,10 +721,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         driveWStrafe(-.25, 0, 1);
         turnToCryptobox(startingPosition);
         extendCryptoboxArmForFirstGlyph();
-        EncoderDrive(.175, 2.5, Reverse, stayOnHeading, 1);
-        findColumn(1);
+        EncoderDrive(.175, 3.15, Reverse, stayOnHeading, 1);
+        findColumn(1.25);
         stopDriveMotors();
-
         placeSecondGlyph();
         // add if time < needed time go back
         // else pick up another?
@@ -869,9 +872,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 smartIntake();
             }
         }
-        if(!haveGlyph){
-            smartIntakeDelayWConveyorSensor(2, .1);
-        }
+        smartIntakeDelayWConveyorSensor(1.5, .1);
+
         stopDriveMotors();
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDrive(1, Math.abs(inchesToDrive + 6), Reverse, stayOnHeading, 1.5);
@@ -1038,6 +1040,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         drive(.2, Reverse, 1);
     }
     public void placeSecondGlyph() {
+        EncoderDrive(.15, 1.5, Forward, stayOnHeading, 1);
         DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         //findColumn();
@@ -1049,5 +1052,32 @@ public class DeclarationsAutonomous extends LinearOpMode {
         drive(.2, Reverse, .5);
         drive(.2, Forward, .5);
         drive(.2, Reverse, .5);
+    }
+    public void placeByFlipping(double timeout){
+        double startTime = runtime.seconds();
+        boolean placed = false;
+        EncoderDrive(.15, 2, Forward, stayOnHeading, 2);
+        double dumpingPower = .35;
+        DumpConveyor.setPower(1);
+        Blocker.setPosition(BlockerServoDown);
+        sleep(1000);
+        while(!placed && startTime + timeout > runtime.seconds()) {
+            DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - EncoderTicksToDump);
+            while (Math.abs(Math.abs(DumpingMotor.getCurrentPosition()) - Math.abs(EncoderTicksToDump)) > 25) {
+                DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                DumpingMotor.setPower(-dumpingPower);
+            }
+            placed = true;
+
+        }
+        sleep(500);
+        EncoderDrive(.15, 2.25, Forward, stayOnHeading, 2);
+        CryptoboxServo.setPosition(CryptoboxServoMidPos);
+        drive(.15, Reverse, .35);
+        while (DumperTouchSensorRight.getState()) {
+            DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            DumpingMotor.setPower(dumpingPower);
+            moveBy(.15, 0, 0);
+        }
     }
 }
