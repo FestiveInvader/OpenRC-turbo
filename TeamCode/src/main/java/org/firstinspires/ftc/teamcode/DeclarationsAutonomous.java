@@ -625,7 +625,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
             if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 8 ) {
                 moveBy(.015, .425, 0); //moveBy is a function that handles robot movement
-            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 10){
+            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 9.5){
                 FoundPylon = true;
             }else {
                 moveBy(.015, -.425, 0); //moveBy is a function that handles robot movement
@@ -692,24 +692,33 @@ public class DeclarationsAutonomous extends LinearOpMode {
         //Add for which columns it goes which next column
         int PylonsToFind = cryptoboxPylonsToGo(direction);
         if(cryptoboxPylonsToGo(PylonsToFind) == 1) {
-            if (startingPosition == 1) {
-                gyroTurn(turningSpeed, -150);
-            } else {
-                //red
+            if(direction == Forward){
+                gyroTurn(turningSpeed, -30);
+            }else{
                 gyroTurn(turningSpeed, -150);
             }
+            EncoderDrive(.3, 10, Reverse, stayOnHeading, 1);
         }else if (PylonsToFind == 0){
-            gyroTurn(turningSpeed, direction* 150);
+            if(direction == Forward){
+                gyroTurn(turningSpeed, -80);
+            }else {
+                gyroTurn(turningSpeed, -100);
+            }
+            EncoderDrive(.3, 10, Reverse, stayOnHeading, 1);
         }else{
-            gyroTurn(turningSpeed, -direction *150);
+            if(direction == Forward){
+                gyroTurn(turningSpeed, -30);
+            }else{
+                gyroTurn(turningSpeed, -150);
+            }
+            EncoderDrive(.3, 20, Reverse, stayOnHeading, 1);
         }
-        EncoderDrive(.3, 10, Reverse, stayOnHeading, 1);
         turnToCryptobox(startingPosition);
         driveWStrafe(-.25, 0, 1);
         turnToCryptobox(startingPosition);
         extendCryptoboxArmForFirstGlyph();
         EncoderDrive(.175, 2.5, Reverse, stayOnHeading, 1);
-        findColumn(.3);
+        findColumn(1);
         stopDriveMotors();
 
         placeSecondGlyph();
@@ -767,34 +776,20 @@ public class DeclarationsAutonomous extends LinearOpMode {
             double limitEncoderCount = startingEncoderCount + 10*CountsPerInch;
 
             while(!linedUp && opModeIsActive() && runtime.seconds() < 25)  {
-
-                /*if(glyphs = 0){
-                    //we want a brown glyph
-                }else{
-                    //we want a grey glyph
-                }*/
-
-                if (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1) {
-                    timer = runtime.seconds();
-                    while (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1 && opModeIsActive()
-                            && FrontDistance.getDistance() > 25 && runtime.seconds() - timer < 2) {
-                        moveBy(0,0,-.25);
-                        smartIntake();
-                    }
-                    wentLeft = true;
-                } else if (FrontRightDistance.getDistance(DistanceUnit.CM) > 1) {
-                    timer = runtime.seconds();
-                    while (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1 && opModeIsActive()
-                            && FrontDistance.getDistance() > 25 && runtime.seconds() - timer < 2) {
-                        moveBy(0,0,.25);
-                        smartIntake();
-                    }
-                    wentRight = true;
-                } else{
-                    moveBy(.3, 0, 0);
-                }
-                if(FrontDistance.getDistance() <= 25 && FrontDistance.getDistance() > 20 ){
+                if(FrontDistance.getDistance() <= 22 && FrontDistance.getDistance() > 20 ){
                     linedUp = true;
+                }else{
+                    if(FrontRightDistance.getDistance(DistanceUnit.CM) > 1 &&
+                            FrontLeftDistance.getDistance(DistanceUnit.CM) > 1){
+                        //if starting position, make sure we turn relic side
+                        moveBy(.175, 0, 0);
+                    }else if (FrontLeftDistance.getDistance(DistanceUnit.CM) > 1) {
+                        moveBy(.1,0,.35);
+                    } else if (FrontRightDistance.getDistance(DistanceUnit.CM) > 1) {
+                        moveBy(.1,0,-.35);
+                    } else {
+                        moveBy(.15, 0, 0);
+                    }
                 }
                 smartIntake();
                 telemetry.addData("Lining Up", 0);
@@ -870,12 +865,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 stopDriveMotors();
                 haveGlyph = true;
             }else {
-                moveBy(.175, 0, 0);
+                moveBy(.2, 0, 0);
                 smartIntake();
             }
         }
         if(!haveGlyph){
-            smartIntakeDelayWConveyorSensor(1.5, 0);
+            smartIntakeDelayWConveyorSensor(2, .1);
         }
         stopDriveMotors();
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
