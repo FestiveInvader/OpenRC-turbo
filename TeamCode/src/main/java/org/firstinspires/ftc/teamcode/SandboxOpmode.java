@@ -12,7 +12,6 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         boolean linedUp = false;
-        placeByFlipping(2);
+        knockOffJewel("BLUE",2);
     }
-
 }
