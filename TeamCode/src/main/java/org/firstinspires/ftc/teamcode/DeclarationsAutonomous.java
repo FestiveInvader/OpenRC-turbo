@@ -738,29 +738,57 @@ public class DeclarationsAutonomous extends LinearOpMode {
         EncoderDrive(.2, 4, Forward, stayOnHeading, 2);
         double turningAngle = 0;
         if( startingPosition == 2){
-            turningAngle = -25 - 8*angleMultiplier;
+            turningAngle = -25 - 10*angleMultiplier;
         }else{
-            turningAngle =  -150 + 5*angleMultiplier;
+            turningAngle =  -155 + 10*angleMultiplier;
         }
         gyroTurn(turningSpeed, turningAngle);
         EncoderDrive(.95, 36,  Forward, stayOnHeading, 2.5);
         Blocker.setPosition(BlockerServoUp);
         DumpConveyor.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        intakeGlyphs(24);
+        driveToGlyphs(startingPosition);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         gyroTurn(turningSpeed, turningAngle);
-        EncoderDrive(.85, 34,  Reverse, stayOnHeading, 4);
+        EncoderDrive(.85, 32,  Reverse, stayOnHeading, 4);
         gyroTurn(turningSpeed, startingRotation);
-        double time = .65;
-        if(CryptoKey.equals(RelicRecoveryVuMark.CENTER)){
-            time = 1;
+        int PylonsToFind = cryptoboxPylonsToGo(direction);
+        if(PylonsToFind == 1) {
+            if(direction == Forward){
+                //Red side
+                gyroTurn(turningSpeed, 150);
+            }else{
+                //blue side
+                gyroTurn(turningSpeed, -60);
+            }
+            EncoderDrive(.4, 10, Reverse, stayOnHeading, 1);
+        }else if (PylonsToFind == 0){
+            if(direction == Forward){
+                //Red side
+                gyroTurn(turningSpeed, 160);
+            }else {
+                //blue
+                gyroTurn(turningSpeed, -10);
+            }
+            EncoderDrive(.4, 15, Reverse, stayOnHeading, 1);
+        }else if (PylonsToFind == 2){
+            if(direction == Forward){
+                //Red side
+                gyroTurn(turningSpeed, 170);
+            }else {
+                //blue
+                gyroTurn(turningSpeed, -10);
+            }
+            EncoderDrive(.75, 15, Reverse, stayOnHeading, 1);
         }
-        driveWStrafe(-.2, -.4*direction, 0, time);
-        gyroTurn(turningSpeed, startingRotation);
+        turnToCryptobox(startingPosition);
+        findWall(-.3, 35);
         driveWStrafe(-.2, 0, 0, .35);
+
+        turnToCryptobox(startingPosition);
         extendCryptoboxArmForFirstGlyph();
-        findColumn(1);
+        EncoderDrive(.175, 3.15, Reverse, stayOnHeading, 1);
+        findColumn(1.25);
         stopDriveMotors();
         placeSecondGlyph();
         // add if time < needed time go back
