@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.hardware.Sensor;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -157,13 +159,16 @@ public class MecanumTeleop extends OpMode {
         IntakeServoRight.setPower(IntakeSpeed);
        }else{
             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-            if (SensorVal <= intakeValLeft) {
+            if (SensorVal <= intakeValLeft && SensorVal > 6) {
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
-            }else if(SensorVal > intakeValLeft && SensorVal < 50){
+            }else if(SensorVal > intakeValLeft){
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(IntakeSpeed);
-            }else{
+            }else if (SensorVal <= 5.5) {
+                IntakeServoLeft.setPower(-IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }else {
                 IntakeServoLeft.setPower(IntakeSpeed);
                 IntakeServoRight.setPower(-IntakeSpeed);
             }
