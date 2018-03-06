@@ -12,6 +12,7 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         boolean linedUp = false;
-        knockOffJewel("BLUE",2);
+        CryptoboxServo.setPosition(CryptoboxServoOutPos);
+        sleep(500);
     }
 }
