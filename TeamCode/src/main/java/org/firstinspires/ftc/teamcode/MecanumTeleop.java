@@ -221,7 +221,7 @@ public class MecanumTeleop extends OpMode {
         // Start Linear Slide/Relic Code
 
         LinearSlideSpeed = gamepad2.right_stick_y;
-        if (LinearSlideMotor.getCurrentPosition() >= 2900){
+        if (LinearSlideMotor.getCurrentPosition() >= 3100){
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, -1, 0);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         } else if (LinearSlideMotor.getCurrentPosition() < 50) {
@@ -232,11 +232,7 @@ public class MecanumTeleop extends OpMode {
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         }
 
-        int relicTurningDirection = Range.clip((int) gamepad2.left_stick_x*100, -1, 1);
-        double clawTurningSpeed = 0;
-        clawTurningSpeed = relicTurningDirection * (gamepad2.left_stick_x*gamepad2.left_stick_x);
-
-        RelicZAxis.setPower(-clawTurningSpeed);
+        RelicZAxis.setPower(-gamepad2.left_stick_x);
 
         if(gamepad2.dpad_up){
             RelicYAxisUp = true;
@@ -298,6 +294,7 @@ public class MecanumTeleop extends OpMode {
         // End Driving Code
 
         telemetry.addData("IntakeSensor Val", IntakeDistance.getDistance(DistanceUnit.CM));
+        telemetry.addData("Slide Enc Val", LinearSlideMotor.getCurrentPosition());
         telemetry.update();
     }
 }
