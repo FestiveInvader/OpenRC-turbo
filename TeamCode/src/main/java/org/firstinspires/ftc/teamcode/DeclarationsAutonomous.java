@@ -697,7 +697,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         TopIntakeServoLeft.setPower(1);
         TopIntakeServoRight.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        driveToGlyphs(startingPosition, 10);
+        driveToGlyphs(startingPosition, 6);
         turnToCryptobox(startingPosition);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         EncoderDrive(.75, 4,  Reverse, stayOnHeading, 3);

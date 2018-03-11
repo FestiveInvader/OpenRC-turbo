@@ -133,10 +133,11 @@ public class MecanumTeleop extends OpMode {
 
     @Override
     public void init_loop() {
+        /*SSR wouldn't let us move in initialization at all, removed servo position sets
         Blocker.setPosition(BlockerServoUp);
         JewelArm.setPosition(JewelServoUpPos);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
-
+        */
     }
 
     @Override
