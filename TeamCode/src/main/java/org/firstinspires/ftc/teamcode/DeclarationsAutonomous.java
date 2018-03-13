@@ -42,11 +42,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public DcMotor LinearSlideMotor = null;       // NeveRest 20
 
     // Declare Servos
-    public CRServo IntakeServoLeft = null;        // VEX 393
-    public CRServo IntakeServoRight = null;       // VEX 393
-    public CRServo TopIntakeServoLeft = null;     // Rev SRS
-    public CRServo TopIntakeServoRight = null;    // Rev SRS
-    public CRServo DumpConveyor = null;           // Rev SRS
     public Servo Blocker = null;                  // Rev SRS  Heh, block-er
     public Servo JewelArm = null;                 // Rev SRS
     public Servo CryptoboxServo = null;           // Rev SRS
@@ -62,7 +57,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public BNO055IMU IMU;
     public I2CXLv2 BackDistance;
     public I2CXLv2 RightDistance;
-    public I2CXLv2 FrontDistance;
 
     // Variables used  in functions
     double CountsPerRev = 537.6;    // Andymark NeveRest 20 encoder counts per revolution
@@ -150,21 +144,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Hardware maps for servos
-        IntakeServoLeft = hardwareMap.crservo.get("IntakeServoLeft");
-        IntakeServoRight = hardwareMap.crservo.get("IntakeServoRight");
-        TopIntakeServoLeft = hardwareMap.crservo.get("TopIntakeServoLeft");
-        TopIntakeServoRight = hardwareMap.crservo.get("TopIntakeServoRight");
-        DumpConveyor = hardwareMap.crservo.get("DumpConveyor");
         Blocker = hardwareMap.servo.get("Blocker");
         JewelArm = hardwareMap.servo.get("JewelServo");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
-
-        IntakeServoLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        IntakeServoRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        TopIntakeServoLeft.setDirection(DcMotorSimple.Direction.FORWARD);
-        TopIntakeServoRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        DumpConveyor.setDirection(DcMotorSimple.Direction.FORWARD);
-
         // Initialize and hardware map Sensors
         DumperTouchSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
         DumperTouchSensorRight.setMode(DigitalChannel.Mode.INPUT);
@@ -174,7 +156,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontLeftDistance = hardwareMap.get(DistanceSensor.class, "FrontLeftSensor");
         FrontRightDistance = hardwareMap.get(DistanceSensor.class, "FrontRightSensor");
         BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
-        FrontDistance = hardwareMap.get(I2CXLv2.class, "FrontDistance");
         IntakeColor = hardwareMap.get(ColorSensor.class, "IntakeSensor");
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
 
@@ -282,7 +263,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             while (opModeIsActive() && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 25
                     && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
                 gyroDrive(Heading, speed, direction);
-                smartIntake();
+                //smartIntake(); Conveyor/intake
             }
             stopDriveMotors();
         }
@@ -691,11 +672,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         EncoderDrive(.95, 18,  Forward, stayOnHeading, 5);
         Blocker.setPosition(BlockerServoUp);
-        DumpConveyor.setPower(.75);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
-        TopIntakeServoLeft.setPower(1);
-        TopIntakeServoRight.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         driveToGlyphs(startingPosition, 6);
         turnToCryptobox(startingPosition);
@@ -757,7 +735,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         gyroTurn(turningSpeed, turningAngle);
         EncoderDrive(.95, 30,  Forward, stayOnHeading, 2.5);
         Blocker.setPosition(BlockerServoUp);
-        DumpConveyor.setPower(1);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         driveToGlyphs(startingPosition, 6);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
@@ -814,7 +791,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                         moveBy(.15, 0, 0);
                     }
                 }
-                smartIntake();
+                //Conveyors intake
                 telemetry.addData("Lining Up", 0);
                 telemetry.update();
 
@@ -833,70 +810,23 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         return  haveGlyph;
     }
-    public void smartIntake(){
-        double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-        if (SensorVal <= 14 && SensorVal > 6) {
-            IntakeServoLeft.setPower(IntakeSpeed);
-            IntakeServoRight.setPower(-IntakeSpeed);
-        }else if(SensorVal > 14){
-            IntakeServoLeft.setPower(IntakeSpeed);
-            IntakeServoRight.setPower(IntakeSpeed);
-        }else if (SensorVal <= 5.65) {
-            IntakeServoLeft.setPower(-IntakeSpeed);
-            IntakeServoRight.setPower(-IntakeSpeed);
-        }else {
-            IntakeServoLeft.setPower(IntakeSpeed);
-            IntakeServoRight.setPower(-IntakeSpeed);
-        }
-        DumpConveyor.setPower(.5);
-        ConveyorLeft.setPower(1);
-        ConveyorRight.setPower(1);
-        TopIntakeServoRight.setPower(1);
-        TopIntakeServoLeft.setPower(1);
-    }
-    public void smartIntakeDelayWConveyorSensor(double delay, double speed){
-        double timeLimit = runtime.time(TimeUnit.SECONDS);
-        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        double startingEncoderCount = FrontLeft.getCurrentPosition();
-        double limitEncoderCount = startingEncoderCount + 8*CountsPerInch;
-        while(runtime.seconds() - timeLimit < delay && ConveyorDistance.getDistance(DistanceUnit.CM) > 1 && runtime.seconds() < 25){
-            if((Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount))) {
-                smartIntake();
-                moveBy(speed, 0, 0);
-            }else{
-                smartIntake();
-            }
-        }
-    }
-    public void smartIntakeDelay(double delay, double speed){
-        double timeLimit = runtime.time(TimeUnit.SECONDS);
-        while(runtime.seconds() - timeLimit < delay){
-            smartIntake();
-            moveBy(speed, 0, 0);
-        }
-    }
     public void intakeGlyph() {
         boolean haveGlyph = false;
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double startingEncoderCount = FrontLeft.getCurrentPosition();
         double limitEncoderCount = startingEncoderCount + 8*CountsPerInch;
-        DumpConveyor.setPower(1);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
-        TopIntakeServoLeft.setPower(1);
-        TopIntakeServoRight.setPower(1);
         while(!haveGlyph && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) && runtime.seconds() <= 25){
             if(ConveyorDistance.getDistance(DistanceUnit.CM) > 1){
                 stopDriveMotors();
                 haveGlyph = true;
             }else {
                 moveBy(.135, 0, 0);
-                smartIntake();
+                //smartIntake(); Conveyor/intake
             }
         }
-        smartIntakeDelayWConveyorSensor(1.5, .1);
 
         stopDriveMotors();
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
@@ -909,7 +839,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             color = 2;
         }*/
     }
-    public void intakeGlyphs(int inches){
+   /* public void intakeGlyphs(int inches){
         boolean haveGlyph = false;
         int color = 0;
         double startingHeading = getHeading();
@@ -998,7 +928,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDrive(1, Math.abs(inchesToDrive), Reverse, stayOnHeading, 5);
     }
-    // End movement methods
+   */ // End movement methods
     // Motor and servo methods
     public void knockOffJewel(String AllianceColor, int startingPosition){
         JewelArm.setPosition(JewelServoDownPos);
@@ -1054,7 +984,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void placeGlyph(RelicRecoveryVuMark Column){
         EncoderDrive(.15, .5, Forward, stayOnHeading, 2);
-        DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         //findColumn();
         sleep(1000);
@@ -1064,7 +993,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         drive(.2, Reverse, 1);
     }
     public void placeGlyphTeamside(){
-        DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         //findColumn();
         sleep(500);
@@ -1073,7 +1001,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         drive(.2, Reverse, 1);
     }
     public void placeSecondGlyphTeamside(){
-        DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         //findColumn();
         sleep(500);
@@ -1086,7 +1013,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void placeSecondGlyph() {
         EncoderDrive(.15, 1.5, Forward, stayOnHeading, 1);
-        DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         //findColumn();
         sleep(500);
@@ -1103,7 +1029,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         boolean placed = false;
         EncoderDrive(.15, 2, Forward, stayOnHeading, 2);
         double dumpingPower = .35;
-        DumpConveyor.setPower(1);
         Blocker.setPosition(BlockerServoDown);
         sleep(1000);
         while(!placed && startTime + timeout > runtime.seconds()) {

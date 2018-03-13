@@ -32,11 +32,6 @@ public class MecanumTeleop extends OpMode {
     public DcMotor LinearSlideMotor = null;       // NeveRest 20
 
     // Declare Servos
-    public CRServo IntakeServoLeft = null;      // Vex 393
-    public CRServo IntakeServoRight = null;     // Vex 393
-    public CRServo TopIntakeServoLeft = null;   // Rev SRS
-    public CRServo TopIntakeServoRight = null;  // Rev SRS
-    public CRServo DumpConveyor = null;         // Rev SRS
     public CRServo RelicZAxis;                  // Rev SRS
     public Servo Blocker;                       // Rev SRS  Heh, block-er, cause it keeps glyphs from falling out
     public Servo JewelArm;                      // Rev SRS
@@ -52,7 +47,7 @@ public class MecanumTeleop extends OpMode {
     // Variables
     int DumpingGearDriven = 40; // Gear connected to dumping motor
     int DumpingGearDriving = 80; // Gear connected to dumping assembly
-    int DumpingDegreesOfTravel = 80; // Wanted degrees of the dump to travel
+    int DumpingDegreesOfTravel = 130; // Wanted degrees of the dump to travel
     int FractionOfRevolutionToDump = 360/DumpingDegreesOfTravel;
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
@@ -105,23 +100,13 @@ public class MecanumTeleop extends OpMode {
         LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         // Hardware maps for servos
-        IntakeServoLeft = hardwareMap.crservo.get("IntakeServoLeft");
-        IntakeServoRight = hardwareMap.crservo.get("IntakeServoRight");
-        TopIntakeServoLeft = hardwareMap.crservo.get("TopIntakeServoLeft");
-        TopIntakeServoRight = hardwareMap.crservo.get("TopIntakeServoRight");
         RelicZAxis = hardwareMap.crservo.get("RelicZAxis");
-        DumpConveyor = hardwareMap.crservo.get("DumpConveyor");
         Blocker = hardwareMap.servo.get("Blocker");
         JewelArm = hardwareMap.servo.get("JewelServo");
         RelicClaw = hardwareMap.servo.get("RelicClaw");
         RelicYAxis = hardwareMap.servo.get("RelicYAxis");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
 
-        IntakeServoLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        IntakeServoRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        TopIntakeServoLeft.setDirection(DcMotorSimple.Direction.FORWARD);
-        TopIntakeServoRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        DumpConveyor.setDirection(DcMotorSimple.Direction.FORWARD);
         LinearSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LinearSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -150,7 +135,7 @@ public class MecanumTeleop extends OpMode {
         CryptoboxServo.setPosition(CryptoboxServoInPos);
 
         // Start Intake Code
-
+/*
        if (gamepad1.left_trigger > .1 || gamepad2.y) {
         TopIntakeServoRight.setPower(-1);
         TopIntakeServoLeft.setPower(-1);
@@ -177,7 +162,7 @@ public class MecanumTeleop extends OpMode {
             ConveyorRight.setPower(1);
             TopIntakeServoLeft.setPower(1);
             TopIntakeServoRight.setPower(1);
-        }
+        }*/
         // End Intake and Conveyor code
 
         // Start Dumping Code
@@ -196,23 +181,13 @@ public class MecanumTeleop extends OpMode {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(dumpingPower);
             BlockerUp = false;
-        } else if (!DumperTouchSensorRight.getState() && Math.abs(DumpConveyor.getPower()) > .5) {
-            DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BlockerUp = false;
-        }else if (!DumperTouchSensorRight.getState()) {
+        } else if (!DumperTouchSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             BlockerUp = true;
         }
 
-        if (gamepad1.right_bumper || gamepad2.right_bumper){
-            DumpConveyor.setPower(1);
-        } else if(gamepad2.left_bumper){
-            DumpConveyor.setPower(-1);
-        }else {
-            DumpConveyor.setPower(.45);
-        }
 
-        if (gamepad2.a || !BlockerUp || DumpConveyor.getPower() > .5) {
+        if (gamepad2.a || !BlockerUp ) {
             Blocker.setPosition(BlockerServoDown);
         } else{
             Blocker.setPosition(BlockerServoUp);
