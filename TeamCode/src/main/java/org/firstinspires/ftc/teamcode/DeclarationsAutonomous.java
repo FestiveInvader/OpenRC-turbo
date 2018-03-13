@@ -66,7 +66,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     // Variables used  in functions
     double CountsPerRev = 537.6;    // Andymark NeveRest 20 encoder counts per revolution
-    double GearRatio = .889;
+    double GearRatio = 1;
     double WheelDiameterInches = 4.0;     // For figuring circumference
     double CountsPerInch = ((CountsPerRev / ((WheelDiameterInches * 3.1415))/GearRatio));
     double HEADING_THRESHOLD = 2;      // As tight as we can make it with an integer gyro
@@ -87,7 +87,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     int DumpingGearDriven = 40; // Gear connected to dumping motor
     int DumpingGearDriving = 80; // Gear connected to dumping assembly
-    int DumpingDegreesOfTravel = 70; // Wanted degrees of the dump to travel
+    int DumpingDegreesOfTravel = 130; // Wanted degrees of the dump to travel
     int FractionOfRevolutionToDump = 360/DumpingDegreesOfTravel;
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
@@ -98,7 +98,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
 
 
-    double BlockerServoUp = .35;
+    double BlockerServoUp = .3;
     double BlockerServoDown = .56;
     double JewelServoUpPos = .61;
     double JewelServoDistancePos = .34;
