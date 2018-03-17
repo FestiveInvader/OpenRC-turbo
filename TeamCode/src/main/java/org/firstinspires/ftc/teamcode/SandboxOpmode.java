@@ -11,8 +11,8 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
-        boolean linedUp = false;
-        CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        sleep(500);
+        ConveyorLeft.setPower(1);
+        ConveyorRight.setPower(1);
+        sleep(300000);
     }
 }

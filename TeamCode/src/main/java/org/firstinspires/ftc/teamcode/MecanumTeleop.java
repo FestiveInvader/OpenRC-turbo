@@ -38,16 +38,20 @@ public class MecanumTeleop extends OpMode {
     public Servo RelicClaw;
     public Servo RelicYAxis;
     public Servo CryptoboxServo;
+    public Servo ClampingServo1;
+    public Servo ClampingServo2;
 
     //Declare Sensors
     public DistanceSensor IntakeDistance;
-    public DigitalChannel DumperTouchSensorRight;
+    public DistanceSensor FlipperDistance1;
+    public DistanceSensor FlipperDistance2;
+    public DigitalChannel DumperLimitSensorRight;
     public BNO055IMU IMU;
 
     // Variables
     int DumpingGearDriven = 40; // Gear connected to dumping motor
     int DumpingGearDriving = 80; // Gear connected to dumping assembly
-    int DumpingDegreesOfTravel = 130; // Wanted degrees of the dump to travel
+    int DumpingDegreesOfTravel = 100; // Wanted degrees of the dump to travel
     int FractionOfRevolutionToDump = 360/DumpingDegreesOfTravel;
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
@@ -71,6 +75,10 @@ public class MecanumTeleop extends OpMode {
     double IntakeSpeed = -.7;
     double CryptoboxServoInPos = 0;
     double CryptoboxServoOutPos = 1;
+    double ClampingServo1InPos = .55;
+    double ClampingServo1OutPos = .4;
+    double ClampingServo2InPos = .45;
+    double ClampingServo2OutPos = .6;
 
     boolean ClawChangePositions = false;
     boolean RelicYAxisUp = false;
@@ -94,9 +102,10 @@ public class MecanumTeleop extends OpMode {
         FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        DumpingMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        ConveyorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        ConveyorRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        ConveyorLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        ConveyorRight.setDirection(DcMotorSimple.Direction.REVERSE);
         LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         // Hardware maps for servos
@@ -106,14 +115,18 @@ public class MecanumTeleop extends OpMode {
         RelicClaw = hardwareMap.servo.get("RelicClaw");
         RelicYAxis = hardwareMap.servo.get("RelicYAxis");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
+        ClampingServo1 = hardwareMap.servo.get("ClampingServo1");
+        ClampingServo2 = hardwareMap.servo.get("ClampingServo2");
 
         LinearSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LinearSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Hardware map Sensors
-        DumperTouchSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
-        DumperTouchSensorRight.setMode(DigitalChannel.Mode.INPUT);
+        DumperLimitSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
+        DumperLimitSensorRight.setMode(DigitalChannel.Mode.INPUT);
         IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
+        FlipperDistance1 = hardwareMap.get(DistanceSensor.class, "FlipperSensor1");
+        FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");
     }
 
     @Override
@@ -133,7 +146,8 @@ public class MecanumTeleop extends OpMode {
     public void loop() {
         JewelArm.setPosition(JewelServoUpPos);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
-
+        ConveyorLeft.setPower(1);
+        ConveyorRight.setPower(1);
         // Start Intake Code
 /*
        if (gamepad1.left_trigger > .1 || gamepad2.y) {
@@ -164,26 +178,55 @@ public class MecanumTeleop extends OpMode {
             TopIntakeServoRight.setPower(1);
         }*/
         // End Intake and Conveyor code
+        boolean clamp = true;
 
         // Start Dumping Code
         Dump = gamepad2.right_trigger > .1;
-        double dumpingPower = .35;
-        if (Dump && !DumperTouchSensorRight.getState()) {
+        double dumpingPower = .5;
+        if (Dump && !DumperLimitSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - EncoderTicksToDump);
             DumpingMotor.setPower(-dumpingPower);
+            if(gamepad2.b){
+                clamp = false;
+            }else{
+                clamp = true;
+            }
             BlockerUp = false;
         } else if (Dump) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setPower(-dumpingPower);
+            if(gamepad2.b){
+                clamp = false;
+            }else{
+                clamp = true;
+            }
             BlockerUp = false;
-        } else if (!Dump && DumperTouchSensorRight.getState()) {
+        } else if (!Dump && DumperLimitSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            DumpingMotor.setPower(dumpingPower);
+            DumpingMotor.setPower(.25);
+            if(gamepad2.b){
+                clamp = false;
+            }else{
+                clamp = true;
+            }
             BlockerUp = false;
-        } else if (!DumperTouchSensorRight.getState()) {
+        } else if (!DumperLimitSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            DumpingMotor.setPower(0);
             BlockerUp = true;
+            if(FlipperDistance1.getDistance(DistanceUnit.CM) < 100 && FlipperDistance2.getDistance(DistanceUnit.CM) < 100) {
+                clamp = true;
+            }else {
+            }
+        }
+        if(clamp){
+            ClampingServo1.setPosition(ClampingServo1OutPos);
+            ClampingServo2.setPosition(ClampingServo2OutPos);
+        }else{
+
+            ClampingServo1.setPosition(ClampingServo1InPos);
+            ClampingServo2.setPosition(ClampingServo2InPos);
         }
 
 
@@ -240,18 +283,18 @@ public class MecanumTeleop extends OpMode {
         }
         double FrontLeftVal =
                 gamepad1.left_stick_y*DrivingMultiplier
-                + (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
+                - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
                 + -gamepad1.right_stick_x*DrivingMultiplier;
         double FrontRightVal =
                 gamepad1.left_stick_y*DrivingMultiplier
-                - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
+                + (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
                 - -gamepad1.right_stick_x*DrivingMultiplier;
         double BackLeftVal =
                 gamepad1.left_stick_y*DrivingMultiplier
-                - (gamepad1.left_stick_x*StrafingMultiplier)
+                + (gamepad1.left_stick_x*StrafingMultiplier)
                 + -gamepad1.right_stick_x*DrivingMultiplier;
         double BackRightVal = gamepad1.left_stick_y*DrivingMultiplier
-                + (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
+                - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
                 - -gamepad1.right_stick_x*DrivingMultiplier;
 
         //Move range to between 0 and +1, if not already
@@ -271,6 +314,7 @@ public class MecanumTeleop extends OpMode {
 
         telemetry.addData("IntakeSensor Val", IntakeDistance.getDistance(DistanceUnit.CM));
         telemetry.addData("Slide Enc Val", LinearSlideMotor.getCurrentPosition());
+        telemetry.addData("Magnet sensor", DumperLimitSensorRight.getState());
         telemetry.update();
     }
 }

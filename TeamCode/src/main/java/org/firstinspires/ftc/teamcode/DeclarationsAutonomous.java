@@ -133,8 +133,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         LinearSlideMotor = hardwareMap.dcMotor.get("LinearSlideMotor");
 
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        ConveyorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        ConveyorRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        ConveyorLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        ConveyorRight.setDirection(DcMotorSimple.Direction.REVERSE);
         FrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         BackLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
