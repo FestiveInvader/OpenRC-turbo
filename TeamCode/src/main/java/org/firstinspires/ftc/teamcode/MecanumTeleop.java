@@ -40,11 +40,13 @@ public class MecanumTeleop extends OpMode {
     public Servo CryptoboxServo;
     public Servo ClampingServo1;
     public Servo ClampingServo2;
+    public CRServo MidIntakeLeft;
+    public CRServo MidIntakeRight;
 
     //Declare Sensors
-    public DistanceSensor IntakeDistance;
     public DistanceSensor FlipperDistance1;
     public DistanceSensor FlipperDistance2;
+    public DistanceSensor MidIntakeDistance;
     public DigitalChannel DumperLimitSensorRight;
     public BNO055IMU IMU;
 
@@ -72,7 +74,7 @@ public class MecanumTeleop extends OpMode {
     double BlockerServoDown = .56;
     double JewelServoUpPos = .60;
     double JoystickMultiplier = 1; // variable to allow slower driving speeds
-    double IntakeSpeed = -.7;
+    double MidIntakeSpeed = -.7;
     double CryptoboxServoInPos = 0;
     double CryptoboxServoOutPos = 1;
     double ClampingServo1InPos = .55;
@@ -85,6 +87,7 @@ public class MecanumTeleop extends OpMode {
     boolean Dump = false;
     boolean Intake = false;
     boolean BlockerUp = true;
+    boolean glyphIn = false;
     public void init() {
         // This section gets the hardware maps
         FrontLeft = hardwareMap.dcMotor.get("FrontLeft");
@@ -117,6 +120,8 @@ public class MecanumTeleop extends OpMode {
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
         ClampingServo1 = hardwareMap.servo.get("ClampingServo1");
         ClampingServo2 = hardwareMap.servo.get("ClampingServo2");
+        MidIntakeLeft = hardwareMap.crservo.get("MidIntakeLeft");
+        MidIntakeRight = hardwareMap.crservo.get("MidIntakeRight");
 
         LinearSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LinearSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -124,9 +129,10 @@ public class MecanumTeleop extends OpMode {
         // Hardware map Sensors
         DumperLimitSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
         DumperLimitSensorRight.setMode(DigitalChannel.Mode.INPUT);
-        IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
+        //IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
         FlipperDistance1 = hardwareMap.get(DistanceSensor.class, "FlipperSensor1");
         FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");
+        MidIntakeDistance = hardwareMap.get(DistanceSensor.class, "MidIntakeSensor");
     }
 
     @Override
@@ -148,6 +154,9 @@ public class MecanumTeleop extends OpMode {
         CryptoboxServo.setPosition(CryptoboxServoInPos);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
+        MidIntakeRight.setPower(-MidIntakeSpeed);
+        MidIntakeLeft.setPower(MidIntakeSpeed);
+
         // Start Intake Code
 /*
        if (gamepad1.left_trigger > .1 || gamepad2.y) {
@@ -227,6 +236,13 @@ public class MecanumTeleop extends OpMode {
 
             ClampingServo1.setPosition(ClampingServo1InPos);
             ClampingServo2.setPosition(ClampingServo2InPos);
+        }
+        if(MidIntakeDistance.getDistance(DistanceUnit.CM) < 100){
+            MidIntakeLeft.setPower(MidIntakeSpeed);
+            MidIntakeRight.setPower(MidIntakeSpeed);
+        }else{
+            MidIntakeLeft.setPower(0);
+            MidIntakeRight.setPower(0);
         }
 
 
@@ -312,7 +328,7 @@ public class MecanumTeleop extends OpMode {
         BackRight.setPower(BackRightVal);
         // End Driving Code
 
-        telemetry.addData("IntakeSensor Val", IntakeDistance.getDistance(DistanceUnit.CM));
+        telemetry.addData("IntakeSensor Val", MidIntakeDistance.getDistance(DistanceUnit.CM));
         telemetry.addData("Slide Enc Val", LinearSlideMotor.getCurrentPosition());
         telemetry.addData("Magnet sensor", DumperLimitSensorRight.getState());
         telemetry.update();
