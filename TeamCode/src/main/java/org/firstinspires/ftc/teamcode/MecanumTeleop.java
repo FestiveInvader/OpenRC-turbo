@@ -237,13 +237,13 @@ public class MecanumTeleop extends OpMode {
             ClampingServo1.setPosition(ClampingServo1InPos);
             ClampingServo2.setPosition(ClampingServo2InPos);
         }
-        if(MidIntakeDistance.getDistance(DistanceUnit.CM) < 100){
+        /*if(MidIntakeDistance.getDistance(DistanceUnit.CM) < 100){
             MidIntakeLeft.setPower(MidIntakeSpeed);
             MidIntakeRight.setPower(MidIntakeSpeed);
         }else{
             MidIntakeLeft.setPower(0);
             MidIntakeRight.setPower(0);
-        }
+        }*/
 
 
         if (gamepad2.a || !BlockerUp ) {
