@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -40,8 +41,7 @@ public class MecanumTeleop extends OpMode {
     public Servo CryptoboxServo;
     public Servo ClampingServo1;
     public Servo ClampingServo2;
-    public CRServo MidIntakeLeft;
-    public CRServo MidIntakeRight;
+    public Servo IntakeServo;
 
     //Declare Sensors
     public DistanceSensor FlipperDistance1;
@@ -53,7 +53,7 @@ public class MecanumTeleop extends OpMode {
     // Variables
     int DumpingGearDriven = 40; // Gear connected to dumping motor
     int DumpingGearDriving = 80; // Gear connected to dumping assembly
-    int DumpingDegreesOfTravel = 100; // Wanted degrees of the dump to travel
+    int DumpingDegreesOfTravel = 110; // Wanted degrees of the dump to travel
     int FractionOfRevolutionToDump = 360/DumpingDegreesOfTravel;
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
@@ -62,6 +62,14 @@ public class MecanumTeleop extends OpMode {
     int linearSlideDistance = 8;
     int intakeValLeft = 14;
     int intakeValRight = 20;
+
+    double IntakeServoUp = 1;
+    double IntakeServoDown = 0;
+    boolean sensorsSeeTwo = false;
+    boolean haveGlyphs = false;
+    boolean clampGlyphs = false;
+    double glyphsSeenTime;
+
 
     double LinearSlideSpeed = 0;
     double LinearSlideSpeedMultiplier = 1;
@@ -73,14 +81,15 @@ public class MecanumTeleop extends OpMode {
     double BlockerServoUp = .35;
     double BlockerServoDown = .56;
     double JewelServoUpPos = .60;
-    double JoystickMultiplier = 1; // variable to allow slower driving speeds
+    double JoystickMultiplier = 1; // v
+    // ariable to allow slower driving speeds
     double MidIntakeSpeed = -.7;
     double CryptoboxServoInPos = 0;
     double CryptoboxServoOutPos = 1;
-    double ClampingServo1InPos = .55;
     double ClampingServo1OutPos = .4;
-    double ClampingServo2InPos = .45;
+    double ClampingServo1InPos = .55;
     double ClampingServo2OutPos = .6;
+    double ClampingServo2InPos = .45;
 
     boolean ClawChangePositions = false;
     boolean RelicYAxisUp = false;
@@ -88,6 +97,9 @@ public class MecanumTeleop extends OpMode {
     boolean Intake = false;
     boolean BlockerUp = true;
     boolean glyphIn = false;
+
+    public ElapsedTime runtime = new ElapsedTime();
+
     public void init() {
         // This section gets the hardware maps
         FrontLeft = hardwareMap.dcMotor.get("FrontLeft");
@@ -120,8 +132,7 @@ public class MecanumTeleop extends OpMode {
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
         ClampingServo1 = hardwareMap.servo.get("ClampingServo1");
         ClampingServo2 = hardwareMap.servo.get("ClampingServo2");
-        MidIntakeLeft = hardwareMap.crservo.get("MidIntakeLeft");
-        MidIntakeRight = hardwareMap.crservo.get("MidIntakeRight");
+        IntakeServo = hardwareMap.servo.get("IntakeServo");
 
         LinearSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LinearSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -146,16 +157,43 @@ public class MecanumTeleop extends OpMode {
 
     @Override
     public void start() {
+        runtime.reset();
     }
 
     @Override
     public void loop() {
         JewelArm.setPosition(JewelServoUpPos);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
-        ConveyorLeft.setPower(1);
-        ConveyorRight.setPower(1);
-        MidIntakeRight.setPower(-MidIntakeSpeed);
-        MidIntakeLeft.setPower(MidIntakeSpeed);
+
+
+        if(FlipperDistance1.getDistance(DistanceUnit.CM) < 50 && FlipperDistance2.getDistance(DistanceUnit.CM) < 50){
+            sensorsSeeTwo = true;
+        }else{
+            sensorsSeeTwo = false;
+        }
+        if(gamepad1.left_bumper){
+            clampGlyphs = false;
+            haveGlyphs = false;
+        }
+        if(gamepad1.right_bumper){
+            clampGlyphs = true;
+        }
+        if(sensorsSeeTwo && !haveGlyphs && !DumperLimitSensorRight.getState()){
+            IntakeServo.setPosition(IntakeServoUp);
+            glyphsSeenTime = runtime.seconds();
+            haveGlyphs = true;
+        }
+        if(haveGlyphs && runtime.seconds() - glyphsSeenTime > 1 && runtime.seconds() - glyphsSeenTime < 1.1){
+            clampGlyphs = true;
+        }
+
+        if(clampGlyphs){
+            ClampingServo1.setPosition(ClampingServo1InPos);
+            ClampingServo2.setPosition(ClampingServo2InPos);
+        }else{
+            ClampingServo1.setPosition(ClampingServo1OutPos);
+            ClampingServo2.setPosition(ClampingServo2OutPos);
+        }
 
         // Start Intake Code
 /*
@@ -187,56 +225,34 @@ public class MecanumTeleop extends OpMode {
             TopIntakeServoRight.setPower(1);
         }*/
         // End Intake and Conveyor code
-        boolean clamp = true;
 
         // Start Dumping Code
-        Dump = gamepad2.right_trigger > .1;
+        Dump = gamepad1.right_trigger > .1;
         double dumpingPower = .5;
         if (Dump && !DumperLimitSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - EncoderTicksToDump);
             DumpingMotor.setPower(-dumpingPower);
-            if(gamepad2.b){
-                clamp = false;
-            }else{
-                clamp = true;
-            }
+            ConveyorLeft.setPower(0);
+            ConveyorRight.setPower(0);
             BlockerUp = false;
         } else if (Dump) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setPower(-dumpingPower);
-            if(gamepad2.b){
-                clamp = false;
-            }else{
-                clamp = true;
-            }
             BlockerUp = false;
         } else if (!Dump && DumperLimitSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(.25);
-            if(gamepad2.b){
-                clamp = false;
-            }else{
-                clamp = true;
-            }
             BlockerUp = false;
+            IntakeServo.setPosition(IntakeServoDown);
         } else if (!DumperLimitSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(0);
+            ConveyorLeft.setPower(1);
+            ConveyorRight.setPower(1);
             BlockerUp = true;
-            if(FlipperDistance1.getDistance(DistanceUnit.CM) < 100 && FlipperDistance2.getDistance(DistanceUnit.CM) < 100) {
-                clamp = true;
-            }else {
-            }
         }
-        if(clamp){
-            ClampingServo1.setPosition(ClampingServo1OutPos);
-            ClampingServo2.setPosition(ClampingServo2OutPos);
-        }else{
 
-            ClampingServo1.setPosition(ClampingServo1InPos);
-            ClampingServo2.setPosition(ClampingServo2InPos);
-        }
         /*if(MidIntakeDistance.getDistance(DistanceUnit.CM) < 100){
             MidIntakeLeft.setPower(MidIntakeSpeed);
             MidIntakeRight.setPower(MidIntakeSpeed);
@@ -292,7 +308,7 @@ public class MecanumTeleop extends OpMode {
 
         // Start Driving Code
         double DrivingMultiplier = 1;
-        if(gamepad1.right_trigger > .1){
+        if(gamepad1.left_trigger > .1){
             DrivingMultiplier = .35;
         }else{
             DrivingMultiplier = 1;
