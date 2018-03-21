@@ -51,19 +51,21 @@ public class MecanumTeleop extends OpMode {
     public BNO055IMU IMU;
 
     // Variables
-    int DumpingGearDriven = 40; // Gear connected to dumping motor
+    /*int DumpingGearDriven = 40; // Gear connected to dumping motor
     int DumpingGearDriving = 80; // Gear connected to dumping assembly
-    int DumpingDegreesOfTravel = 110; // Wanted degrees of the dump to travel
+    int DumpingDegreesOfTravel = 122; // Wanted degrees of the dump to travel
     int FractionOfRevolutionToDump = 360/DumpingDegreesOfTravel;
     int DumpingMotorEncoderTicks = 1680; // NeveRest 60
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
-    int EncoderTicksToDump = DumpingEncoderTicksPerRevolution/FractionOfRevolutionToDump;
+    int EncoderTicksToDump = DumpingEncoderTicksPerRevolution/FractionOfRevolutionToDump;*/
+    int DumpEncoderOffset = 0;
     int linearSlideDistance = 8;
     int intakeValLeft = 14;
     int intakeValRight = 20;
 
     double IntakeServoUp = 1;
+    double IntakeServo90Pos = .7;
     double IntakeServoDown = 0;
     boolean sensorsSeeTwo = false;
     boolean haveGlyphs = false;
@@ -87,9 +89,9 @@ public class MecanumTeleop extends OpMode {
     double CryptoboxServoInPos = 0;
     double CryptoboxServoOutPos = 1;
     double ClampingServo1OutPos = .4;
-    double ClampingServo1InPos = .55;
+    double ClampingServo1InPos = .6;
     double ClampingServo2OutPos = .6;
-    double ClampingServo2InPos = .45;
+    double ClampingServo2InPos = .40 ;
 
     boolean ClawChangePositions = false;
     boolean RelicYAxisUp = false;
@@ -170,6 +172,7 @@ public class MecanumTeleop extends OpMode {
             sensorsSeeTwo = true;
         }else{
             sensorsSeeTwo = false;
+
         }
         if(gamepad1.left_bumper){
             clampGlyphs = false;
@@ -178,12 +181,14 @@ public class MecanumTeleop extends OpMode {
         if(gamepad1.right_bumper){
             clampGlyphs = true;
         }
-        if(sensorsSeeTwo && !haveGlyphs && !DumperLimitSensorRight.getState()){
+        if((sensorsSeeTwo && !haveGlyphs && !DumperLimitSensorRight.getState()) || gamepad1.right_bumper){
             IntakeServo.setPosition(IntakeServoUp);
             glyphsSeenTime = runtime.seconds();
             haveGlyphs = true;
         }
-        if(haveGlyphs && runtime.seconds() - glyphsSeenTime > 1 && runtime.seconds() - glyphsSeenTime < 1.1){
+        if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .65 && runtime.seconds() - glyphsSeenTime < 1.15){
+            IntakeServo.setPosition(IntakeServo90Pos);
+        }else if(haveGlyphs && runtime.seconds() - glyphsSeenTime > 1.25 && runtime.seconds() - glyphsSeenTime < 1.5){
             clampGlyphs = true;
         }
 
@@ -194,6 +199,16 @@ public class MecanumTeleop extends OpMode {
             ClampingServo1.setPosition(ClampingServo1OutPos);
             ClampingServo2.setPosition(ClampingServo2OutPos);
         }
+        if(gamepad1.a){
+            DumpEncoderOffset = DumpEncoderOffset + 1;
+        }
+        if(gamepad2.y){
+            DumpEncoderOffset
+                    = DumpEncoderOffset - 1;
+        }
+        telemetry.addData("SensorSeeTwo", sensorsSeeTwo);
+        telemetry.addData("Clamp glyphs", clampGlyphs);
+        telemetry.addData("have gylphs", haveGlyphs);
 
         // Start Intake Code
 /*
@@ -231,7 +246,7 @@ public class MecanumTeleop extends OpMode {
         double dumpingPower = .5;
         if (Dump && !DumperLimitSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - EncoderTicksToDump);
+            DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - 1250);
             DumpingMotor.setPower(-dumpingPower);
             ConveyorLeft.setPower(0);
             ConveyorRight.setPower(0);
@@ -244,12 +259,17 @@ public class MecanumTeleop extends OpMode {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(.25);
             BlockerUp = false;
-            IntakeServo.setPosition(IntakeServoDown);
+            if(!haveGlyphs){
+                IntakeServo.setPosition(IntakeServoDown);
+            }
         } else if (!DumperLimitSensorRight.getState()) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(0);
             ConveyorLeft.setPower(1);
             ConveyorRight.setPower(1);
+            if(!haveGlyphs){
+                IntakeServo.setPosition(IntakeServoDown);
+            }
             BlockerUp = true;
         }
 
