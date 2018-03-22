@@ -45,13 +45,18 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public Servo Blocker = null;                  // Rev SRS  Heh, block-er
     public Servo JewelArm = null;                 // Rev SRS
     public Servo CryptoboxServo = null;           // Rev SRS
+    public Servo ClampingServo1;
+    public Servo ClampingServo2;
+    public Servo IntakeServo;
+
 
     public DistanceSensor CryptoboxDistance;
     public ColorSensor JewelColor;
     public DigitalChannel DumperTouchSensorRight;
     public DistanceSensor FlipperDistance1;
     public DistanceSensor FlipperDistance2;
-    public DistanceSensor MidIntakeDistance;
+    public DigitalChannel DumperLimitSensorRight;
+    public DigitalChannel DumperLimitSensorLeft;
     public BNO055IMU IMU;
     public I2CXLv2 BackDistance;
     public I2CXLv2 RightDistance;
@@ -145,12 +150,23 @@ public class DeclarationsAutonomous extends LinearOpMode {
         Blocker = hardwareMap.servo.get("Blocker");
         JewelArm = hardwareMap.servo.get("JewelServo");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
+        ClampingServo1 = hardwareMap.servo.get("ClampingServo1");
+        ClampingServo2 = hardwareMap.servo.get("ClampingServo2");
+        IntakeServo = hardwareMap.servo.get("IntakeServo");
+
         // Initialize and hardware map Sensors
         DumperTouchSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
         DumperTouchSensorRight.setMode(DigitalChannel.Mode.INPUT);
         CryptoboxDistance = hardwareMap.get(DistanceSensor.class, "CryptoboxSensor");
         BackDistance = hardwareMap.get(I2CXLv2.class, "BackDistance");
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
+        DumperLimitSensorRight = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorRight");
+        DumperLimitSensorLeft = hardwareMap.get(DigitalChannel.class, "DumperTouchSensorLeft");
+        DumperLimitSensorRight.setMode(DigitalChannel.Mode.INPUT);
+        DumperLimitSensorLeft.setMode(DigitalChannel.Mode.INPUT);
+        //IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
+        FlipperDistance1 = hardwareMap.get(DistanceSensor.class, "FlipperSensor1");
+        FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");
 
         // Start Init IMU
         BNO055IMU.Parameters Bparameters = new BNO055IMU.Parameters();
@@ -235,6 +251,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         stopDriveMotors();
     }
     public void EncoderDrive(double speed, double Inches, int direction, double heading, double timeout) {
+        //Here's the encoder drive Michael
         double startTime = runtime.seconds();
         double Heading = 0;
         if (heading == 84.17){
@@ -328,6 +345,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return Range.clip(error * (2*PCoeff), -1, 1);
     }
     public void gyroDrive(double targetAngle, double targetSpeed, int direction) {
+        //Here's the drive code Michael
+        FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         double LeftPower = 0;
         double RightPower = 0;
         int Direction = -direction;
