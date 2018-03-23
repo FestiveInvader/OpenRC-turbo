@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.hardware.Sensor;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -69,7 +67,8 @@ public class MecanumTeleop extends OpMode {
     double IntakeServoDown = 0;
     boolean sensorsSeeTwo = false;
     boolean haveGlyphs = false;
-    boolean clampGlyphs = false;
+    boolean FlipperServoUp = false;
+    boolean eitherArePressed = false;
     double glyphsSeenTime;
 
 
@@ -82,7 +81,7 @@ public class MecanumTeleop extends OpMode {
     double StrafingMultiplier = 2;
     double BlockerServoUp = .35;
     double BlockerServoDown = .56;
-    double JewelServoUpPos = .60;
+    double JewelServoUpPos = .55;
     double JoystickMultiplier = 1; // v
     // ariable to allow slower driving speeds
     double MidIntakeSpeed = -.7;
@@ -92,7 +91,7 @@ public class MecanumTeleop extends OpMode {
     double ClampingServo1InPos = .6;
     double ClampingServo2OutPos = .6;
     double ClampingServo2InPos = .40 ;
-    double FlipperServoUpPos = 0;
+    double FlipperServoUpPos = .2;
     double FlipperServoDownPos = 1;
 
     boolean ClawChangePositions = false;
@@ -101,6 +100,7 @@ public class MecanumTeleop extends OpMode {
     int Intake = 1;
     boolean BlockerUp = true;
     boolean glyphIn = false;
+    boolean placedGlyphs = false;
 
     public ElapsedTime runtime = new ElapsedTime();
 
@@ -155,11 +155,6 @@ public class MecanumTeleop extends OpMode {
 
     @Override
     public void init_loop() {
-        /*SSR wouldn't let us move in initialization at all, removed servo position sets
-        Blocker.setPosition(BlockerServoUp);
-        JewelArm.setPosition(JewelServoUpPos);
-        CryptoboxServo.setPosition(CryptoboxServoInPos);
-        */
     }
 
     @Override
@@ -175,95 +170,62 @@ public class MecanumTeleop extends OpMode {
         ConveyorRight.setPower(Intake);
 
 
-        if(FlipperDistance1.getDistance(DistanceUnit.CM) < 50 && FlipperDistance2.getDistance(DistanceUnit.CM) < 50){
+        if(FlipperDistance1.getDistance(DistanceUnit.CM) < 50  && FlipperDistance2.getDistance(DistanceUnit.CM) < 50){
             sensorsSeeTwo = true;
         }else{
             sensorsSeeTwo = false;
         }
+
         if(gamepad1.left_bumper){
-            clampGlyphs = false;
+            //Put everything done
             haveGlyphs = false;
         }
-        if(!haveGlyphs && (!DumperLimitSensorLeft.getState())){
-            clampGlyphs = false;
-        }
         if(gamepad1.right_bumper){
-            clampGlyphs = true;
-        }
-        if((sensorsSeeTwo && !haveGlyphs && !DumperLimitSensorRight.getState())){
-            IntakeServo.setPosition(IntakeServoUp);
-            glyphsSeenTime = runtime.seconds();
+            //start the putting up sequence
             haveGlyphs = true;
-        }
-        if(gamepad1.right_bumper){
-            IntakeServo.setPosition(IntakeServoUp);
             glyphsSeenTime = runtime.seconds();
-            haveGlyphs = true;
         }
-        if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .35 && runtime.seconds() - glyphsSeenTime < .5){
-            clampGlyphs = true;
-        }else if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .5 && runtime.seconds() - glyphsSeenTime < .65){
+
+        if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .1 && runtime.seconds() - glyphsSeenTime < .35) {
+            IntakeServo.setPosition(IntakeServoUp);
+            telemetry.addData("Stuck in 1 loop", 1);
+        }else if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .35 && runtime.seconds() - glyphsSeenTime < .55){
+            FlipperServoUp = true;
+            telemetry.addData("Stuck in 2 loop", 2);
+            //when we have the glyphs and time is between /75 and .85 seconds
+        }else if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .55){
+            telemetry.addData("Stuck in 3 loop", 3);
+            //Same as above, but a little later in time
             IntakeServo.setPosition(IntakeServo90Pos);
-
+            FlipperServoUp = true;
+        }
+        if(!haveGlyphs){
+            IntakeServo.setPosition(IntakeServoDown);
+            FlipperServoUp = false;
+            telemetry.addData("in the !haveglyphs", 1);
         }
 
-        if(clampGlyphs){
-            //ClampingServo1.setPosition(ClampingServo1InPos);
-            //ClampingServo2.setPosition(ClampingServo2InPos);
+        if(FlipperServoUp){
+            //Servo on flipper up
             FlipperServo.setPosition(FlipperServoUpPos);
-        }else{
-            //ClampingServo1.setPosition(ClampingServo1OutPos);
-            //ClampingServo2.setPosition(ClampingServo2OutPos);
+        }else{//servo on flipper down
             FlipperServo.setPosition(FlipperServoDownPos);
-
         }
-        telemetry.addData("Flippersensor1", FlipperDistance1.getDistance(DistanceUnit.CM));
-        telemetry.addData("Flippersensor2", FlipperDistance2.getDistance(DistanceUnit.CM));
-        telemetry.addData("FlipperTouchLeft", DumperLimitSensorLeft.getState());
-        telemetry.addData("FlipperTouchRight", DumperLimitSensorRight.getState());
-        telemetry.addData("SensorSeeTwo", sensorsSeeTwo);
-        telemetry.addData("Clamp glyphs", clampGlyphs);
-        telemetry.addData("have gylphs", haveGlyphs);
+            // Start Intake Code
 
-
-
-        // Start Intake Code
-/*
-       if (gamepad1.left_trigger > .1 || gamepad2.y) {
-        TopIntakeServoRight.setPower(-1);
-        TopIntakeServoLeft.setPower(-1);
-        ConveyorLeft.setPower(-1);
-        ConveyorRight.setPower(-1);
-        IntakeServoLeft.setPower(-IntakeSpeed);
-        IntakeServoRight.setPower(IntakeSpeed);
-       }else{
-            double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-            if (SensorVal <= intakeValLeft && SensorVal > 6) {
-                IntakeServoLeft.setPower(IntakeSpeed);
-                IntakeServoRight.setPower(-IntakeSpeed);
-            }else if(SensorVal > intakeValLeft){
-                IntakeServoLeft.setPower(IntakeSpeed);
-                IntakeServoRight.setPower(IntakeSpeed);
-            }else if (SensorVal <= 5.5) {
-                IntakeServoLeft.setPower(-IntakeSpeed);
-                IntakeServoRight.setPower(-IntakeSpeed);
-            }else {
-                IntakeServoLeft.setPower(IntakeSpeed);
-                IntakeServoRight.setPower(-IntakeSpeed);
-            }
-            ConveyorLeft.setPower(1);
-            ConveyorRight.setPower(1);
-            TopIntakeServoLeft.setPower(1);
-            TopIntakeServoRight.setPower(1);
-        }*/
         // End Intake and Conveyor code
-
+        if(!DumperLimitSensorRight.getState() || !DumperLimitSensorLeft.getState()){
+            //either touch sensors limit switches are pressed
+            eitherArePressed = true;
+        }else{
+            eitherArePressed = false;
+        }
         // Start Dumping Code
         Dump = gamepad1.right_trigger > .1;
         double dumpingPower = .5;
         //Helped with flipperOffset By Ethan from 12670 Eclipse
         int flipperOffset = 100;
-        if (Dump && !DumperLimitSensorRight.getState()) {
+        if (Dump && eitherArePressed) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - (1250+DumpEncoderOffset));
             DumpingMotor.setPower(-dumpingPower);
@@ -272,26 +234,19 @@ public class MecanumTeleop extends OpMode {
             }else {
                 Intake = 0;
             }
-            BlockerUp = false;
         } else if (gamepad1.a) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setPower(-dumpingPower);
             DumpingMotor.setTargetPosition(DumpingMotor.getTargetPosition() - flipperOffset);
-            BlockerUp = false;
         } else if(gamepad1.y) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setPower(-dumpingPower);
             DumpingMotor.setTargetPosition(DumpingMotor.getTargetPosition() + flipperOffset);
-            BlockerUp = false;
-        }else if (!Dump && DumperLimitSensorRight.getState()) {
+        }else if (!Dump && !eitherArePressed) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(.25);
-            BlockerUp = false;
-            if(!haveGlyphs){
-                IntakeServo.setPosition(IntakeServoDown);
-            }
-            clampGlyphs = true;
-        } else if (!DumperLimitSensorRight.getState() || !DumperLimitSensorLeft.getState()) {
+            haveGlyphs = false;
+        } else if (eitherArePressed) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(0);
             if(gamepad1.b){
@@ -299,21 +254,7 @@ public class MecanumTeleop extends OpMode {
             }else{
                 Intake = 1;
             }
-            if(!haveGlyphs){
-                IntakeServo.setPosition(IntakeServoDown);
-            }
-            BlockerUp = true;
         }
-
-
-        /*if(MidIntakeDistance.getDistance(DistanceUnit.CM) < 100){
-            MidIntakeLeft.setPower(MidIntakeSpeed);
-            MidIntakeRight.setPower(MidIntakeSpeed);
-        }else{
-            MidIntakeLeft.setPower(0);
-            MidIntakeRight.setPower(0);
-        }*/
-
         // End Dumping Code
 
         // Start Linear Slide/Relic Code
@@ -328,6 +269,9 @@ public class MecanumTeleop extends OpMode {
         }else{
             LinearSlideSpeed = gamepad2.right_stick_y;
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
+        }
+        if(Math.abs(LinearSlideMotor.getPower()) > .01){
+            Intake = 0;
         }
 
         RelicZAxis.setPower(-gamepad2.left_stick_x);
@@ -390,6 +334,46 @@ public class MecanumTeleop extends OpMode {
         BackLeft.setPower(BackLeftVal);
         BackRight.setPower(BackRightVal);
         // End Driving Code
+
+        telemetry.addData("Flippersensor1", FlipperDistance1.getDistance(DistanceUnit.CM));
+        telemetry.addData("Flippersensor2", FlipperDistance2.getDistance(DistanceUnit.CM));
+        telemetry.addData("FlipperTouchLeft", DumperLimitSensorLeft.getState());
+        telemetry.addData("FlipperTouchRight", DumperLimitSensorRight.getState());
+        telemetry.addData("SensorSeeTwo", sensorsSeeTwo);
+        telemetry.addData("Clamp glyphs", FlipperServoUp);
+        telemetry.addData("have gylphs", haveGlyphs);
+        telemetry.addData("LSlide Pos", LinearSlideMotor.getCurrentPosition());
+        telemetry.update();
+
+        /*
+       if (gamepad1.left_trigger > .1 || gamepad2.y) {
+        TopIntakeServoRight.setPower(-1);
+        TopIntakeServoLeft.setPower(-1);
+        ConveyorLeft.setPower(-1);
+        ConveyorRight.setPower(-1);
+        IntakeServoLeft.setPower(-IntakeSpeed);
+        IntakeServoRight.setPower(IntakeSpeed);
+       }else{
+            double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+            if (SensorVal <= intakeValLeft && SensorVal > 6) {
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }else if(SensorVal > intakeValLeft){
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(IntakeSpeed);
+            }else if (SensorVal <= 5.5) {
+                IntakeServoLeft.setPower(-IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }else {
+                IntakeServoLeft.setPower(IntakeSpeed);
+                IntakeServoRight.setPower(-IntakeSpeed);
+            }
+            ConveyorLeft.setPower(1);
+            ConveyorRight.setPower(1);
+            TopIntakeServoLeft.setPower(1);
+            TopIntakeServoRight.setPower(1);
+        }*/
+
 
     }
 }

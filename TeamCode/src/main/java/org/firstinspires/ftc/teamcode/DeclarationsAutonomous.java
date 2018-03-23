@@ -97,7 +97,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     double BlockerServoUp = .3;
     double BlockerServoDown = .56;
-    double JewelServoUpPos = .61;
+    double JewelServoUpPos = .55 ;
     double JewelServoDistancePos = .34;
     double JewelServoDownPos = .14; //.2 really
     double RegularTurnSpeed = .165;
