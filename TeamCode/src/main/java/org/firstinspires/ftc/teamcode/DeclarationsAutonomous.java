@@ -803,7 +803,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public boolean haveGlyph(){
         boolean haveGlyph = false;
-        double SensorVal = MidIntakeDistance.getDistance(DistanceUnit.CM);
+        double SensorVal = FlipperDistance1.getDistance(DistanceUnit.CM);
         if (SensorVal <= 14) {
             haveGlyph = true;
         }
@@ -819,7 +819,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
         while(!haveGlyph && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) && runtime.seconds() <= 25){
-            if(MidIntakeDistance.getDistance(DistanceUnit.CM) > 1){
+            if(FlipperDistance1.getDistance(DistanceUnit.CM) > 1){
                 stopDriveMotors();
                 haveGlyph = true;
             }else {
