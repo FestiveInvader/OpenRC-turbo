@@ -11,8 +11,8 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
-        ConveyorLeft.setPower(1);
-        ConveyorRight.setPower(1);
-        sleep(300000);
+        EncoderDrive(.2, 48, Forward, stayOnHeading, 10);
+        sleep(20000);
+        EncoderDrive(.2, 48, Reverse, stayOnHeading, 10);
     }
 }

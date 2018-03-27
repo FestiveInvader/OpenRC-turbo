@@ -37,8 +37,6 @@ public class MecanumTeleop extends OpMode {
     public Servo RelicClaw;
     public Servo RelicYAxis;
     public Servo CryptoboxServo;
-    public Servo ClampingServo1;
-    public Servo ClampingServo2;
     public Servo IntakeServo;
     public Servo FlipperServo;
     //Declare Sensors
@@ -62,9 +60,7 @@ public class MecanumTeleop extends OpMode {
     int intakeValLeft = 14;
     int intakeValRight = 20;
 
-    double IntakeServoUp = 1;
-    double IntakeServo90Pos = .7;
-    double IntakeServoDown = 0;
+
     boolean sensorsSeeTwo = false;
     boolean haveGlyphs = false;
     boolean FlipperServoUp = false;
@@ -93,6 +89,9 @@ public class MecanumTeleop extends OpMode {
     double ClampingServo2InPos = .40 ;
     double FlipperServoUpPos = .2;
     double FlipperServoDownPos = 1;
+    double IntakeServoUp = 1;
+    double IntakeServo90Pos = .7;
+    double IntakeServoDown = 0;
 
     boolean ClawChangePositions = false;
     boolean RelicYAxisUp = false;
@@ -135,8 +134,6 @@ public class MecanumTeleop extends OpMode {
         RelicClaw = hardwareMap.servo.get("RelicClaw");
         RelicYAxis = hardwareMap.servo.get("RelicYAxis");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
-        ClampingServo1 = hardwareMap.servo.get("ClampingServo1");
-        ClampingServo2 = hardwareMap.servo.get("ClampingServo2");
         IntakeServo = hardwareMap.servo.get("IntakeServo");
         FlipperServo = hardwareMap.servo.get("FlipperServo");
 
