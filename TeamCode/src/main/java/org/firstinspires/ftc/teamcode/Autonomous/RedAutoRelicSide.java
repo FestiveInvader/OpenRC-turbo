@@ -1,5 +1,7 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
+import org.firstinspires.ftc.teamcode.Autonomous.DeclarationsAutonomous;
 
 @Autonomous(name="Red| Relic Side regular", group="RED")
 public class RedAutoRelicSide extends DeclarationsAutonomous {

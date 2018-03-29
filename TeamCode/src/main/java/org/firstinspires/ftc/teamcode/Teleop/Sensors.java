@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Teleop;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -16,8 +16,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.Arrays;
 
-@TeleOp(name="MecanumTeleop", group="TELEOP")
-public class MecanumTeleop extends OpMode {
+@TeleOp(name="TeleopTest", group="TELEOP")
+public class Sensors extends OpMode {
     // This section declares hardware for the program, such as Motors, servos and sensors
 
     // Declare Motors
@@ -37,6 +37,8 @@ public class MecanumTeleop extends OpMode {
     public Servo RelicClaw;
     public Servo RelicYAxis;
     public Servo CryptoboxServo;
+    public Servo ClampingServo1;
+    public Servo ClampingServo2;
     public Servo IntakeServo;
     public Servo FlipperServo;
     //Declare Sensors
@@ -60,7 +62,9 @@ public class MecanumTeleop extends OpMode {
     int intakeValLeft = 14;
     int intakeValRight = 20;
 
-
+    double IntakeServoUp = 1;
+    double IntakeServo90Pos = .7;
+    double IntakeServoDown = 0;
     boolean sensorsSeeTwo = false;
     boolean haveGlyphs = false;
     boolean FlipperServoUp = false;
@@ -87,11 +91,8 @@ public class MecanumTeleop extends OpMode {
     double ClampingServo1InPos = .6;
     double ClampingServo2OutPos = .6;
     double ClampingServo2InPos = .40 ;
-    double FlipperServoUpPos = .2;
+    double FlipperServoUpPos = .05;
     double FlipperServoDownPos = 1;
-    double IntakeServoUp = 1;
-    double IntakeServo90Pos = .7;
-    double IntakeServoDown = 0;
 
     boolean ClawChangePositions = false;
     boolean RelicYAxisUp = false;
@@ -134,6 +135,8 @@ public class MecanumTeleop extends OpMode {
         RelicClaw = hardwareMap.servo.get("RelicClaw");
         RelicYAxis = hardwareMap.servo.get("RelicYAxis");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
+        ClampingServo1 = hardwareMap.servo.get("ClampingServo1");
+        ClampingServo2 = hardwareMap.servo.get("ClampingServo2");
         IntakeServo = hardwareMap.servo.get("IntakeServo");
         FlipperServo = hardwareMap.servo.get("FlipperServo");
 
@@ -161,11 +164,7 @@ public class MecanumTeleop extends OpMode {
 
     @Override
     public void loop() {
-        JewelArm.setPosition(JewelServoUpPos);
-        CryptoboxServo.setPosition(CryptoboxServoInPos);
-        ConveyorLeft.setPower(Intake);
-        ConveyorRight.setPower(Intake);
-
+        eitherArePressed = true;
 
         if(FlipperDistance1.getDistance(DistanceUnit.CM) < 50  && FlipperDistance2.getDistance(DistanceUnit.CM) < 50){
             sensorsSeeTwo = true;
@@ -177,7 +176,7 @@ public class MecanumTeleop extends OpMode {
             //Put everything done
             haveGlyphs = false;
         }
-        if(gamepad1.right_bumper){
+        if(gamepad1.right_bumper && eitherArePressed){
             //start the putting up sequence
             haveGlyphs = true;
             glyphsSeenTime = runtime.seconds();
@@ -199,7 +198,6 @@ public class MecanumTeleop extends OpMode {
         if(!haveGlyphs){
             IntakeServo.setPosition(IntakeServoDown);
             FlipperServoUp = false;
-            telemetry.addData("in the !haveglyphs", 1);
         }
 
         if(FlipperServoUp){
@@ -208,8 +206,10 @@ public class MecanumTeleop extends OpMode {
         }else{//servo on flipper down
             FlipperServo.setPosition(FlipperServoDownPos);
         }
-            // Start Intake Code
 
+        telemetry.update();
+        // Start Intake Code
+/*
         // End Intake and Conveyor code
         if(!DumperLimitSensorRight.getState() || !DumperLimitSensorLeft.getState()){
             //either touch sensors limit switches are pressed
@@ -251,12 +251,12 @@ public class MecanumTeleop extends OpMode {
             }else{
                 Intake = 1;
             }
-        }
+        }*/
         // End Dumping Code
 
         // Start Linear Slide/Relic Code
 
-        LinearSlideSpeed = gamepad2.right_stick_y;
+        /*LinearSlideSpeed = gamepad2.right_stick_y;
         if (LinearSlideMotor.getCurrentPosition() >= 3850 ){
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, -1, 0);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
@@ -303,16 +303,16 @@ public class MecanumTeleop extends OpMode {
         }
         double FrontLeftVal =
                 gamepad1.left_stick_y*DrivingMultiplier
-                - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
-                + -gamepad1.right_stick_x*DrivingMultiplier;
+                        - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
+                        + -gamepad1.right_stick_x*DrivingMultiplier;
         double FrontRightVal =
                 gamepad1.left_stick_y*DrivingMultiplier
-                + (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
-                - -gamepad1.right_stick_x*DrivingMultiplier;
+                        + (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
+                        - -gamepad1.right_stick_x*DrivingMultiplier;
         double BackLeftVal =
                 gamepad1.left_stick_y*DrivingMultiplier
-                + (gamepad1.left_stick_x*StrafingMultiplier)
-                + -gamepad1.right_stick_x*DrivingMultiplier;
+                        + (gamepad1.left_stick_x*StrafingMultiplier)
+                        + -gamepad1.right_stick_x*DrivingMultiplier;
         double BackRightVal = gamepad1.left_stick_y*DrivingMultiplier
                 - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
                 - -gamepad1.right_stick_x*DrivingMultiplier;
@@ -341,7 +341,7 @@ public class MecanumTeleop extends OpMode {
         telemetry.addData("have gylphs", haveGlyphs);
         telemetry.addData("LSlide Pos", LinearSlideMotor.getCurrentPosition());
         telemetry.update();
-
+*/
         /*
        if (gamepad1.left_trigger > .1 || gamepad2.y) {
         TopIntakeServoRight.setPower(-1);
