@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -30,6 +31,12 @@ import java.util.Arrays;
 public class DeclarationsAutonomous extends LinearOpMode {
     // This section declares hardware for the program, such as Motors, servos and sensors
     // Declare Motors
+
+    public JewelDetector jewelDetector;
+    public VuforiaHardware vuforiaHardware;
+
+    private JewelDetector.JewelOrder jewelOrder;
+
     public DcMotor FrontLeft = null;              // NeveRest Orbital 20
     public DcMotor BackLeft = null;               // NeveRest Orbital 20
     public DcMotor FrontRight = null;             // NeveRest Orbital 20
@@ -142,6 +149,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
     int color = 0;
     @Override
     public void runOpMode() {
+        jewelDetector = new JewelDetector();
+        jewelDetector.downScaleFactor = 0.4;
+        jewelDetector.ratioWeight = 30;
+        jewelDetector.perfectRatio = 1.0;
+        jewelDetector.areaWeight = 0.003;
+        jewelDetector.maxDiffrence = 200;
+        jewelDetector.debugContours = true;
+        jewelDetector.detectionMode = JewelDetector.JewelDetectionMode.PERFECT_AREA;
+        jewelDetector.perfectArea = 5550;
+        jewelDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+
         // This section gets the hardware maps
         Arrays.fill(columnsPlaced, Boolean.FALSE);
         //Makes sure that the booleans start as false
@@ -198,7 +216,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("IMU Init'd", true);
         telemetry.update();
 
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        /*int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
         // OR...  Do Not Activate the Camera Monitor View, to save power
         parameters.vuforiaLicenseKey = "ASW6AVr/////AAAAGcNlW86HgEydiJgfyCjQwxJ8z/aUm0uGPANypQfjy94MH3+UHpB" +
@@ -214,17 +232,27 @@ public class DeclarationsAutonomous extends LinearOpMode {
         relicTemplate.setName("relicVuMarkTemplate"); // can help in debugging; otherwise not necessary
         telemetry.addData("Init'd VuForia ", 1);
         telemetry.update();
-        relicTrackables.activate();
+        relicTrackables.activate();*/
         CryptoKey = RelicRecoveryVuMark.UNKNOWN;
-
         Blocker.setPosition(BlockerServoUp);
         JewelArm.setPosition(JewelServoUpPos);
+
+        vuforiaHardware = new VuforiaHardware();
+
+
+        jewelDetector.enable();
+
         while(!isStarted()){
+            jewelOrder = jewelDetector.getLastOrder();
+        }
+
+        /*while(!isStarted()){
             telemetry.addData("Ready to start", CryptoKey);
             telemetry.update();
         }
         LinearSlideMotor.setPower(0);
         runtime.reset();
+
         while(CryptoKey == RelicRecoveryVuMark.UNKNOWN && runtime.seconds() < .2){
             RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
@@ -236,7 +264,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 telemetry.addData("VuMark", "not visible");
             }
             telemetry.update();
-        }
+        }*/
     }
 
     // Start Movement methods
