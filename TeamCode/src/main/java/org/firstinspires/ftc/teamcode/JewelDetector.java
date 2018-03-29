@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Autonomous;
+package org.firstinspires.ftc.teamcode;
 
 import com.disnodeteam.dogecv.OpenCVPipeline;
 import com.disnodeteam.dogecv.filters.DogeCVColorFilter;

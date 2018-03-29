@@ -1,9 +1,8 @@
-package org.firstinspires.ftc.teamcode.Autonomous;
+package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.Autonomous.DeclarationsAutonomous;
 
 @Autonomous(name="Sandbox test", group="Test")
 public class SandboxOpmode extends DeclarationsAutonomous {
