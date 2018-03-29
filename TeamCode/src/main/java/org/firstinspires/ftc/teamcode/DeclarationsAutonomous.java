@@ -245,12 +245,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
 
         jewelDetector.disable();
+        
         vuforiaHardware.Init(hardwareMap);
 
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.UNKNOWN;
         ElapsedTime timer = new ElapsedTime();
         while(vuMark == RelicRecoveryVuMark.UNKNOWN /*&& timer.seconds() <0.5*/){
             //Not sure how long vuforia takes to reinitialize, may have to detect vuforia while knocking jewel
+            //Also, Should be working JewelCV
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
                 CryptoKey = vuMark;
                 telemetry.addData("VuMark", "%s visible", vuMark);
