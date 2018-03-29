@@ -819,8 +819,22 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double time =.5;
         findWall(-1, 55, 3);
         //Add for which columns it goes which next column
-        int PylonsToFind = cryptoboxPylonsToGo(direction);
+        if(getColumnsToTravelMG() != 0) {
+            strafeToColumnMG(direction);
+            turnToCryptobox(startingPosition);
+            findWall(-.35, 35, 3);
+            driveWStrafe(-.2, 0, 0, .5);
 
+            extendCryptoboxArmForFirstGlyph();
+            EncoderDrive(.15, 3.15, Reverse, stayOnHeading, 1);
+            findColumn(1);
+            stopDriveMotors();
+            placeByFlipping(2);
+        }else{
+            //no more glyphs, end auton
+
+        }
+        endAuto();
         /*if(PylonsToFind == 1) {
             if(direction == Forward){
                 gyroTurn(turningSpeed, -140);
@@ -845,16 +859,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }
             EncoderDrive(.75, 15, Reverse, stayOnHeading, 1);
         }*/
-        turnToCryptobox(startingPosition);
-        findWall(-.35, 35, 3);
-        driveWStrafe(-.2, 0, 0, .5);
 
-        turnToCryptobox(startingPosition);
-        extendCryptoboxArmForFirstGlyph();
-        EncoderDrive(.15, 3.15, Reverse, stayOnHeading, 1);
-        findColumn(1.25);
-        stopDriveMotors();
-        placeByFlipping(2);
         // add if time < needed time go back
         // else pick up another?
     }

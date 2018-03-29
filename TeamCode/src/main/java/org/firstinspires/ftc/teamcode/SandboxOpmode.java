@@ -11,8 +11,25 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
-        EncoderDrive(.2, 48, Forward, stayOnHeading, 10);
-        sleep(20000);
-        EncoderDrive(.2, 48, Reverse, stayOnHeading, 10);
+        double timer;
+        boolean wentLeft = false;
+        boolean wentRight = false;
+        boolean gotGlyph = false;
+        ConveyorRight.setPower(1);
+        ConveyorLeft.setPower(1);
+        boolean linedUp = false;
+        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        double startingEncoderCount = FrontLeft.getCurrentPosition();
+        double limitEncoderCount = startingEncoderCount + 18*CountsPerInch;
+
+        while(runtime.seconds() < 25 && !gotGlyph && opModeIsActive() && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) ) {
+            moveBy(.15, 0, 0);
+            if (FlipperDistance2.getDistance(DistanceUnit.CM) < 75) {
+                gotGlyph = true;
+            }
+        }
+        stopDriveMotors();
+        sleep(5000);
     }
 }
