@@ -245,7 +245,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
 
         jewelDetector.disable();
-        
+
         vuforiaHardware.Init(hardwareMap);
 
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.UNKNOWN;
