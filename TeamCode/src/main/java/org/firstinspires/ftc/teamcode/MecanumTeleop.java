@@ -42,11 +42,53 @@ public class MecanumTeleop extends OpMode {
     public Servo IntakeServo;
     public Servo FlipperServo;
     //Declare Sensors
-    public DistanceSensor FlipperDistance1;
+    public DistanceSensor IntakeDistance;
     public DistanceSensor FlipperDistance2;
     public DigitalChannel DumperLimitSensorRight;
     public DigitalChannel DumperLimitSensorLeft;
     public BNO055IMU IMU;
+    //Variables in use
+    boolean RelicYAxisUp = false;
+    boolean Dump = false;
+    boolean sensorsSeeTwo = false;
+    boolean haveGlyphs = false;
+    boolean FlipperServoUp = false;
+    boolean eitherArePressed = false;
+    boolean intake = true;
+
+
+    double LeftIntake = 1;
+    double RightIntake = 1;
+    double FlipperServoUpPos = .2;
+    double FlipperServoDownPos = 1;
+    double IntakeServoUp = 1;
+    double IntakeServo90Pos = .7;
+    double IntakeServoDown = 0;
+    double glyphsSeenTime;
+    double LinearSlideSpeed = 0;
+    double LinearSlideSpeedMultiplier = 1;
+    double RelicYAxisUpPosition = .8;
+    double RelicYAxisDownPosition = .31;
+    double RelicClawOpenPos = 1;
+    double RelicClawClosedPos = .375;
+    double StrafingMultiplier = 2;
+    double JewelServoUpPos = .55;
+    double CryptoboxServoInPos = 0;
+
+    int DumpEncoderOffset = 0;
+    int intakeValLeft = 22;
+
+
+
+    //variables out of use, but maybe needed in future use
+    boolean BlockerUp = true;
+    boolean glyphIn = false;
+    boolean placedGlyphs = false;
+    double BlockerServoUp = .35;
+    double BlockerServoDown = .56;
+    double JoystickMultiplier = 1;
+    double MidIntakeSpeed = -.7;
+    int intakeValRight = 20;
 
     // Variables
     /*int DumpingGearDriven = 40; // Gear connected to dumping motor
@@ -57,51 +99,6 @@ public class MecanumTeleop extends OpMode {
     int DumpingGearRatio = DumpingGearDriving/DumpingGearDriven; // 2:1
     int DumpingEncoderTicksPerRevolution = DumpingMotorEncoderTicks*DumpingGearRatio;
     int EncoderTicksToDump = DumpingEncoderTicksPerRevolution/FractionOfRevolutionToDump;*/
-    int DumpEncoderOffset = 0;
-    int linearSlideDistance = 8;
-    int intakeValLeft = 14;
-    int intakeValRight = 20;
-
-
-    boolean sensorsSeeTwo = false;
-    boolean haveGlyphs = false;
-    boolean FlipperServoUp = false;
-    boolean eitherArePressed = false;
-    double glyphsSeenTime;
-
-
-    double LinearSlideSpeed = 0;
-    double LinearSlideSpeedMultiplier = 1;
-    double RelicYAxisUpPosition = .8;
-    double RelicYAxisDownPosition = .31;
-    double RelicClawOpenPos = 1;
-    double RelicClawClosedPos = .375;
-    double StrafingMultiplier = 2;
-    double BlockerServoUp = .35;
-    double BlockerServoDown = .56;
-    double JewelServoUpPos = .55;
-    double JoystickMultiplier = 1; // v
-    // ariable to allow slower driving speeds
-    double MidIntakeSpeed = -.7;
-    double CryptoboxServoInPos = 0;
-    double CryptoboxServoOutPos = 1;
-    double ClampingServo1OutPos = .4;
-    double ClampingServo1InPos = .6;
-    double ClampingServo2OutPos = .6;
-    double ClampingServo2InPos = .40 ;
-    double FlipperServoUpPos = .2;
-    double FlipperServoDownPos = 1;
-    double IntakeServoUp = 1;
-    double IntakeServo90Pos = .7;
-    double IntakeServoDown = 0;
-
-    boolean ClawChangePositions = false;
-    boolean RelicYAxisUp = false;
-    boolean Dump = false;
-    int Intake = 1;
-    boolean BlockerUp = true;
-    boolean glyphIn = false;
-    boolean placedGlyphs = false;
 
     public ElapsedTime runtime = new ElapsedTime();
 
@@ -126,6 +123,8 @@ public class MecanumTeleop extends OpMode {
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         ConveyorLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         ConveyorRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        ConveyorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        ConveyorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         LinearSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -148,7 +147,7 @@ public class MecanumTeleop extends OpMode {
         DumperLimitSensorRight.setMode(DigitalChannel.Mode.INPUT);
         DumperLimitSensorLeft.setMode(DigitalChannel.Mode.INPUT);
         //IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
-        FlipperDistance1 = hardwareMap.get(DistanceSensor.class, "FlipperSensor1");
+        IntakeDistance = hardwareMap.get(DistanceSensor.class, "FlipperSensor1");
         FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");
     }
 
@@ -165,27 +164,55 @@ public class MecanumTeleop extends OpMode {
     public void loop() {
         JewelArm.setPosition(JewelServoUpPos);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
-        ConveyorLeft.setPower(Intake);
-        ConveyorRight.setPower(Intake);
+        if(intake){
+            if (gamepad1.b || gamepad2.y) {
+                LeftIntake = -1;
+                RightIntake = -1;
+            }else{
+                LeftIntake = 1;
+                RightIntake = 1;
+                /*double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+                if (SensorVal <= intakeValLeft && SensorVal > 6) {
+                    LeftIntake = 1;
+                    RightIntake = 1;
+                }else if(SensorVal > intakeValLeft){
+                    LeftIntake = 0;
+                    RightIntake = 1;
+                }else if (SensorVal <= 5.5) {
+                    LeftIntake = 1;
+                    RightIntake = 0;
+                }else {
+                    LeftIntake = 1;
+                    RightIntake = 1;
+                }*/
+            }
+        }else{
+            LeftIntake = 0;
+            RightIntake = 0;
+        }
 
 
-        if(FlipperDistance1.getDistance(DistanceUnit.CM) < 50  && FlipperDistance2.getDistance(DistanceUnit.CM) < 50){
+
+        if(FlipperDistance2.getDistance(DistanceUnit.CM) < 50){
             sensorsSeeTwo = true;
         }else{
             sensorsSeeTwo = false;
         }
 
         if(gamepad1.left_bumper){
+            intake = true;
             //Put everything done
-            haveGlyphs = false;
-        }
-        if(gamepad1.right_bumper){
+            //haveGlyphs = false;
+            FlipperServoUp = false;
+        }else if(gamepad1.right_bumper){
             //start the putting up sequence
-            haveGlyphs = true;
-            glyphsSeenTime = runtime.seconds();
+            FlipperServoUp = true;
+            intake = false;
+            /*haveGlyphs = true;
+            glyphsSeenTime = runtime.seconds();*/
         }
 
-        if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .1 && runtime.seconds() - glyphsSeenTime < .35) {
+       /* if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .1 && runtime.seconds() - glyphsSeenTime < .35) {
             IntakeServo.setPosition(IntakeServoUp);
             telemetry.addData("Stuck in 1 loop", 1);
         }else if(haveGlyphs && runtime.seconds() - glyphsSeenTime > .35 && runtime.seconds() - glyphsSeenTime < .55){
@@ -202,7 +229,7 @@ public class MecanumTeleop extends OpMode {
             IntakeServo.setPosition(IntakeServoDown);
             FlipperServoUp = false;
             telemetry.addData("in the !haveglyphs", 1);
-        }
+        }*/
 
         if(FlipperServoUp){
             //Servo on flipper up
@@ -228,11 +255,7 @@ public class MecanumTeleop extends OpMode {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - (1250+DumpEncoderOffset));
             DumpingMotor.setPower(-dumpingPower);
-            if(gamepad1.b){
-                Intake = -1;
-            }else {
-                Intake = 0;
-            }
+            intake = false;
         } else if (gamepad1.a) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setPower(-dumpingPower);
@@ -244,25 +267,20 @@ public class MecanumTeleop extends OpMode {
         }else if (!Dump && !eitherArePressed) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(.25);
-            haveGlyphs = false;
+            FlipperServoUp = false;
+
         } else if (eitherArePressed) {
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(0);
-            if(gamepad1.b){
-                Intake = -1;
-            }else{
-                Intake = 1;
-            }
+            intake = true;
+
         }
         // End Dumping Code
 
         // Start Linear Slide/Relic Code
 
         LinearSlideSpeed = gamepad2.right_stick_y;
-        if (LinearSlideMotor.getCurrentPosition() >= 3850 ){
-            LinearSlideSpeed = Range.clip(LinearSlideSpeed, -1, 0);
-            LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
-        } else if (LinearSlideMotor.getCurrentPosition() < 50) {
+        if (LinearSlideMotor.getCurrentPosition() < 50) {
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, 0, 1);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         }else{
@@ -270,7 +288,7 @@ public class MecanumTeleop extends OpMode {
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         }
         if(Math.abs(LinearSlideMotor.getPower()) > .01){
-            Intake = 0;
+           intake = false;
         }
 
         RelicZAxis.setPower(-gamepad2.left_stick_x);
@@ -333,8 +351,9 @@ public class MecanumTeleop extends OpMode {
         BackLeft.setPower(BackLeftVal);
         BackRight.setPower(BackRightVal);
         // End Driving Code
-
-        telemetry.addData("Flippersensor1", FlipperDistance1.getDistance(DistanceUnit.CM));
+        ConveyorLeft.setPower(LeftIntake);
+        ConveyorRight.setPower(RightIntake);
+        telemetry.addData("Intake Distance", IntakeDistance.getDistance(DistanceUnit.CM));
         telemetry.addData("Flippersensor2", FlipperDistance2.getDistance(DistanceUnit.CM));
         telemetry.addData("FlipperTouchLeft", DumperLimitSensorLeft.getState());
         telemetry.addData("FlipperTouchRight", DumperLimitSensorRight.getState());
@@ -343,36 +362,5 @@ public class MecanumTeleop extends OpMode {
         telemetry.addData("have gylphs", haveGlyphs);
         telemetry.addData("LSlide Pos", LinearSlideMotor.getCurrentPosition());
         telemetry.update();
-
-        /*
-       if (gamepad1.left_trigger > .1 || gamepad2.y) {
-        TopIntakeServoRight.setPower(-1);
-        TopIntakeServoLeft.setPower(-1);
-        ConveyorLeft.setPower(-1);
-        ConveyorRight.setPower(-1);
-        IntakeServoLeft.setPower(-IntakeSpeed);
-        IntakeServoRight.setPower(IntakeSpeed);
-       }else{
-            double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-            if (SensorVal <= intakeValLeft && SensorVal > 6) {
-                IntakeServoLeft.setPower(IntakeSpeed);
-                IntakeServoRight.setPower(-IntakeSpeed);
-            }else if(SensorVal > intakeValLeft){
-                IntakeServoLeft.setPower(IntakeSpeed);
-                IntakeServoRight.setPower(IntakeSpeed);
-            }else if (SensorVal <= 5.5) {
-                IntakeServoLeft.setPower(-IntakeSpeed);
-                IntakeServoRight.setPower(-IntakeSpeed);
-            }else {
-                IntakeServoLeft.setPower(IntakeSpeed);
-                IntakeServoRight.setPower(-IntakeSpeed);
-            }
-            ConveyorLeft.setPower(1);
-            ConveyorRight.setPower(1);
-            TopIntakeServoLeft.setPower(1);
-            TopIntakeServoRight.setPower(1);
-        }*/
-
-
-    }
+        }
 }
