@@ -35,7 +35,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public JewelDetector jewelDetector;
     public VuforiaHardware vuforiaHardware;
 
-    private JewelDetector.JewelOrder jewelOrder;
+    private JewelDetector.JewelOrder jewelOrder = JewelDetector.JewelOrder.UNKNOWN;
 
     public DcMotor FrontLeft = null;              // NeveRest Orbital 20
     public DcMotor BackLeft = null;               // NeveRest Orbital 20
@@ -242,7 +242,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         vuforiaHardware.Init(hardwareMap);
 
         ElapsedTime timer = new ElapsedTime();
-        while(timer.seconds() < 5){
+        while(timer.seconds() < 2){
             vuMark = vuforiaHardware.getVuMark();
             CryptoKey = vuMark;
             telemetry.addData("Vumark First Scan", CryptoKey);
@@ -256,16 +256,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
             telemetry.update();
         }
         telemetry.addData("Vumark FOUND!!!!", CryptoKey);
+        telemetry.addData("DogeCV Initializing...", jewelOrder);
         telemetry.update();
 
         vuforiaHardware.Stop();
 
         jewelDetector.enable();
 
-        while (!isStarted()) {
+        while (!isStarted() || jewelOrder == JewelDetector.JewelOrder.UNKNOWN) {
             jewelOrder = jewelDetector.getLastOrder();
-            telemetry.addData("Vumark Actual", CryptoKey);
-            telemetry.addData("Jewel Order", jewelOrder);
+            telemetry.addData("Vumark Found!!!!", CryptoKey);
+            telemetry.addData("Jewel Order Found!", jewelOrder);
             telemetry.addData("Thumbs Up!", 1);
             telemetry.update();
         }
