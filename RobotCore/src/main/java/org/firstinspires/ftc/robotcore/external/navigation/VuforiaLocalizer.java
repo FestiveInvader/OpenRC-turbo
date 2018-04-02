@@ -189,7 +189,11 @@ public interface VuforiaLocalizer {
          * and paste it in to your code as the value of the 'vuforiaLicenseKey' field of the
          * {@link Parameters} instance with which you initialize Vuforia.
          */
-        public String vuforiaLicenseKey = "<visit https://developer.vuforia.com/license-manager to obtain a license key>";
+        public String vuforiaLicenseKey = "ASW6AVr/////AAAAGcNlW86HgEydiJgfyCjQwxJ8z/aUm0uGPANypQfjy94MH3+UHpB\" +\n" +
+                "                \"60bep2E2CIpQCtDevYkE3I9xx1nrU3d9mxfoelhGARuvw7GBwTSjMG0GDQbuSgWGZ1X1IVW35MjOoeg57y/IJGCosxEGz\" +\n" +
+                "                \"J0VHTFmKLkPoGCHQysZ2M2d8AVQDyG+PobNjbYQeC16TZJ7SJyXHr7MJxpj/MKbRwb/bZ1icAvWdrNWiB48dyRjIESk7MewD\" +\n" +
+                "                \"X5ke8X6KEjZkKFiQxbAeCbh3DoxTXVJujcSHAdzncIsFIxLqvh5pX0il9tX+vs+64CUjEbi/HaES7S0q3d3MrVQMCXz77zynqv\" +\n" +
+                "                \"iei9O/4BmYcLw6W7c+Es0sClX/";
 
         /**
          * Indicates the camera which Vuforia should use.
@@ -204,7 +208,7 @@ public interface VuforiaLocalizer {
          *
          * @see <a href="https://developer.vuforia.com/library/articles/Training/Extended-Tracking">Vuforia Extended Tracking</a>
          */
-        public boolean useExtendedTracking = true;
+        public boolean useExtendedTracking = false;
 
         /**
          * {@link CameraMonitorFeedback} enumerates the kinds of positioning feedback that

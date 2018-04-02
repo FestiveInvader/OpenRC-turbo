@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -31,6 +31,7 @@ public class VuforiaHardware {
         relicTemplate= relicTrackables.get(0);
         relicTemplate.setName("relicVuMarkTemplate"); // can help in debugging; otherwise not necessary
         relicTrackables.activate();
+
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
     }
 

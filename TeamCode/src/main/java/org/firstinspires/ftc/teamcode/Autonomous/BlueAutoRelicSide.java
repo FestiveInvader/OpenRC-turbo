@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 @Autonomous(name="BLUE| Right Side regular", group="BLUE")
 public class BlueAutoRelicSide extends DeclarationsAutonomous {
