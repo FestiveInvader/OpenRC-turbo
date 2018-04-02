@@ -132,20 +132,7 @@ public class VuforiaCamera extends VisionCamera {
         Vuforia.setFrameFormat(PIXEL_FORMAT.RGB888, true);
         vuforia.setFrameQueueCapacity(1);
 
-       /* if (parameters.cameraMonitorViewId != 0) {
-            this.overlayView = new OverlayView(activity);
 
-            for (Tracker tracker : trackers) {
-                overlayView.addTracker(tracker);
-            }
-
-            final Activity activity = appUtil.getActivity();
-            activity.runOnUiThread(() -> {
-                LinearLayout cameraMonitorView = (LinearLayout) activity.findViewById(parameters.cameraMonitorViewId);
-                cameraLayout = (FrameLayout) cameraMonitorView.getParent();
-                cameraLayout.addView(overlayView);
-            });
-        }*/
 
         frameConsumerExecutor = ThreadPool.newSingleThreadExecutor("Vuforia frame consumer");
         frameConsumerExecutor.execute(new FrameConsumer(vuforia.getFrameQueue()));

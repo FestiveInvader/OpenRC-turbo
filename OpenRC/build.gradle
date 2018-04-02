@@ -6,8 +6,10 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 19
-        versionCode 5
-        versionName "2.0b3"
+
+        versionCode 6
+        versionName "2.0b4 SS"
+ /*e1d337085da762cf116f6384ed9290ce89ac209a*/
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -24,7 +26,14 @@ android {
     }
 }
 
+repositories {
+    flatDir {
+        dirs '../libs'
+    }
+}
+
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    compile project(path: ':RobotCore')
+
+    compileOnly(name: 'RobotCore-release', ext: 'aar')
+//>>>>>>> e1d337085da762cf116f6384ed9290ce89ac209a
 }

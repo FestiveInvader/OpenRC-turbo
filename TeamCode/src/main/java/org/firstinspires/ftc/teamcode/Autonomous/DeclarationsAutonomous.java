@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -20,6 +21,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.vision.DogeCVJewelTracker;
 import org.firstinspires.ftc.teamcode.vision.VuforiaCamera;
 import org.firstinspires.ftc.teamcode.vision.VuforiaVuMarkTracker;
@@ -147,6 +150,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     int count_list[]=new int[1];
     long time_list[]=new long[1];
     boolean columnsPlaced[] = new boolean[3];
+    boolean senseJewels = false;
 
 
 
@@ -221,7 +225,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("IMU Init'd", true);
         telemetry.update();
 
-       /* int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
         // OR...  Do Not Activate the Camera Monitor View, to save power
         parameters.vuforiaLicenseKey = "ASW6AVr/////AAAAGcNlW86HgEydiJgfyCjQwxJ8z/aUm0uGPANypQfjy94MH3+UHpB" +
@@ -238,8 +242,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("Init'd VuForia ", 1);
         telemetry.update();
         relicTrackables.activate();
-        */
-        Blocker.setPosition(BlockerServoUp);
+
+      /*  Blocker.setPosition(BlockerServoUp);
         JewelArm.setPosition(JewelServoUpPos);
 
         camera = new VuforiaCamera();
@@ -271,9 +275,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
             telemetry.addData("Cryptokey", CryptoKey);
             telemetry.addData("JewelOrder", JEWELORDER);
             telemetry.update();
-        }
+        }*/
        // jewelTracker.disable();
-       /* vuforiaHardware = new VuforiaHardware();
+        vuforiaHardware = new VuforiaHardware();
 
         vuforiaHardware.Init(hardwareMap);
 
@@ -285,7 +289,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             //telemetry.addData("Timer", timer.seconds());
             telemetry.update();
         }
-        while(CryptoKey == vuMark || CryptoKey == RelicRecoveryVuMark.UNKNOWN){
+        while((CryptoKey == vuMark || CryptoKey == RelicRecoveryVuMark.UNKNOWN) && !isStarted() ){
             CryptoKey = vuforiaHardware.getVuMark();
             telemetry.addData("Vumark Scanning", CryptoKey);
             telemetry.addData("If vumark same as last match ", vuforiaHardware.getVuMark());
@@ -309,7 +313,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 telemetry.update();
             }
             jewelDetector.disable();
-        }*/
+        }else{
+            senseJewels = true;
+        }
 
        /* while(!isStarted()){
             telemetry.addData("Ready to start", CryptoKey);
@@ -1142,7 +1148,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         telemetry.addData("KnockingJewel", 10);
         telemetry.update();
-        sleep(500);
+        if(senseJewels){
+            jewelDetector.enable();
+        }else {
+            sleep(500);
+        }
         // sleep to allow the jewel arm to go down
         //Knock off the jewel.  If the jewel is the way we go to get the cryptobox, we drive forward
         // To knock off, otherwise we turn.  This is to
@@ -1178,6 +1188,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int Red = JewelColor.red();
         int Direction = 0;
 
+        if(senseJewels){
+            JEWELORDER = jewelDetector.getLastOrder();
+            //maybe switch out to color sensor, if delay is too long
+            //It's possible that the open CV didn't detect, due to us scanning for vuforia and waiting for a change
+            //If that happens, we init CV while we put the jewel arm down, though maybe use color sensor?
+        }
         if(JEWELORDER == JewelDetector.JewelOrder.RED_BLUE){
             //Jewel that sensor is pointing at is red, means that the robot will need to move
             Direction = -1;
@@ -1187,6 +1203,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }else{
             Direction = 0;
         }
+        jewelDetector.disable();
         /*if(Red > Blue){
             //Jewel that sensor is pointing at is red, means that the robot will need to move
             Direction = -1;
