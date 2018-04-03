@@ -381,19 +381,24 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         double target;
         if (opModeIsActive() ) {
-            BackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
             FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-            target = BackLeft.getCurrentPosition() + (int) (Inches * CountsPerInch * direction);
+            target = FrontLeft.getCurrentPosition() + (int) (Inches * CountsPerInch * direction);
 
-            while (opModeIsActive() && Math.abs(target) - Math.abs(BackLeft.getCurrentPosition()) > 50
+            while (opModeIsActive() && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 50
                     && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
                 gyroDrive(Heading, speed, direction);
                 //smartIntake(); Conveyor/intake
+                telemetry.addData("encoder driving", "ZOOOOM");
+                telemetry.addData("Encoder Ticks", FrontLeft.getCurrentPosition());
+                telemetry.addData("Encoder Target", target);
+                telemetry.addData("Difference", Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()));
+                telemetry.update();
             }
             stopDriveMotors();
         }
@@ -600,19 +605,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1 || startingPosition == 4) {
             if (Direction == Reverse) {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDrive(.75, 10 + DistanceToTravel, Direction, stayOnHeading, 3 );
+                    EncoderDrive(.5, 10 + DistanceToTravel, Direction, stayOnHeading, 3 );
                 } else {
-                    EncoderDrive(.75, 15 + DistanceToTravel, Direction,stayOnHeading, 3);
+                    EncoderDrive(.5, 15 + DistanceToTravel, Direction,stayOnHeading, 3);
                 }
             } else {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDrive(.75, 10 + DistanceToTravel, Direction, stayOnHeading, 3);
+                    EncoderDrive(.5, 10 + DistanceToTravel, Direction, stayOnHeading, 3);
                 } else {
-                    EncoderDrive(.75, 16 + DistanceToTravel, Direction, stayOnHeading, 3);
+                    EncoderDrive(.5, 16 + DistanceToTravel, Direction, stayOnHeading, 3);
                 }
             }
         }else{
-            EncoderDrive(.75,  DistanceToTravel, Forward, stayOnHeading, 5);
+            EncoderDrive(.5,  DistanceToTravel, Forward, stayOnHeading, 5);
         }
         currentColumn = PylonsToFind;
         if(Direction == Reverse) {
@@ -856,16 +861,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int columnToGoTo = 0;
         int columnsToTravel = 0;
         boolean foundColumnToGoTo = false;
-        while(!foundColumnToGoTo) {
-            for (int i = 0; columnsPlaced[i]; i++) {
-                if (columnsPlaced[i] == false && !foundColumnToGoTo) {
-                    //Then i = a column without glyphs, and we should go to that column to place some
-                    columnToGoTo = i;
-                    foundColumnToGoTo = true;
-                    telemetry.addData("Column that's free", columnToGoTo);
-                    telemetry.update();
-                }
+         int c = 0;
+        for(boolean e : columnsPlaced) {
+            if(e) {
+                columnToGoTo = c;
+                telemetry.addData("Column that's free", columnToGoTo);
+                telemetry.update();
             }
+            c++;
         }
         sleep(1500);
         columnsToTravel = currentColumn - columnToGoTo;
@@ -894,9 +897,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 }
                 //blue side
                 if(strafingLeft){
-                    strafeTime = columnsToGo - .2;
+                    strafeTime = Math.abs(columnsToGo) - .2;
                 }else{
-                    strafeTime = columnsToGo + .2;
+                    strafeTime = Math.abs(columnsToGo) + .2;
                 }
             }else{
                 if(columnsToGo > 0){
@@ -946,7 +949,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         EncoderDrive(.25, 3, Reverse, stayOnHeading, 1);
         findColumn(1);
         stopDriveMotors();
-        placeByFlipping(2);
+        placeByFlipping(3);
         telemetry.addData("Made it past flipping", 1);
         telemetry.update();
         //no more glyphs, end auton
@@ -1212,10 +1215,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         boolean placed = false;
         EncoderDrive(.35, 2, Forward, stayOnHeading, 2);
         double dumpingPower = .65;
+        DumpingMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         while(!placed && startTime + 1.5 > runtime.seconds()) {
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - EncoderTicksToDump);
             while (DumpingMotor.isBusy()) {
-                DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 DumpingMotor.setPower(-dumpingPower);
                 telemetry.addData("Current Pos", DumpingMotor.getCurrentPosition());
                 telemetry.addData("Target Pos", DumpingMotor.getTargetPosition());
@@ -1231,7 +1235,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         EncoderDrive(.15, 5, Forward, stayOnHeading, 1.5);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double startingRuntime = runtime.seconds();
-        while (DumperTouchSensorRight.getState() || DumperTouchSensorLeft.getState() && runtime.seconds() - startingRuntime < .5 && opModeIsActive()) {
+        while ((DumperTouchSensorRight.getState() || DumperTouchSensorLeft.getState()) && runtime.seconds() - startingRuntime < .5 && opModeIsActive()) {
             DumpingMotor.setPower(dumpingPower);
         }
         DumpingMotor.setPower(0);

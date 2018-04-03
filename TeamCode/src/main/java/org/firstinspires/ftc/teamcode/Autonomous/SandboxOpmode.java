@@ -1,14 +1,18 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+
 @Autonomous(name="Sandbox test", group="Test")
 public class SandboxOpmode extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
         while(opModeIsActive()){
-            goToDistance(.25, 50, BackDistance, 5, 4);
-            sleep(10000);
+            EncoderDrive(.5, 24, Reverse, stayOnHeading, 15);
+            sleep(5000);
+            EncoderDrive(.5, 24, Forward, stayOnHeading, 15);
+            sleep(5000);
         }
     }
 }
