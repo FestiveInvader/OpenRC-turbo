@@ -6,11 +6,9 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
-        double intakeValLeft = 16;
-        vuforiaHardware.Init(hardwareMap);
-        sleep(500);
-        telemetry.addData("Vumark", CryptoKey);
-        telemetry.update();
-        sleep(5000);
+        while(opModeIsActive()){
+            goToDistance(.25, 50, BackDistance, 5, 4);
+            sleep(10000);
+        }
     }
 }
