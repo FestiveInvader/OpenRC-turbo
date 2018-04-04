@@ -530,19 +530,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1 || startingPosition == 4) {
             if (Direction == Reverse) {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDriveAccelDecel(.5, 12 + DistanceToTravel, 12, Direction, stayOnHeading, 3 );
+                    EncoderDriveAccelDecel(.5, 10 + DistanceToTravel, 12, Direction, stayOnHeading, 3 );
                 } else {
-                    EncoderDriveAccelDecel(.5, 17 + DistanceToTravel, 12, Direction,stayOnHeading, 3);
+                    EncoderDriveAccelDecel(.5, 15 + DistanceToTravel, 12, Direction,stayOnHeading, 3);
                 }
             } else {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDriveAccelDecel(.5, 12 + DistanceToTravel, 12,Direction, stayOnHeading, 3);
+                    EncoderDriveAccelDecel(.5, 10 + DistanceToTravel, 12,Direction, stayOnHeading, 3);
                 } else {
-                    EncoderDriveAccelDecel(.5, 18 + DistanceToTravel, 12,Direction, stayOnHeading, 3);
+                    EncoderDriveAccelDecel(.5, 16 + DistanceToTravel, 12,Direction, stayOnHeading, 3);
                 }
             }
         }else{
-            EncoderDriveAccelDecel(.5,  DistanceToTravel, 12, Forward, stayOnHeading, 5);
+            EncoderDriveAccelDecel(.5,  DistanceToTravel, 10, Forward, stayOnHeading, 5);
         }
         currentColumn = PylonsToFind;
         if(Direction == Reverse) {
@@ -682,7 +682,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
             if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6.5 ) {
                 moveBy(.015, .3, 0); //moveBy is a function that handles robot movement
-            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 8.25){
+            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 7.15){
                 FoundPylon = true;
             }else {
                 moveBy(.015, -.3, 0); //moveBy is a function that handles robot movement
@@ -777,8 +777,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void strafeToColumnMG(int direction){
         int columnsToGo = getColumnsToTravelMG();
         boolean strafingLeft = false;
-        int multiplier =  Range.clip(columnsToGo, -1, 1);
-        int strafingDirectionMultiplier = multiplier;
+        int strafingDirectionMultiplier = 1;
+        if(columnsToGo > 0){
+            strafingDirectionMultiplier = 1;
+        }else{
+            strafingDirectionMultiplier = -1;
+        }
         double strafeTime = 1;
 
 
@@ -820,6 +824,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("Columns To Go", columnsToGo);
         telemetry.addData("Columns placed", columnsPlaced);
         telemetry.update();
+        sleep(5000);
     }
     public void ramThePitRelicSide(int startingPosition, int direction){
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -827,12 +832,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FlipperServo.setPosition(FlipperServoDownPos);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
-        EncoderDrive(.95, 24, Forward, stayOnHeading, .75);
+        EncoderDriveAccelDecel(.95, 30, 10, Forward, stayOnHeading, .75);
         telemetry.addData("Made it past encoder", 1);
         telemetry.update();
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        driveToGlyphs(startingPosition, 10);
-        goToDistance(.75, Reverse, BackDistance, 1, 5);
+        driveToGlyphs(startingPosition, 16);
+        goToDistance(.75, 45, BackDistance, 3, 3);
         telemetry.addData("Made it past go to", 1);
         telemetry.update();
         ConveyorLeft.setPower(1);
@@ -843,7 +848,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         turnToCryptobox(startingPosition);
         drive(.2, Reverse, .5);
         extendCryptoboxArmForFirstGlyph();
+        FlipperServo.setPosition(FlipperServoUpPos);
         EncoderDrive(.25, 3, Reverse, stayOnHeading, 1);
+        ConveyorLeft.setPower(-1);
+        ConveyorRight.setPower(-1);
         findColumn(1);
         stopDriveMotors();
         placeByFlipping(3);
@@ -992,7 +1000,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
             double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
 
             while(!haveGlyph() && opModeIsActive() && runtime.seconds() < 22 && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) )  {
-                moveBy(.15, 0,0);
+                moveBy(.25, 0,0);
+                smartIntake();
             }
             //intakeGlyph();
             glyphs += 1;
@@ -1217,13 +1226,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
          drive(.2, Reverse, .5);
      }*/
     public void placeByFlipping(double timeout){
+        FlipperServo.setPosition(FlipperServoUpPos);
         double startTime = runtime.seconds();
         boolean placed = false;
         EncoderDrive(.35, 2, Forward, stayOnHeading, 2);
         double dumpingPower = .65;
         DumpingMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        while(!placed && startTime + 1.5 > runtime.seconds()) {
+        while(!placed && startTime + 1 > runtime.seconds()) {
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - EncoderTicksToDump);
             while (DumpingMotor.isBusy()) {
                 DumpingMotor.setPower(-dumpingPower);
@@ -1243,6 +1253,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double startingRuntime = runtime.seconds();
         while ((DumperTouchSensorRight.getState() || DumperTouchSensorLeft.getState()) && runtime.seconds() - startingRuntime < .5 && opModeIsActive()) {
             DumpingMotor.setPower(dumpingPower);
+            moveBy(-.3, 0,0);
         }
         DumpingMotor.setPower(0);
     }
@@ -1250,7 +1261,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         drive(.4, Reverse, .5);
     }
     public void smartIntake(){
-        double intakeValLeft = 18;
+        double intakeValLeft = 16;
         double speed = 1;
         double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
         if (SensorVal <= intakeValLeft && SensorVal > 6) {
@@ -1258,9 +1269,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
             ConveyorLeft.setPower(speed);
         }else if(SensorVal > intakeValLeft){
             ConveyorRight.setPower(speed);
-            ConveyorLeft.setPower(speed/1.1);
+            ConveyorLeft.setPower(-speed);
         }else if (SensorVal <= 5.5) {
-            ConveyorRight.setPower(speed/1.1);
+            ConveyorRight.setPower(-speed);
             ConveyorLeft.setPower(speed);
         }else {
             ConveyorRight.setPower(speed);
