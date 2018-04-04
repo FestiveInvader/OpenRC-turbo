@@ -9,10 +9,10 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         while(opModeIsActive()){
-            EncoderDrive(.75, 25, 10, 10, Forward, stayOnHeading, 8);
-            sleep(1000);
-            EncoderDrive(.75, 25, 10, 10, Reverse,stayOnHeading, 8);
-            sleep(1000);
+            EncoderDriveAccelDecel(.5, 20, 8, Forward, stayOnHeading, 8);
+            sleep(2000);
+            EncoderDriveAccelDecel(.5, 20, 8, Reverse, stayOnHeading, 8);
+            sleep(2000);
 
         }
     }

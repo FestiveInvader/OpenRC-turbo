@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -13,7 +12,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -21,13 +19,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.teamcode.Autonomous.I2CXLv2;
 
-import java.sql.Time;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 //@Author Eric Adams, Team 8417 'Lectric Legends
 
@@ -257,7 +250,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         stopDriveMotors();
     }
-    public void EncoderDrive(double speed, double Inches, double accelerationInches, double decelerationInches, int direction, double heading, double timeout) {
+    public void EncoderDrive(double speed, double Inches, int direction, double heading, double timeout) {
         //Here's the encoder drive Michael
         double startTime = runtime.seconds();
         double Heading = 0;
@@ -288,6 +281,51 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }
             stopDriveMotors();
         }
+    }
+    public void EncoderDriveAccelDecel(double speed, double inches, double decelInches, int direction, double heading, double timeout){
+        double startTime = runtime.seconds();
+        double Heading = 0;
+        boolean notAtTarget = true;
+        if (heading == 84.17){
+            Heading = getHeading();
+        }else{
+            Heading = heading;
+        }
+        double target;
+        if (opModeIsActive() ) {
+            FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            double power = 0;
+            double error;
+
+
+            target = FrontLeft.getCurrentPosition() + (int) (inches * CountsPerInch * direction);
+            double decelTicks = (int) (decelInches * CountsPerInch);
+
+            while(Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 50 && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
+                double motorPos = Math.abs(FrontLeft.getCurrentPosition());
+                error = Math.abs(target) - Math.abs(motorPos);
+                //decel
+                if(Math.abs(motorPos) < Math.abs(target) - Math.abs(decelTicks)){
+                    gyroDrive(Heading, speed, direction);
+                    telemetry.addData("FrontLeftPwr", FrontLeft.getPower());
+                    telemetry.addData("In speeeeeeeed", FrontLeft.getPower());
+                    telemetry.update();
+                }else {
+                    gyroDrive(Heading, Range.clip(power, .15, 1), direction);
+                    telemetry.addData("FrontLeftPwr", FrontLeft.getPower());
+                    telemetry.addData("In Decel", FrontLeft.getPower());
+                    telemetry.update();
+                }
+
+            }
+            stopDriveMotors();
+        }
+
     }
 
     public void gyroTurn(double speed, double angle) {
@@ -492,19 +530,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1 || startingPosition == 4) {
             if (Direction == Reverse) {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDrive(.5, 12 + DistanceToTravel, 2, 4, Direction, stayOnHeading, 3 );
+                    EncoderDriveAccelDecel(.5, 12 + DistanceToTravel, 12, Direction, stayOnHeading, 3 );
                 } else {
-                    EncoderDrive(.5, 17 + DistanceToTravel, 2, 6, Direction,stayOnHeading, 3);
+                    EncoderDriveAccelDecel(.5, 17 + DistanceToTravel, 12, Direction,stayOnHeading, 3);
                 }
             } else {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDrive(.5, 12 + DistanceToTravel, 2, 6,Direction, stayOnHeading, 3);
+                    EncoderDriveAccelDecel(.5, 12 + DistanceToTravel, 12,Direction, stayOnHeading, 3);
                 } else {
-                    EncoderDrive(.5, 18 + DistanceToTravel, 2,6,Direction, stayOnHeading, 3);
+                    EncoderDriveAccelDecel(.5, 18 + DistanceToTravel, 12,Direction, stayOnHeading, 3);
                 }
             }
         }else{
-            EncoderDrive(.2,  DistanceToTravel, 2,4,Forward, stayOnHeading, 5);
+            EncoderDriveAccelDecel(.5,  DistanceToTravel, 12, Forward, stayOnHeading, 5);
         }
         currentColumn = PylonsToFind;
         if(Direction == Reverse) {
@@ -576,9 +614,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void extendCryptoboxArmForFirstGlyph(){
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.175, 6.5, 0,0, Forward, stayOnHeading, 5);
+        EncoderDrive(.175, 6.5, Forward, stayOnHeading, 5);
         sleep(300);
-        EncoderDrive(.175, 4, 0,0,Reverse, stayOnHeading, 2);
+        EncoderDrive(.175, 4, Reverse, stayOnHeading, 2);
     }
     public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset, int startingPosition){
         // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
@@ -789,7 +827,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FlipperServo.setPosition(FlipperServoDownPos);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
-        EncoderDrive(.95, 24,  4,6,Forward, stayOnHeading, .75);
+        EncoderDrive(.95, 24, Forward, stayOnHeading, .75);
         telemetry.addData("Made it past encoder", 1);
         telemetry.update();
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
@@ -805,7 +843,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         turnToCryptobox(startingPosition);
         drive(.2, Reverse, .5);
         extendCryptoboxArmForFirstGlyph();
-        EncoderDrive(.25, 3, 1,1,Reverse, stayOnHeading, 1);
+        EncoderDrive(.25, 3, Reverse, stayOnHeading, 1);
         findColumn(1);
         stopDriveMotors();
         placeByFlipping(3);
@@ -903,7 +941,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double startingRotation = getHeading();
         double angleMultiplier = cryptoboxPylonsToGo(-direction);
-        EncoderDrive(.175, 6, 1,1,Forward, stayOnHeading, 2);
+        EncoderDrive(.175, 6, Forward, stayOnHeading, 2);
         double turningAngle = 0;
         if( startingPosition == 2){
             turningAngle = -25 - 10*angleMultiplier;
@@ -911,7 +949,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             turningAngle =  -155 + 10*angleMultiplier;
         }
         gyroTurn(turningSpeed, turningAngle);
-        EncoderDrive(.95, 30,  4,6,Forward, stayOnHeading, 2.5);
+        EncoderDrive(.95, 30, Forward, stayOnHeading, 2.5);
         Blocker.setPosition(BlockerServoUp);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         //driveToGlyphs(startingPosition, 6);
@@ -920,9 +958,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int PylonsToFind = cryptoboxPylonsToGo(direction);
 
         if(PylonsToFind == 2){
-            EncoderDrive(.85, 28, 4,6,Reverse, stayOnHeading, 4);
+            EncoderDrive(.85, 28, Reverse, stayOnHeading, 4);
         }else {
-            EncoderDrive(.85, 24, Reverse, 4, 6, stayOnHeading, 4);
+            EncoderDrive(.85, 24, 6, stayOnHeading, 4);
         }
         turnToCryptobox(startingPosition);
         driveWStrafe(-.15, 0, 0, .75);
@@ -932,7 +970,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(PylonsToFind == 0){
             placeByFlipping(3);
         }else {
-            EncoderDrive(.15, 3.15, 1,1,Reverse, stayOnHeading, 1);
+            EncoderDrive(.15, 3.15, Reverse, stayOnHeading, 1);
             findColumn(1.25);
             stopDriveMotors();
             placeByFlipping(3);
@@ -991,7 +1029,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
         stopDriveMotors();
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
-        EncoderDrive(1, Math.abs(inchesToDrive), 2,2,Reverse, stayOnHeading, 1.5);
+        EncoderDrive(1, Math.abs(inchesToDrive), Reverse, stayOnHeading, 1.5);
     }
     /* public void intakeGlyphs(int inches){
          boolean haveGlyph = false;
@@ -1097,7 +1135,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1){
             if(Direction == Forward) {
                 knockedCryptoboxSideJewel = true;
-                EncoderDrive(.35, 5, 1,0,Reverse, stayOnHeading, 5);
+                EncoderDrive(.35, 5, Reverse, stayOnHeading, 5);
             }else{
                 double TurningAngle = 4 * Direction;
                 gyroTurn(turningSpeed, TurningAngle);
@@ -1105,7 +1143,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }else if (startingPosition == 4){
             if(Direction == Reverse) {
                 knockedCryptoboxSideJewel = true;
-                EncoderDrive(.35, 5,1,0, Forward, stayOnHeading, 5);
+                EncoderDrive(.35, 5, Forward, stayOnHeading, 5);
             }else{
                 double TurningAngle = 4 * Direction;
                 gyroTurn(turningSpeed, TurningAngle);
@@ -1181,7 +1219,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void placeByFlipping(double timeout){
         double startTime = runtime.seconds();
         boolean placed = false;
-        EncoderDrive(.35, 2, 0,0, Forward, stayOnHeading, 2);
+        EncoderDrive(.35, 2, Forward, stayOnHeading, 2);
         double dumpingPower = .65;
         DumpingMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -1193,14 +1231,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 telemetry.addData("Target Pos", DumpingMotor.getTargetPosition());
                 telemetry.addData("Difference for while", (Math.abs(DumpingMotor.getCurrentPosition())) - 1200);
                 telemetry.update();
-                moveBy(.075, 0, 0);
+                //moveBy(.075, 0, 0);
             }
             placed = true;
 
         }
         sleep(150);
         FlipperServo.setPosition(FlipperServoDownPos);
-        EncoderDrive(.15, 5, 1.5, 1.5, Forward, stayOnHeading, 1.5);
+        EncoderDrive(.15, 5, Forward, stayOnHeading, 1.5);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double startingRuntime = runtime.seconds();
         while ((DumperTouchSensorRight.getState() || DumperTouchSensorLeft.getState()) && runtime.seconds() - startingRuntime < .5 && opModeIsActive()) {
