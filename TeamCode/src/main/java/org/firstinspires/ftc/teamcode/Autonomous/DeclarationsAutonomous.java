@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
-import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -23,23 +23,17 @@ import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.teamcode.vision.DogeCVJewelTracker;
-import org.firstinspires.ftc.teamcode.vision.VuforiaCamera;
-import org.firstinspires.ftc.teamcode.vision.VuforiaVuMarkTracker;
+import org.firstinspires.ftc.teamcode.Autonomous.I2CXLv2;
 
+import java.sql.Time;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 //@Author Eric Adams, Team 8417 'Lectric Legends
 
 public class DeclarationsAutonomous extends LinearOpMode {
     // This section declares hardware for the program, such as Motors, servos and sensors
     // Declare Motors
-
-    public JewelDetector jewelDetector;
-    public VuforiaHardware vuforiaHardware;
-
-    private JewelDetector.JewelOrder jewelOrder = JewelDetector.JewelOrder.UNKNOWN;
-
     public DcMotor FrontLeft = null;              // NeveRest Orbital 20
     public DcMotor BackLeft = null;               // NeveRest Orbital 20
     public DcMotor FrontRight = null;             // NeveRest Orbital 20
@@ -53,6 +47,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public Servo Blocker = null;                  // Rev SRS  Heh, block-er
     public Servo JewelArm = null;                 // Rev SRS
     public Servo CryptoboxServo = null;           // Rev SRS
+    public Servo IntakeServo;
     public Servo FlipperServo;
 
 
@@ -64,7 +59,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public DistanceSensor FlipperDistance2;
     public BNO055IMU IMU;
     public I2CXLv2 BackDistance;
-    public I2CXLv2 RightDistance;
 
     // Variables used  in functions
     double CountsPerRev = 537.6;    // Andymark NeveRest 20 encoder counts per revolution
@@ -118,8 +112,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     double JewelServoDownPos = .14; //.2 really
     double RegularTurnSpeed = .165;
     double IntakeSpeed = -.7;
-    double CryptoboxServoInPos = .1;
-    double CryptoboxServoOutPos = .9;
+    double CryptoboxServoInPos = 0;
+    double CryptoboxServoOutPos = 1;
     double CryptoboxServoMidPos = .65;
     double programStartOrientation;
     double stayOnHeading = 84.17;
@@ -129,18 +123,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
     boolean CenterColumnPlaced = false;
     boolean RightColumnPlaced = false;
 
-    JewelDetector.JewelOrder JEWELORDER = JewelDetector.JewelOrder.UNKNOWN;
+
     boolean knockedCryptoboxSideJewel = false;
 
     VuforiaLocalizer vuforia;
-    RelicRecoveryVuMark CryptoKey = RelicRecoveryVuMark.UNKNOWN;
-    public ElapsedTime runtime = new ElapsedTime();
+    VuforiaHardware vuforiaHardware;
+    RelicRecoveryVuMark CryptoKey;
     RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.UNKNOWN;
-
-    protected VuforiaCamera camera;
-    protected DogeCVJewelTracker jewelTracker;
-    protected VuforiaVuMarkTracker vuMarkTracker;
-
+    public ElapsedTime runtime = new ElapsedTime();
 
     float d = 0;
     float denom = 0;
@@ -150,7 +140,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     int count_list[]=new int[1];
     long time_list[]=new long[1];
     boolean columnsPlaced[] = new boolean[3];
-    boolean senseJewels = false;
 
 
 
@@ -158,17 +147,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     int color = 0;
     @Override
     public void runOpMode() {
-        jewelDetector = new JewelDetector();
-        jewelDetector.downScaleFactor = 0.4;
-        jewelDetector.ratioWeight = 30;
-        jewelDetector.perfectRatio = 1.0;
-        jewelDetector.areaWeight = 0.003;
-        jewelDetector.maxDiffrence = 200;
-        jewelDetector.debugContours = true;
-        jewelDetector.detectionMode = JewelDetector.JewelDetectionMode.PERFECT_AREA;
-        jewelDetector.perfectArea = 5550;
-        jewelDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-
         // This section gets the hardware maps
         Arrays.fill(columnsPlaced, Boolean.FALSE);
         //Makes sure that the booleans start as false
@@ -196,6 +174,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         Blocker = hardwareMap.servo.get("Blocker");
         JewelArm = hardwareMap.servo.get("JewelServo");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
+        IntakeServo = hardwareMap.servo.get("IntakeServo");
         FlipperServo = hardwareMap.servo.get("FlipperServo");
 
         // Initialize and hardware map Sensors
@@ -224,59 +203,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // End Init IMU
         telemetry.addData("IMU Init'd", true);
         telemetry.update();
-
-        /*int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-        // OR...  Do Not Activate the Camera Monitor View, to save power
-        parameters.vuforiaLicenseKey = "ASW6AVr/////AAAAGcNlW86HgEydiJgfyCjQwxJ8z/aUm0uGPANypQfjy94MH3+UHpB" +
-                "60bep2E2CIpQCtDevYkE3I9xx1nrU3d9mxfoelhGARuvw7GBwTSjMG0GDQbuSgWGZ1X1IVW35MjOoeg57y/IJGCosxEGz" +
-                "J0VHTFmKLkPoGCHQysZ2M2d8AVQDyG+PobNjbYQeC16TZJ7SJyXHr7MJxpj/MKbRwb/bZ1icAvWdrNWiB48dyRjIESk7MewD" +
-                "X5ke8X6KEjZkKFiQxbAeCbh3DoxTXVJujcSHAdzncIsFIxLqvh5pX0il9tX+vs+64CUjEbi/HaES7S0q3d3MrVQMCXz77zynqv" +
-                "iei9O/4BmYcLw6W7c+Es0sClX/";
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
-        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
-
-        VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
-        VuforiaTrackable relicTemplate = relicTrackables.get(0);
-        relicTemplate.setName("relicVuMarkTemplate"); // can help in debugging; otherwise not necessary
-        telemetry.addData("Init'd VuForia ", 1);
-        telemetry.update();
-        relicTrackables.activate();
-*/
-      /*  Blocker.setPosition(BlockerServoUp);
-        JewelArm.setPosition(JewelServoUpPos);
-
-        camera = new VuforiaCamera();
-
-        telemetry.addData("Camera initd", true);
-        telemetry.update();
-        jewelTracker = new DogeCVJewelTracker(jewelDetector);
-        telemetry.addData("DogeCV Initd", true);
-        telemetry.update();
-        vuMarkTracker = new VuforiaVuMarkTracker();
-        telemetry.addData("Vumark Tracker Initd", true);
-        telemetry.update();
-        camera.addTracker(jewelTracker);
-        telemetry.addData("Jewel tracker Added", true);
-        telemetry.update();
-        camera.addTracker(vuMarkTracker);
-        telemetry.addData("Vumark tracker added", true);
-        telemetry.update();
-        telemetry.addData("Camera Initialized", true);
-        telemetry.update();
-
-        camera.initialize();
-        vuMarkTracker.enable();
-        while(!isStarted()){
-            //set cryptokey to vuforia
-            //set jewels to last position
-            CryptoKey = vuMarkTracker.getVuMark();
-            JEWELORDER = jewelTracker.getLastOrder();
-            telemetry.addData("Cryptokey", CryptoKey);
-            telemetry.addData("JewelOrder", JEWELORDER);
-            telemetry.update();
-        }*/
-       // jewelTracker.disable();
         vuforiaHardware = new VuforiaHardware();
 
         vuforiaHardware.Init(hardwareMap);
@@ -302,55 +228,20 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.update();
         LinearSlideMotor.setPower(0);
         vuforiaHardware.Stop();
-/*
-        if(!isStarted()) {
-            jewelDetector.enable();
-
-            while (!isStarted() || jewelOrder == JewelDetector.JewelOrder.UNKNOWN) {
-                jewelOrder = jewelDetector.getLastOrder();
-                telemetry.addData("Vumark Found!!!!", CryptoKey);
-                telemetry.addData("Jewel Order Found!", jewelOrder);
-                telemetry.addData("Thumbs Up!", 1);
-                telemetry.update();
-            }
-            jewelDetector.disable();
-        }else{
-            senseJewels = true;
-        }*/
-
-       /* while(!isStarted()){
-            telemetry.addData("Ready to start", CryptoKey);
-            telemetry.update();
-        }
-        LinearSlideMotor.setPower(0);
-        runtime.reset();
-
-        while(CryptoKey == RelicRecoveryVuMark.UNKNOWN && runtime.seconds() < .2){
-            RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
-            if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
-                CryptoKey = vuMark;
-                telemetry.addData("VuMark", "%s visible", vuMark);
-                telemetry.addData("int val", CryptoKey);
-            }
-            else {
-                telemetry.addData("VuMark", "not visible");
-            }
-            telemetry.update();
-        }*/
     }
 
     // Start Movement methods
     public void drive(double speed, int direction, double time){
-       double startingHeading = getHeading();
-       double timeStarted = runtime.time();
-       FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-       FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-       BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-       BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        double startingHeading = getHeading();
+        double timeStarted = runtime.time();
+        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-       while(opModeIsActive() && runtime.time() - timeStarted < time) {
-           gyroDrive(startingHeading, speed, direction);
-       }
+        while(opModeIsActive() && runtime.time() - timeStarted < time) {
+            gyroDrive(startingHeading, speed, direction);
+        }
         stopDriveMotors();
     }
     public void driveWStrafe(double yspeed, double xspeed, double rotation, double time){
@@ -363,17 +254,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
         while(opModeIsActive() && runtime.seconds() - timeStarted < time) {
             moveBy(yspeed, xspeed, rotation);
-            telemetry.addData("In DriveWStrafe", 1);
-            telemetry.addData("Seconds", time);
-            telemetry.addData("Y speed", "XSpeed", yspeed, xspeed);
-            telemetry.update();
         }
         stopDriveMotors();
     }
-    public void EncoderDrive(double speed, double Inches, int direction, double heading, double timeout) {
+    public void EncoderDrive(double speed, double Inches, double accelerationInches, double decelerationInches, int direction, double heading, double timeout) {
         //Here's the encoder drive Michael
         double startTime = runtime.seconds();
         double Heading = 0;
+        boolean notAtTarget = true;
         if (heading == 84.17){
             Heading = getHeading();
         }else{
@@ -389,20 +277,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
             BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
             target = FrontLeft.getCurrentPosition() + (int) (Inches * CountsPerInch * direction);
+            while(opModeIsActive() && notAtTarget) {
 
-            while (opModeIsActive() && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 50
-                    && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
-                gyroDrive(Heading, speed, direction);
-                //smartIntake(); Conveyor/intake
-                telemetry.addData("encoder driving", "ZOOOOM");
-                telemetry.addData("Encoder Ticks", FrontLeft.getCurrentPosition());
-                telemetry.addData("Encoder Target", target);
-                telemetry.addData("Difference", Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()));
-                telemetry.update();
+                if (Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 25 && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
+                    gyroDrive(Heading, speed, direction);
+                    //smartIntake(); Conveyor/intake
+                }else{
+                    notAtTarget = false;
+                }
             }
             stopDriveMotors();
         }
     }
+
     public void gyroTurn(double speed, double angle) {
         // keep looping while we are still active, and not on heading.
         while (opModeIsActive() && !onHeading(speed, -angle, P_TURN_COEFF)) {
@@ -553,7 +440,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void driveToCrypotboxEncoders(int Direction, int startingPosition) {
         int PylonsToFind = cryptoboxPylonsToGo(Direction);
         double DistanceToTravel = 0;
-            // Blue side
+        // Blue side
         if(startingPosition == 1 || startingPosition == 4){
             if(Direction == Reverse){
                 if (PylonsToFind == 0) {
@@ -605,19 +492,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1 || startingPosition == 4) {
             if (Direction == Reverse) {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDrive(.5, 10 + DistanceToTravel, Direction, stayOnHeading, 3 );
+                    EncoderDrive(.5, 12 + DistanceToTravel, 2, 4, Direction, stayOnHeading, 3 );
                 } else {
-                    EncoderDrive(.5, 15 + DistanceToTravel, Direction,stayOnHeading, 3);
+                    EncoderDrive(.5, 17 + DistanceToTravel, 2, 6, Direction,stayOnHeading, 3);
                 }
             } else {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDrive(.5, 10 + DistanceToTravel, Direction, stayOnHeading, 3);
+                    EncoderDrive(.5, 12 + DistanceToTravel, 2, 6,Direction, stayOnHeading, 3);
                 } else {
-                    EncoderDrive(.5, 16 + DistanceToTravel, Direction, stayOnHeading, 3);
+                    EncoderDrive(.5, 18 + DistanceToTravel, 2,6,Direction, stayOnHeading, 3);
                 }
             }
         }else{
-            EncoderDrive(.5,  DistanceToTravel, Forward, stayOnHeading, 5);
+            EncoderDrive(.2,  DistanceToTravel, 2,4,Forward, stayOnHeading, 5);
         }
         currentColumn = PylonsToFind;
         if(Direction == Reverse) {
@@ -670,31 +557,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return PylonsToFind;
     }
 
-    public void driveToCryptoboxDistanceVariance(int Direction){
-        int MinTol = 6;
-        int MaxTol = 20;
-        boolean foundPylon = false;
-        double LastLoopDistance = RightDistance.getDistance();
-        while (opModeIsActive() && !foundPylon) {
-            int ThisLoopDistance = RightDistance.getDistance();
-            if(ThisLoopDistance > 60 || ThisLoopDistance < 21 || LastLoopDistance > 60 || LastLoopDistance < 21){
-                //sensor val is bad, skip this loop
-                gyroDrive(0, .11, Direction);
-            }else if(Math.abs(ThisLoopDistance - LastLoopDistance) >= MinTol &&
-                    Math.abs(ThisLoopDistance - LastLoopDistance) <= MaxTol){
-                foundPylon = true;
-            }else{
-                gyroDrive(0, .11, Direction);
-            }
-            telemetry.addData("This loop" , ThisLoopDistance);
-            telemetry.addData("Last loop" , LastLoopDistance);
-            telemetry.addData("Difference", Math.abs(ThisLoopDistance - LastLoopDistance));
-            telemetry.addData("Vumark", CryptoKey);
-            telemetry.update();
-            LastLoopDistance = ThisLoopDistance;
-        }
-        stopDriveMotors();
-    }
+
     public void turnToCryptobox (int startingPosition){
         int heading = 0;
         if(startingPosition == 1){
@@ -713,9 +576,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void extendCryptoboxArmForFirstGlyph(){
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        EncoderDrive(.175, 6.5, Forward, stayOnHeading, 5);
-        sleep(200);
-        EncoderDrive(.175, 4, Reverse, stayOnHeading, 2);
+        EncoderDrive(.175, 6.5, 0,0, Forward, stayOnHeading, 5);
+        sleep(300);
+        EncoderDrive(.175, 4, 0,0,Reverse, stayOnHeading, 2);
     }
     public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset, int startingPosition){
         // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
@@ -751,11 +614,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         findColumn(1.5);
         stopDriveMotors();
         placeByFlipping(3);
-        pushInFirstGlyph();
+
+
     }
     public void endAuto(){
         JewelArm.setPosition(JewelServoDistancePos);
-        //go to distance with timout of like .25 seconds?
         drive(1, Forward, .125);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
         sleep(200);
@@ -763,7 +626,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("Vumark", CryptoKey);
         telemetry.addData("Color", color);
         telemetry.addData("No Glyphs", glyphs);
-        telemetry.addData("Have a Nice Day!!!", ":) <3");
         telemetry.update();
         sleep(3000);
 
@@ -779,14 +641,13 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // whenever a distance value is less than what the distance is to the wall, that means there's
         // a pylon in that location, and we can a ssume our position from there
         boolean FoundPylon = false;
-         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
-            if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6.25 ) {
-                moveBy(0, .3, 0); //moveBy is a function that handles robot movement
-            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 7.25){
+        while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
+            if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6.5 ) {
+                moveBy(.015, .3, 0); //moveBy is a function that handles robot movement
+            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 8.25){
                 FoundPylon = true;
             }else {
-                moveBy(0, -.3, 0); //moveBy is a function that handles robot movement
-                //Speed maybe .275 for higher voltage batteries, but for MG testing .3 is good
+                moveBy(.015, -.3, 0); //moveBy is a function that handles robot movement
             }
         }
         /*double error;
@@ -853,7 +714,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
             telemetry.addData("speed", FrontLeft.getPower());
             telemetry.update();
         }
-        stopDriveMotors();
     }
     public int getColumnsToTravelMG(){
         telemetry.addData("started get column", 1);
@@ -861,7 +721,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int columnToGoTo = 0;
         int columnsToTravel = 0;
         boolean foundColumnToGoTo = false;
-         int c = 0;
+        int c = 0;
         for(boolean e : columnsPlaced) {
             if(e) {
                 columnToGoTo = c;
@@ -870,7 +730,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }
             c++;
         }
-        sleep(1500);
         columnsToTravel = currentColumn - columnToGoTo;
         telemetry.addData("Columns to go", columnsToTravel);
         telemetry.update();
@@ -930,7 +789,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FlipperServo.setPosition(FlipperServoDownPos);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
-        EncoderDrive(.95, 24,  Forward, stayOnHeading, .75);
+        EncoderDrive(.95, 24,  4,6,Forward, stayOnHeading, .75);
         telemetry.addData("Made it past encoder", 1);
         telemetry.update();
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
@@ -946,7 +805,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         turnToCryptobox(startingPosition);
         drive(.2, Reverse, .5);
         extendCryptoboxArmForFirstGlyph();
-        EncoderDrive(.25, 3, Reverse, stayOnHeading, 1);
+        EncoderDrive(.25, 3, 1,1,Reverse, stayOnHeading, 1);
         findColumn(1);
         stopDriveMotors();
         placeByFlipping(3);
@@ -984,13 +843,67 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // add if time < needed time go back
         // else pick up another?
     }
+    /*public void ramThePitRelicSide(int startingPosition, int direction){
+        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        FlipperServo.setPosition(FlipperServoDownPos);
+        IntakeServo.setPosition(IntakeServoDown);
+        EncoderDrive(.95, 18,  Forward, stayOnHeading, 5);
+        ConveyorLeft.setPower(1);
+        ConveyorRight.setPower(1);
+        CryptoboxServo.setPosition(CryptoboxServoMidPos);
+        driveToGlyphs(startingPosition, 6);
+        turnToCryptobox(startingPosition);
+        CryptoboxServo.setPosition(CryptoboxServoMidPos);
+        double time =.5;
+        findWall(-1, 55, 3);
+        //Add for which columns it goes which next column
+        int PylonsToFind = cryptoboxPylonsToGo(direction);
+
+        *//*if(PylonsToFind == 1) {
+            if(direction == Forward){
+                gyroTurn(turningSpeed, -140);
+            }else{
+                gyroTurn(turningSpeed, -150);
+            }
+            EncoderDrive(.35, 10, Reverse, stayOnHeading, 1);
+        }else if (PylonsToFind == 0){
+            if(direction == Forward){
+                gyroTurn(turningSpeed, -110);
+            }else {
+                //blue
+                gyroTurn(turningSpeed, -100);
+            }
+            EncoderDrive(.35, 15, Reverse, stayOnHeading, 1);
+        }else if (PylonsToFind == 2){
+            if(direction == Forward){
+                gyroTurn(turningSpeed, -105);
+            }else {
+                //blue
+                gyroTurn(turningSpeed, -100);
+            }
+            EncoderDrive(.75, 15, Reverse, stayOnHeading, 1);
+        }*//*
+        turnToCryptobox(startingPosition);
+        findWall(-.35, 35, 3);
+        driveWStrafe(-.2, 0, 0, .5);
+
+        turnToCryptobox(startingPosition);
+        extendCryptoboxArmForFirstGlyph();
+        EncoderDrive(.15, 3.15, Reverse, stayOnHeading, 1);
+        findColumn(1.25);
+        stopDriveMotors();
+        placeByFlipping(2);
+        // add if time < needed time go back
+        // else pick up another?
+    }*/
 
     public void ramThePitTeamSide(int startingPosition, int direction){
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double startingRotation = getHeading();
         double angleMultiplier = cryptoboxPylonsToGo(-direction);
-        EncoderDrive(.175, 6, Forward, stayOnHeading, 2);
+        EncoderDrive(.175, 6, 1,1,Forward, stayOnHeading, 2);
         double turningAngle = 0;
         if( startingPosition == 2){
             turningAngle = -25 - 10*angleMultiplier;
@@ -998,7 +911,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             turningAngle =  -155 + 10*angleMultiplier;
         }
         gyroTurn(turningSpeed, turningAngle);
-        EncoderDrive(.95, 30,  Forward, stayOnHeading, 2.5);
+        EncoderDrive(.95, 30,  4,6,Forward, stayOnHeading, 2.5);
         Blocker.setPosition(BlockerServoUp);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         //driveToGlyphs(startingPosition, 6);
@@ -1007,9 +920,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         int PylonsToFind = cryptoboxPylonsToGo(direction);
 
         if(PylonsToFind == 2){
-            EncoderDrive(.85, 28, Reverse, stayOnHeading, 4);
+            EncoderDrive(.85, 28, 4,6,Reverse, stayOnHeading, 4);
         }else {
-            EncoderDrive(.85, 24, Reverse, stayOnHeading, 4);
+            EncoderDrive(.85, 24, Reverse, 4, 6, stayOnHeading, 4);
         }
         turnToCryptobox(startingPosition);
         driveWStrafe(-.15, 0, 0, .75);
@@ -1019,7 +932,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(PylonsToFind == 0){
             placeByFlipping(3);
         }else {
-            EncoderDrive(.15, 3.15, Reverse, stayOnHeading, 1);
+            EncoderDrive(.15, 3.15, 1,1,Reverse, stayOnHeading, 1);
             findColumn(1.25);
             stopDriveMotors();
             placeByFlipping(3);
@@ -1041,11 +954,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
             double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
 
             while(!haveGlyph() && opModeIsActive() && runtime.seconds() < 22 && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) )  {
-                moveBy(.2, 0,0);
-                smartIntake();
+                moveBy(.15, 0,0);
             }
-            ConveyorRight.setPower(0);
-            ConveyorLeft.setPower(0);
+            //intakeGlyph();
+            glyphs += 1;
+            //EncoderDrive(.75, 10, Reverse, stayOnHeading, 1.5);
             gotGlyph = true;
         }
     }
@@ -1078,26 +991,113 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
         stopDriveMotors();
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
-        EncoderDrive(1, Math.abs(inchesToDrive), Reverse, stayOnHeading, 1.5);
+        EncoderDrive(1, Math.abs(inchesToDrive), 2,2,Reverse, stayOnHeading, 1.5);
     }
+    /* public void intakeGlyphs(int inches){
+         boolean haveGlyph = false;
+         int color = 0;
+         double startingHeading = getHeading();
+         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+         double startingEncoderCount = FrontLeft.getCurrentPosition();
+         double limitEncoderCount = startingEncoderCount + inches*CountsPerInch;
+         DumpConveyor.setPower(1);
+         ConveyorLeft.setPower(1);
+         ConveyorRight.setPower(1);
+         TopIntakeServoLeft.setPower(1);
+         TopIntakeServoRight.setPower(1);
+         while(!haveGlyph && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) && runtime.seconds() < 24){
 
-    // End movement methods
+             gyroDrive(startingHeading, .2, Forward);
+             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+             if (SensorVal <= 14) {
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+                 haveGlyph = true;
+             }else if(SensorVal > 14 && SensorVal < 20){
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(IntakeSpeed);
+             }else if (SensorVal >= 20){
+                 IntakeServoLeft.setPower(-IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+             }else{
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+             }
+             telemetry.addData("CurrentPos", FrontLeft.getCurrentPosition());
+             telemetry.addData("Limit Pos", limitEncoderCount);
+             telemetry.addData("Difference", Math.abs(limitEncoderCount) - Math.abs(FrontLeft.getCurrentPosition()));
+             telemetry.update();
+             //if color is > whatever, it's brown. Otherwise it's grey
+         }
+         stopDriveMotors();
+         double timeLimit = runtime.time(TimeUnit.SECONDS);
+         while(runtime.seconds() - timeLimit < .5){
+             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+             if (SensorVal <= 11) {
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+                 haveGlyph = true;
+             }else if(SensorVal > 11 && SensorVal < 20){
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(IntakeSpeed);
+             }else if (SensorVal >= 20){
+                 IntakeServoLeft.setPower(-IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+             }else{
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+             }
+             //if color is > whatever, it's brown. Otherwise it's grey
+         }
+         if(IntakeColor.alpha() > 130){
+             telemetry.addData("Grey", IntakeColor.alpha());
+             color = 1;
+         }else{
+             telemetry.addData("Brown", IntakeColor.alpha());
+             color = 2;
+         }
+         telemetry.update();
+         double time = runtime.time(TimeUnit.SECONDS);
+         while(runtime.seconds() - time < 1){
+             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+             if (SensorVal <= 11) {
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+                 haveGlyph = true;
+             }else if(SensorVal > 11 && SensorVal < 20){
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(IntakeSpeed);
+             }else if (SensorVal >= 20){
+                 IntakeServoLeft.setPower(-IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+             }else{
+                 IntakeServoLeft.setPower(IntakeSpeed);
+                 IntakeServoRight.setPower(-IntakeSpeed);
+             }
+             //if color is > whatever, it's brown. Otherwise it's grey
+         }
+         IntakeServoLeft.setPower(IntakeSpeed);
+         IntakeServoRight.setPower(-IntakeSpeed);
+         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
+         EncoderDrive(1, Math.abs(inchesToDrive), Reverse, stayOnHeading, 5);
+     }
+    */ // End movement methods
     // Motor and servo methods
     public void knockOffJewel(String AllianceColor, int startingPosition){
-
         JewelArm.setPosition(JewelServoDownPos);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         telemetry.addData("KnockingJewel", 10);
         telemetry.update();
-        sleep(750);
         // sleep to allow the jewel arm to go down
+        sleep(750);
         //Knock off the jewel.  If the jewel is the way we go to get the cryptobox, we drive forward
         // To knock off, otherwise we turn.  This is to
         int Direction = jewelDirection(AllianceColor);
         if(startingPosition == 1){
             if(Direction == Forward) {
                 knockedCryptoboxSideJewel = true;
-                EncoderDrive(.35, 5, Reverse, stayOnHeading, 5);
+                EncoderDrive(.35, 5, 1,0,Reverse, stayOnHeading, 5);
             }else{
                 double TurningAngle = 4 * Direction;
                 gyroTurn(turningSpeed, TurningAngle);
@@ -1105,7 +1105,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }else if (startingPosition == 4){
             if(Direction == Reverse) {
                 knockedCryptoboxSideJewel = true;
-                EncoderDrive(.35, 5, Forward, stayOnHeading, 5);
+                EncoderDrive(.35, 5,1,0, Forward, stayOnHeading, 5);
             }else{
                 double TurningAngle = 4 * Direction;
                 gyroTurn(turningSpeed, TurningAngle);
@@ -1114,106 +1114,74 @@ public class DeclarationsAutonomous extends LinearOpMode {
             double TurningAngle = 4 * Direction;
             gyroTurn(turningSpeed, TurningAngle);
         }
-
         JewelArm.setPosition(JewelServoUpPos);
         // Turn back to the original robot orientation
         gyroTurn(turningSpeed, 0);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
     }
-    public int jewelDirection(String AllianceColor) {
-        int Direction = 0;
-/*
-        if (senseJewels) {
-            while (JEWELORDER == JewelDetector.JewelOrder.UNKNOWN && runtime.seconds() < 4) {
-                JEWELORDER = jewelDetector.getLastOrder();
-            }
-
-            //maybe switch out to color sensor, if delay is too long
-            //It's possible that the open CV didn't detect, due to us scanning for vuforia and waiting for a change
-            //If that happens, we init CV while we put the jewel arm down, though maybe use color sensor?
-        }
-        if (runtime.seconds() < 4) {
-            if (JEWELORDER == JewelDetector.JewelOrder.RED_BLUE) {
-                //Jewel that sensor is pointing at is red, means that the robot will need to move
-                Direction = -1;
-            } else if (JEWELORDER == JewelDetector.JewelOrder.BLUE_RED) {
-                //Jewel that sensor is pointing at is blue
-                Direction = 1;
-            } else {
-                Direction = 0;
-            }
-        } else {
-            int Blue = JewelColor.blue();
-            int Red = JewelColor.red();
-            if (Red > Blue) {
-                //Jewel that sensor is pointing at is red, means that the robot will need to move
-                Direction = -1;
-            } else {
-                //Jewel that sensor is pointing at is blue
-                Direction = 1;
-            }
-        }*/
+    public int jewelDirection(String AllianceColor){
         int Blue = JewelColor.blue();
         int Red = JewelColor.red();
-        if (Red > Blue) {
+        int Direction = 0;
+        if(Red > Blue){
             //Jewel that sensor is pointing at is red, means that the robot will need to move
             Direction = -1;
-        } else {
+        }else{
             //Jewel that sensor is pointing at is blue
             Direction = 1;
         }
-        if (AllianceColor.equals("RED")) {
+        if (AllianceColor.equals("RED")){
+            //if the alliance
             Direction = -Direction;
         }
         return Direction;
     }
-
-    public void placeGlyph(RelicRecoveryVuMark Column){
-        EncoderDrive(.15, .5, Forward, stayOnHeading, 2);
-        Blocker.setPosition(BlockerServoDown);
-        //findColumn();
-        sleep(1000);
-        EncoderDrive(.15,  5, Forward, stayOnHeading, 2);
-        drive(-.15, Reverse, .5);
-        CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        drive(.2, Reverse, 1);
-    }
-    public void placeGlyphTeamside(){
-        Blocker.setPosition(BlockerServoDown);
-        //findColumn();
-        sleep(500);
-        EncoderDrive(.25,  6, Forward, stayOnHeading, 2);
-        CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        drive(.2, Reverse, 1);
-    }
-    public void placeSecondGlyphTeamside(){
-        Blocker.setPosition(BlockerServoDown);
-        //findColumn();
-        sleep(500);
-        drive(.2, Reverse, .5);
-        EncoderDrive(.25,  8, Forward, stayOnHeading, 2);
-        CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        while(runtime.seconds() < 28.75) {
-            moveBy(-.35, 0, 0 );
-        }
-    }
-    public void placeSecondGlyph() {
-        EncoderDrive(.15, 1.5, Forward, stayOnHeading, 1);
-        Blocker.setPosition(BlockerServoDown);
-        //findColumn();
-        sleep(500);
-        drive(.2, Reverse, .5);
-        sleep(500);
-        EncoderDrive(.15, 6, Forward, stayOnHeading, 2);
-        CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        drive(.2, Reverse, .5);
-        drive(.75, Forward, .2);
-        drive(.2, Reverse, .5);
-    }
+    /* public void placeGlyph(RelicRecoveryVuMark Column){
+         EncoderDrive(.15, .5, Forward, stayOnHeading, 2);
+         Blocker.setPosition(BlockerServoDown);
+         //findColumn();
+         sleep(1000);
+         EncoderDrive(.15,  5, Forward, stayOnHeading, 2);
+         drive(-.15, Reverse, .5);
+         CryptoboxServo.setPosition(CryptoboxServoMidPos);
+         drive(.2, Reverse, 1);
+     }
+     public void placeGlyphTeamside(){
+         Blocker.setPosition(BlockerServoDown);
+         //findColumn();
+         sleep(500);
+         EncoderDrive(.25,  6, Forward, stayOnHeading, 2);
+         CryptoboxServo.setPosition(CryptoboxServoMidPos);
+         drive(.2, Reverse, 1);
+     }
+     public void placeSecondGlyphTeamside(){
+         Blocker.setPosition(BlockerServoDown);
+         //findColumn();
+         sleep(500);
+         drive(.2, Reverse, .5);
+         EncoderDrive(.25,  8, Forward, stayOnHeading, 2);
+         CryptoboxServo.setPosition(CryptoboxServoMidPos);
+         while(runtime.seconds() < 28.75) {
+             moveBy(-.35, 0, 0 );
+         }
+     }
+     public void placeSecondGlyph() {
+         EncoderDrive(.15, 1.5, Forward, stayOnHeading, 1);
+         Blocker.setPosition(BlockerServoDown);
+         //findColumn();
+         sleep(500);
+         drive(.2, Reverse, .5);
+         sleep(500);
+         EncoderDrive(.15, 6, Forward, stayOnHeading, 2);
+         CryptoboxServo.setPosition(CryptoboxServoMidPos);
+         drive(.2, Reverse, .5);
+         drive(.75, Forward, .2);
+         drive(.2, Reverse, .5);
+     }*/
     public void placeByFlipping(double timeout){
         double startTime = runtime.seconds();
         boolean placed = false;
-        EncoderDrive(.35, 2, Forward, stayOnHeading, 2);
+        EncoderDrive(.35, 2, 0,0, Forward, stayOnHeading, 2);
         double dumpingPower = .65;
         DumpingMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -1232,7 +1200,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         sleep(150);
         FlipperServo.setPosition(FlipperServoDownPos);
-        EncoderDrive(.15, 5, Forward, stayOnHeading, 1.5);
+        EncoderDrive(.15, 5, 1.5, 1.5, Forward, stayOnHeading, 1.5);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double startingRuntime = runtime.seconds();
         while ((DumperTouchSensorRight.getState() || DumperTouchSensorLeft.getState()) && runtime.seconds() - startingRuntime < .5 && opModeIsActive()) {
