@@ -848,96 +848,43 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
 
     public void ramThePitRelicSide(int startingPosition, int direction){
-        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //Drive forward to pit
+        // get glyphs
+        // drive back to close to cryptobox
+        // go to correct column
+        // ram wall
+        // find column
+        // place glyph
+
+        //Drive forward to pit - Should be complete
         FlipperServo.setPosition(FlipperServoDownPos);
+        CryptoboxServo.setPosition(CryptoboxServoMidPos);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
-        EncoderDriveAccelDecel(.95, 30, 4, Forward, stayOnHeading, .75);
-        telemetry.addData("Made it past encoder", 1);
-        telemetry.update();
-        CryptoboxServo.setPosition(CryptoboxServoMidPos);
+        EncoderDrive(.95, 28, Forward, stayOnHeading, .75);
+
+        //Grab glyphs, this part needs work (also hardware side tho)
         driveToGlyphs(startingPosition, 16);
         FlipperServo.setPosition(FlipperServoUpPos);
+
+        //Drive back to cryptobox, this part needs a little work, maybe use findwall instead of goToDistance
         EncoderDrive(.75, 20, Reverse, stayOnHeading, 2);
         goToDistance(.75, 45, BackDistance, 1, 5);
-        telemetry.addData("Made it past go to", 1);
-        telemetry.update();
         ConveyorLeft.setPower(-1);
         ConveyorRight.setPower(-1);
+        //go to correct column - need some work, just strafeToColumn reliability/distances/power values
         strafeToColumnMG(direction);
-        telemetry.addData("Made it past strafing", 1);
-        telemetry.update();
-        //turnToCryptobox(startingPosition);
         drive(.2, Reverse, .5);
         extendCryptoboxArmForFirstGlyph();
         EncoderDrive(.25, 3, Reverse, stayOnHeading, 1);
+
+        //Find column and place glyphs - complete
         findColumn(1);
         stopDriveMotors();
         placeByFlippingSecondGlyph(3);
-        telemetry.addData("Made it past flipping", 1);
-        telemetry.update();
         //no more glyphs, end auton
-            FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            FlipperServo.setPosition(FlipperServoDownPos);
-            ConveyorLeft.setPower(1);
-            ConveyorRight.setPower(1);
-            EncoderDriveAccelDecel(.95, 30, 4, Forward, stayOnHeading, .75);
-            telemetry.addData("Made it past encoder", 1);
-            telemetry.update();
-            CryptoboxServo.setPosition(CryptoboxServoMidPos);
-            driveToGlyphs(startingPosition, 16);
-            goToDistance(.75, 60, BackDistance, 1, 5);
-            telemetry.addData("Made it past go to", 1);
-            telemetry.update();
-            ConveyorLeft.setPower(1);
-            ConveyorRight.setPower(1);
-            strafeToColumnMG(direction);
-            telemetry.addData("Made it past strafing", 1);
-            telemetry.update();
-            turnToCryptobox(startingPosition);
-            drive(.2, Reverse, .5);
-            extendCryptoboxArmForFirstGlyph();
-            FlipperServo.setPosition(FlipperServoUpPos);
-            EncoderDrive(.25, 3, Reverse, stayOnHeading, 1);
-            ConveyorLeft.setPower(-1);
-            ConveyorRight.setPower(-1);
-            findColumn(1);
-            stopDriveMotors();
-            placeByFlippingSecondGlyph(3);
-            telemetry.addData("Made it past flipping", 1);
-            telemetry.update();
-
-
         endAuto();
-        /*if(PylonsToFind == 1) {
-            if(direction == Forward){
-                gyroTurn(turningSpeed, -140);
-            }else{
-                gyroTurn(turningSpeed, -150);
-            }
-            EncoderDrive(.35, 10, Reverse, stayOnHeading, 1);
-        }else if (PylonsToFind == 0){
-            if(direction == Forward){
-                gyroTurn(turningSpeed, -110);
-            }else {
-                //blue
-                gyroTurn(turningSpeed, -100);
-            }
-            EncoderDrive(.35, 15, Reverse, stayOnHeading, 1);
-        }else if (PylonsToFind == 2){
-            if(direction == Forward){
-                gyroTurn(turningSpeed, -105);
-            }else {
-                //blue
-                gyroTurn(turningSpeed, -100);
-            }
-            EncoderDrive(.75, 15, Reverse, stayOnHeading, 1);
-        }*/
 
-        // add if time < needed time go back
-        // else pick up another?
     }
     /*public void ramThePitRelicSide(int startingPosition, int direction){
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
