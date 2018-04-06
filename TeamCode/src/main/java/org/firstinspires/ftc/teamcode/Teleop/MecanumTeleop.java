@@ -303,6 +303,8 @@ public class MecanumTeleop extends OpMode {
         }else{
             RelicYAxis.setPosition(RelicYAxisDownPosition);
         }
+
+
         //Right joystick for relic claw rotation
         //left bumper super secret switcher
 

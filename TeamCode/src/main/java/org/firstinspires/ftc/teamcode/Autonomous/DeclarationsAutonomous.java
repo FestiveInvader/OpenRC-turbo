@@ -296,10 +296,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if (opModeIsActive() ) {
             FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-            FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+            FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             double power = 0;
             double error;
 
@@ -326,7 +328,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }
             stopDriveMotors();
         }
-
     }
 
     public void gyroTurn(double speed, double angle) {
@@ -533,9 +534,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1 || startingPosition == 4) {
             if (Direction == Reverse) {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDriveAccelDecel(.5, 10 + DistanceToTravel, 12, Direction, stayOnHeading, 3 );
+                    EncoderDriveAccelDecel(.5, 12 + DistanceToTravel, 12, Direction, stayOnHeading, 3 );
                 } else {
-                    EncoderDriveAccelDecel(.5, 13 + DistanceToTravel, 12, Direction,stayOnHeading, 3);
+                    EncoderDriveAccelDecel(.5, 14 + DistanceToTravel, 12, Direction,stayOnHeading, 3);
                 }
             } else {
                 if (knockedCryptoboxSideJewel) {
@@ -545,7 +546,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 }
             }
         }else{
-            EncoderDriveAccelDecel(.5,  DistanceToTravel, 10, Forward, stayOnHeading, 5);
+            EncoderDriveAccelDecel(.35,  DistanceToTravel, 8, Forward, stayOnHeading, 5);
         }
         if(Direction == Reverse) {
             //blue side
@@ -659,9 +660,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
     public void endAuto(){
         JewelArm.setPosition(JewelServoDistancePos);
-        drive(1, Forward, .125);
+        EncoderDrive(.35, 6, Forward, stayOnHeading, 2);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
-        sleep(200);
+        sleep(100);
+        drive(1, Forward, .125);
         JewelArm.setPosition(JewelServoUpPos);
         telemetry.addData("Vumark", CryptoKey);
         telemetry.addData("Color", color);
@@ -788,6 +790,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("Columns to go", columnsToTravel);
         telemetry.update();
         currentColumn = columnToGoTo;
+        sleep(1000);
         return columnsToTravel;
     }
     public void strafeToColumnMG(int direction){
@@ -809,15 +812,15 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }else{
             if(direction == Reverse){
                 if(columnsToGo > 0){
-                    strafingLeft = true;
-                }else{
                     strafingLeft = false;
+                }else{
+                    strafingLeft = true;
                 }
                 //blue side
                 if(strafingLeft){
-                    strafeTime = Math.abs(columnsToGo/2) - .2;
+                    strafeTime = (columnsToGo/2) - .2;
                 }else{
-                    strafeTime = Math.abs(columnsToGo/2) + .2;
+                    strafeTime = (columnsToGo/2) + .2;
                 }
             }else {
                 if (columnsToGo > 0) {
@@ -827,17 +830,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 }
                 //red side
                 if (strafingLeft) {
-                    strafeTime = Math.abs(columnsToGo/2) + .2;
+                    strafeTime = (columnsToGo/2) + .2;
                     //make sure this columnsToGo isn't returning 0
                 } else {
-                    strafeTime = Math.abs(columnsToGo/2) - .2;
+                    strafeTime = (columnsToGo/2) - .2;
                 }
             }
         }
             //}
             //Put in other function, just to see if it's the movement that's handled by this function that's out of whack
             //Y speed, x speed, rotation speed, time
-        driveWStrafe(-.15, .4*strafingDirectionMultiplier, 0, strafeTime);
+        driveWStrafe(-.15, .3*columnsToGo, 0, .75);
 
         telemetry.addData("Strafe Time", strafeTime);
         telemetry.addData("Strafing Left?", strafingLeft);
@@ -845,9 +848,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("Columns To Go", columnsToGo);
         telemetry.addData("Columns placed", columnsPlaced);
         telemetry.update();
+        sleep(2000);
     }
-
-    public void ramThePitRelicSide(int startingPosition, int direction){
+    public void MGAutoRelicSide(int startingPosition, int direction, int noOfTrips){
+        int trips = 0;
+        while (trips < noOfTrips){
+            ramThePitRelicSide(startingPosition,direction);
+            trips++;
+        }
+        endAuto();
+    }
+    public void ramThePitRelicSide(int startingPosition, int direction) {
         //Drive forward to pit
         // get glyphs
         // drive back to close to cryptobox
@@ -868,8 +879,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FlipperServo.setPosition(FlipperServoUpPos);
 
         //Drive back to cryptobox, this part needs a little work, maybe use findwall instead of goToDistance
+        // it's consistency that's the problem it looks like
         EncoderDrive(.75, 20, Reverse, stayOnHeading, 2);
-        goToDistance(.75, 45, BackDistance, 1, 5);
+        drive(.3, Reverse, .5);
         ConveyorLeft.setPower(-1);
         ConveyorRight.setPower(-1);
         //go to correct column - need some work, just strafeToColumn reliability/distances/power values
@@ -883,8 +895,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         stopDriveMotors();
         placeByFlippingSecondGlyph(3);
         //no more glyphs, end auton
-        endAuto();
-
     }
     /*public void ramThePitRelicSide(int startingPosition, int direction){
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -989,6 +999,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         boolean wentLeft = false;
         boolean wentRight = false;
         boolean gotGlyph = false;
+        double startingRotation = getHeading();
         while(runtime.seconds() < 25 && !gotGlyph && opModeIsActive()){
             boolean linedUp = false;
             FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -997,7 +1008,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
 
             while(!haveGlyph() && opModeIsActive() && runtime.seconds() < 22 && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) )  {
-                moveBy(.15, 0,0);
+                gyroDrive(startingRotation, .2,Forward);
                 smartIntake();
             }
             //intakeGlyph();
@@ -1141,7 +1152,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1){
             if(Direction == Forward) {
                 knockedCryptoboxSideJewel = true;
-                EncoderDrive(.35, 5, Reverse, stayOnHeading, 5);
+                EncoderDrive(.5, 5, Reverse, stayOnHeading, 5);
             }else{
                 double TurningAngle = 4 * Direction;
                 gyroTurn(turningSpeed, TurningAngle);

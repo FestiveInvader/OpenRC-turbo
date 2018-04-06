@@ -8,7 +8,6 @@ public class RedAutoRelicSideMG extends DeclarationsAutonomous {
         super.runOpMode();
         knockOffJewel("RED", 4);
         driveAndPlace(CryptoKey, Forward, RelicSide, 0, 4);
-        ramThePitRelicSide(4, Forward);
-        endAuto();
+        MGAutoRelicSide(4, Forward, 2);
     }
 }

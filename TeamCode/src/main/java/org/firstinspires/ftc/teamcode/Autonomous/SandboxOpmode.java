@@ -9,8 +9,14 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         while(opModeIsActive()){
-                driveWStrafe(.3,.3,0,2);
-                sleep(10000);
+            driveWStrafe(-.15,.3,0,1);
+            sleep(2500);
+            driveWStrafe(-.15,-.6,0,1);
+            sleep(2500);
+            /*driveWStrafe(0,.3,0,1);
+            sleep(2500);
+            driveWStrafe(0, -.6, 0, 1);
+            sleep(2500);*/
         }
     }
 }
