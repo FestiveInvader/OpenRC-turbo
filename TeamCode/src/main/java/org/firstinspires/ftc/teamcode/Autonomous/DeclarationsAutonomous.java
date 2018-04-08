@@ -279,7 +279,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             target = FrontLeft.getCurrentPosition() + (int) (Inches * CountsPerInch * direction);
             while(opModeIsActive() && notAtTarget && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 25
                     && (startTime + timeout > runtime.seconds())) {
-                
+
                     gyroDrive(Heading, speed, direction);
                     //smartIntake(); Conveyor/intake
 
@@ -537,9 +537,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1 || startingPosition == 4) {
             if (Direction == Reverse) {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDriveAccelDecel(.35, 10 + DistanceToTravel, 12, Direction, stayOnHeading, 1.75);
+                    EncoderDriveAccelDecel(.35, 12 + DistanceToTravel, 12, Direction, stayOnHeading, 1.75);
                 } else {
-                    EncoderDriveAccelDecel(.35, 14 + DistanceToTravel, 12, Direction,stayOnHeading, 1.75);
+                    EncoderDriveAccelDecel(.35, 16 + DistanceToTravel, 12, Direction,stayOnHeading, 1.75);
                 }
             } else {
                 if (knockedCryptoboxSideJewel) {
@@ -847,7 +847,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // ram wall
         // find column
         // place glyph
-        if(runtime.seconds() < 21) {
+        if(runtime.seconds() < 25) {
             //Drive forward to pit - Should be complete
             if(trips == 1){
                 gyroTurn(turningSpeed, startingHeading);
@@ -856,7 +856,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             CryptoboxServo.setPosition(CryptoboxServoMidPos);
             ConveyorLeft.setPower(1);
             ConveyorRight.setPower(1);
-            EncoderDrive(.95, 26, Forward, stayOnHeading, .75);
+            EncoderDrive(1, 26, Forward, stayOnHeading, .75);
 
 
             //Grab glyphs, this part needs work (also hardware side tho)
@@ -876,12 +876,18 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
             ConveyorLeft.setPower(-1);
             ConveyorRight.setPower(-1);
-            drive(.3, Reverse, .5);
+            drive(.2, Reverse, .5);
             FlipperServo.setPosition(FlipperServoDownPos);
             ConveyorLeft.setPower(1);
             ConveyorRight.setPower(1);
+            double rotationOfCryptobox = -getHeading();
             EncoderDrive(.25, 12, Forward, stayOnHeading, 1.5);
+            gyroTurn(turningSpeed, rotationOfCryptobox - 5);
             EncoderDrive(.25, 12, Reverse, stayOnHeading, 1.5);
+            turnToCryptobox(startingPosition);
+            drive(.3, Reverse, .35);
+
+
             extendCryptoboxArmForFirstGlyph();
             //Find column and place glyphs - complete
             findColumn(1);
@@ -950,6 +956,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 gyroDrive(startingRotation, .5,Forward);
                 smartIntake();
             }
+            
             //intakeGlyph();
             glyphs += 1;
             //EncoderDrive(.75, 10, Reverse, stayOnHeading, 1.5);
@@ -974,7 +981,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public boolean haveGlyph(){
         boolean haveGlyph = false;
         double SensorVal = FlipperDistance2.getDistance(DistanceUnit.CM);
-        if (SensorVal <= 50) {
+        if (SensorVal <= 15) {
             haveGlyph = true;
         }
         return  haveGlyph;
@@ -1002,96 +1009,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDrive(1, Math.abs(inchesToDrive), Reverse, stayOnHeading, 1.5);
     }
-    /* public void intakeGlyphs(int inches){
-         boolean haveGlyph = false;
-         int color = 0;
-         double startingHeading = getHeading();
-         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-         double startingEncoderCount = FrontLeft.getCurrentPosition();
-         double limitEncoderCount = startingEncoderCount + inches*CountsPerInch;
-         DumpConveyor.setPower(1);
-         ConveyorLeft.setPower(1);
-         ConveyorRight.setPower(1);
-         TopIntakeServoLeft.setPower(1);
-         TopIntakeServoRight.setPower(1);
-         while(!haveGlyph && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) && runtime.seconds() < 24){
-
-             gyroDrive(startingHeading, .2, Forward);
-             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-             if (SensorVal <= 14) {
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-                 haveGlyph = true;
-             }else if(SensorVal > 14 && SensorVal < 20){
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(IntakeSpeed);
-             }else if (SensorVal >= 20){
-                 IntakeServoLeft.setPower(-IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-             }else{
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-             }
-             telemetry.addData("CurrentPos", FrontLeft.getCurrentPosition());
-             telemetry.addData("Limit Pos", limitEncoderCount);
-             telemetry.addData("Difference", Math.abs(limitEncoderCount) - Math.abs(FrontLeft.getCurrentPosition()));
-             telemetry.update();
-             //if color is > whatever, it's brown. Otherwise it's grey
-         }
-         stopDriveMotors();
-         double timeLimit = runtime.time(TimeUnit.SECONDS);
-         while(runtime.seconds() - timeLimit < .5){
-             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-             if (SensorVal <= 11) {
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-                 haveGlyph = true;
-             }else if(SensorVal > 11 && SensorVal < 20){
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(IntakeSpeed);
-             }else if (SensorVal >= 20){
-                 IntakeServoLeft.setPower(-IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-             }else{
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-             }
-             //if color is > whatever, it's brown. Otherwise it's grey
-         }
-         if(IntakeColor.alpha() > 130){
-             telemetry.addData("Grey", IntakeColor.alpha());
-             color = 1;
-         }else{
-             telemetry.addData("Brown", IntakeColor.alpha());
-             color = 2;
-         }
-         telemetry.update();
-         double time = runtime.time(TimeUnit.SECONDS);
-         while(runtime.seconds() - time < 1){
-             double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-             if (SensorVal <= 11) {
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-                 haveGlyph = true;
-             }else if(SensorVal > 11 && SensorVal < 20){
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(IntakeSpeed);
-             }else if (SensorVal >= 20){
-                 IntakeServoLeft.setPower(-IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-             }else{
-                 IntakeServoLeft.setPower(IntakeSpeed);
-                 IntakeServoRight.setPower(-IntakeSpeed);
-             }
-             //if color is > whatever, it's brown. Otherwise it's grey
-         }
-         IntakeServoLeft.setPower(IntakeSpeed);
-         IntakeServoRight.setPower(-IntakeSpeed);
-         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
-         EncoderDrive(1, Math.abs(inchesToDrive), Reverse, stayOnHeading, 5);
-     }
-    */ // End movement methods
+ // End movement methods
     // Motor and servo methods
     public void knockOffJewel(String AllianceColor, int startingPosition){
         JewelArm.setPosition(JewelServoDownPos);

@@ -10,8 +10,7 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         while(opModeIsActive()){
-            smartIntake();
-            telemetry.addData("IntakeDistance", IntakeDistance.getDistance(DistanceUnit.CM));
+            telemetry.addData("FlipperDistance", FlipperDistance2.getDistance(DistanceUnit.CM));
             telemetry.update();
         }
     }
