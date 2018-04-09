@@ -7,6 +7,8 @@ import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -21,6 +23,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.openftc.hardware.rev.OpenRevDcMotorImplEx;
 
 import java.util.Arrays;
 
@@ -33,8 +36,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public DcMotor BackLeft = null;               // NeveRest Orbital 20
     public DcMotor FrontRight = null;             // NeveRest Orbital 20
     public DcMotor BackRight = null;              // NeveRest Orbital 20
-    public DcMotor ConveyorLeft = null;           // Rev HD Hex Motor
-    public DcMotor ConveyorRight = null;          // Rev HD Hex Motor
+    public OpenRevDcMotorImplEx ConveyorLeft = null;           // Rev HD Hex Motor
+    public OpenRevDcMotorImplEx ConveyorRight = null;          // Rev HD Hex Motor
     public DcMotor DumpingMotor = null;           // NeveRest 60
     public DcMotor LinearSlideMotor = null;       // NeveRest 20
 
@@ -150,8 +153,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontRight = hardwareMap.dcMotor.get("FrontRight");
         BackLeft = hardwareMap.dcMotor.get("BackLeft");
         BackRight = hardwareMap.dcMotor.get("BackRight");
-        ConveyorLeft = hardwareMap.dcMotor.get("ConveyorLeft");
-        ConveyorRight = hardwareMap.dcMotor.get("ConveyorRight");
+        ConveyorLeft = new OpenRevDcMotorImplEx((DcMotorImplEx) hardwareMap.dcMotor.get("ConveyorLeft"));
+        ConveyorRight = new OpenRevDcMotorImplEx((DcMotorImplEx) hardwareMap.dcMotor.get("ConveyorRight"));
         DumpingMotor = hardwareMap.dcMotor.get("DumpingMotor");
         LinearSlideMotor = hardwareMap.dcMotor.get("LinearSlideMotor");
 
@@ -847,7 +850,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         // ram wall
         // find column
         // place glyph
-        if(runtime.seconds() < 25) {
+        //if(runtime.seconds() < 25) {
             //Drive forward to pit - Should be complete
             if(trips == 1){
                 gyroTurn(turningSpeed, startingHeading);
@@ -861,11 +864,25 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
             //Grab glyphs, this part needs work (also hardware side tho)
             driveToGlyphs(startingPosition, 24);
+            if(!haveGlyph()){
+                double rotationOfCryptobox = -getHeading();
+                if(startingPosition == 1) {
+                    gyroTurn(turningSpeed, rotationOfCryptobox + 25);
+                }else{
+                    gyroTurn(turningSpeed, rotationOfCryptobox - 25);
+                }
+                EncoderDrive(.25, 18, Forward, stayOnHeading, 1.5);
+                driveToGlyphs(startingPosition, 30);
+            }
 
             //Drive back to cryptobox, this part needs a little work, maybe use findwall instead of goToDistance
             // it's consistency that's the problem it looks like
-            EncoderDrive(1, 16, Reverse, stayOnHeading, .6);
+            gyroTurn(turningSpeed,-startingHeading - 10);
+            EncoderDrive(1, 20, Reverse, stayOnHeading, .6);
+            turnToCryptobox(startingPosition);
+
             FlipperServo.setPosition(FlipperServoUpPos);
+            findWall(.5, 40, 1.5);
 
 
             //go to correct column - need some work, just strafeToColumn reliability/distances/power values
@@ -878,22 +895,24 @@ public class DeclarationsAutonomous extends LinearOpMode {
             ConveyorRight.setPower(-1);
             drive(.2, Reverse, .5);
             FlipperServo.setPosition(FlipperServoDownPos);
-            ConveyorLeft.setPower(1);
-            ConveyorRight.setPower(1);
+            ConveyorLeft.setPower(-.35);
+            ConveyorRight.setPower(-.35);/*
             double rotationOfCryptobox = -getHeading();
             EncoderDrive(.25, 12, Forward, stayOnHeading, 1.5);
             gyroTurn(turningSpeed, rotationOfCryptobox - 5);
-            EncoderDrive(.25, 12, Reverse, stayOnHeading, 1.5);
-            turnToCryptobox(startingPosition);
+            EncoderDrive(.25, 12, Reverse, stayOnHeading, 1.5);*/
+            //turnToCryptobox(startingPosition);
             drive(.3, Reverse, .35);
 
 
             extendCryptoboxArmForFirstGlyph();
+            EncoderDrive(.2, 2, Reverse, stayOnHeading, 1);
             //Find column and place glyphs - complete
+            FlipperServo.setPosition(FlipperServoUpPos);
             findColumn(1);
             placeByFlippingSecondGlyph(2.25);
             //no more glyphs, end auton
-        }
+
     }
 
     public void ramThePitTeamSide(int startingPosition, int direction){
@@ -944,11 +963,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
         boolean wentLeft = false;
         boolean wentRight = false;
         boolean gotGlyph = false;
+        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         double startingRotation = getHeading();
+
         while(runtime.seconds() < 25 && !gotGlyph && opModeIsActive()){
             boolean linedUp = false;
-            FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
             double startingEncoderCount = FrontLeft.getCurrentPosition();
             double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
 
@@ -956,7 +981,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 gyroDrive(startingRotation, .5,Forward);
                 smartIntake();
             }
-            
+
             //intakeGlyph();
             glyphs += 1;
             //EncoderDrive(.75, 10, Reverse, stayOnHeading, 1.5);
@@ -1161,12 +1186,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         sleep(150);
         FlipperServo.setPosition(FlipperServoDownPos);
-        EncoderDrive(.15, 5, Forward, stayOnHeading, 1.5);
+        EncoderDrive(.15, 3.5, Forward, stayOnHeading, 1.5);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double startingRuntime = runtime.seconds();
         while ((DumperTouchSensorRight.getState() || DumperTouchSensorLeft.getState()) && runtime.seconds() - startingRuntime < .5 && opModeIsActive()) {
             DumpingMotor.setPower(dumpingPower);
-            moveBy(-.3, 0,0);
+            moveBy(-.4, 0,0);
         }
         DumpingMotor.setPower(0);
         stopDriveMotors();
@@ -1191,8 +1216,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
             ConveyorRight.setPower(speed);
             ConveyorLeft.setPower(speed);
         }*/
-        ConveyorRight.setPower(speed);
-        ConveyorLeft.setPower(speed);
+       if(ConveyorRight.getCurrentDraw() > 4000 || ConveyorLeft.getCurrentDraw() > 4000){
+           ConveyorLeft.setPower(-1);
+           ConveyorRight.setPower(-1);
+       }else if((ConveyorRight.getCurrentDraw() < 1000 && ConveyorLeft.getCurrentDraw() < 1000)){
+           ConveyorRight.setPower(speed);
+           ConveyorLeft.setPower(speed);
+       }
+       sleep(15);
+        telemetry.addData("Left Vel", ConveyorLeft.getCurrentDraw());
+        telemetry.addData("Right Vel", ConveyorRight.getCurrentDraw());
+        telemetry.update();
     }
 
 }

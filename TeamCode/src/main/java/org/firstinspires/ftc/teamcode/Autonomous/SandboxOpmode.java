@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 
@@ -10,7 +11,9 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         while(opModeIsActive()){
-            telemetry.addData("FlipperDistance", FlipperDistance2.getDistance(DistanceUnit.CM));
+            smartIntake();
+            telemetry.addData("Left Vel", ConveyorLeft.getCurrentDraw());
+            telemetry.addData("Right Vel", ConveyorRight.getCurrentDraw());
             telemetry.update();
         }
     }
