@@ -661,8 +661,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         telemetry.addData("Vumark", CryptoKey);
         telemetry.addData("Color", color);
         telemetry.addData("No Glyphs", glyphs);
+        telemetry.addData("KnockedCryptoboxJewl", knockedCryptoboxSideJewel);
         telemetry.update();
-        sleep(500);
+        sleep(5000);
 
     }
     public void findColumn(double timeout){
@@ -716,7 +717,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double timeout = runtime.seconds() + Timeout;
         while (opModeIsActive() && !foundWall && (runtime.seconds() < timeout)) {
             int ThisLoopDistance = BackDistance.getDistance();
-            if(ThisLoopDistance > 200 || ThisLoopDistance == 20){
+            if(ThisLoopDistance > 200 || ThisLoopDistance < 21){
                 //sensor val is bad, skip this loop
                 moveBy(speed, 0, 0);
                 badLoopTimer++;
@@ -726,6 +727,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 stopDriveMotors();
                 foundWall = true;
             }
+            telemetry.addData("Distance", BackDistance.getDistance());
+            telemetry.update();
         }
     }
     public void goToDistance(double targetSpeed, double distance,  I2CXLv2 distanceSensor, double timeout, int tolerance){
@@ -863,52 +866,58 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
 
             //Grab glyphs, this part needs work (also hardware side tho)
-            driveToGlyphs(startingPosition, 24);
+            driveToGlyphs(startingPosition, 18);
             if(!haveGlyph()){
+                EncoderDrive(.2, 4, Forward, stayOnHeading, 1.2);
                 double rotationOfCryptobox = -getHeading();
                 if(startingPosition == 1) {
-                    gyroTurn(turningSpeed, rotationOfCryptobox + 25);
+                    gyroTurn(turningSpeed, rotationOfCryptobox + 45);
                 }else{
-                    gyroTurn(turningSpeed, rotationOfCryptobox - 25);
+                    gyroTurn(turningSpeed, rotationOfCryptobox - 45);
                 }
-                EncoderDrive(.25, 18, Forward, stayOnHeading, 1.5);
                 driveToGlyphs(startingPosition, 30);
             }
-
+            ConveyorLeft.setPower(0);
+            ConveyorRight.setPower(0);
             //Drive back to cryptobox, this part needs a little work, maybe use findwall instead of goToDistance
             // it's consistency that's the problem it looks like
-            gyroTurn(turningSpeed,-startingHeading - 10);
+            /*gyroTurn(turningSpeed,-startingHeading - 10);
             EncoderDrive(1, 20, Reverse, stayOnHeading, .6);
-            turnToCryptobox(startingPosition);
-
             FlipperServo.setPosition(FlipperServoUpPos);
-            findWall(.5, 40, 1.5);
-
-
+            turnToCryptobox(startingPosition);
+*/          CryptoboxServo.setPosition(CryptoboxServoMidPos);
+            turnToCryptobox(startingPosition);
+            findWall(-.5, 65, 1.5);
             //go to correct column - need some work, just strafeToColumn reliability/distances/power values
-            if(trips == 1){
+            /*if(trips == 1){
                 turnToCryptobox(startingPosition);
             }
-            strafeToColumnMG(direction);
-
+            strafeToColumnMG(direction);*/
+/*
             ConveyorLeft.setPower(-1);
             ConveyorRight.setPower(-1);
             drive(.2, Reverse, .5);
             FlipperServo.setPosition(FlipperServoDownPos);
-            ConveyorLeft.setPower(-.35);
-            ConveyorRight.setPower(-.35);/*
+            ConveyorLeft.setPower(-1);
+            ConveyorRight.setPower(-1);
             double rotationOfCryptobox = -getHeading();
             EncoderDrive(.25, 12, Forward, stayOnHeading, 1.5);
             gyroTurn(turningSpeed, rotationOfCryptobox - 5);
-            EncoderDrive(.25, 12, Reverse, stayOnHeading, 1.5);*/
+            EncoderDrive(.25, 12, Reverse, stayOnHeading, 1.5);
+            //turnToCryptobox(startingPosition);*/
+            double rotationOfCryptobox = -getHeading();
+            gyroTurn(turningSpeed, rotationOfCryptobox - 10);
             //turnToCryptobox(startingPosition);
-            drive(.3, Reverse, .35);
+            drive(.3, Reverse, 1);
+            turnToCryptobox(startingPosition);
 
+        FlipperServo.setPosition(FlipperServoUpPos);
 
-            extendCryptoboxArmForFirstGlyph();
+        extendCryptoboxArmForFirstGlyph();
             EncoderDrive(.2, 2, Reverse, stayOnHeading, 1);
             //Find column and place glyphs - complete
-            FlipperServo.setPosition(FlipperServoUpPos);
+            ConveyorLeft.setPower(-1);
+            ConveyorRight.setPower(-1);
             findColumn(1);
             placeByFlippingSecondGlyph(2.25);
             //no more glyphs, end auton
@@ -977,8 +986,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
             double startingEncoderCount = FrontLeft.getCurrentPosition();
             double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
 
-            while(!haveGlyph() && opModeIsActive() && runtime.seconds() < 25 && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) )  {
-                gyroDrive(startingRotation, .5,Forward);
+            while(!haveGlyph() && runtime.seconds() < 25 && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) )  {
+                gyroDrive(startingRotation, .35,Forward);
                 smartIntake();
             }
 
@@ -1006,7 +1015,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public boolean haveGlyph(){
         boolean haveGlyph = false;
         double SensorVal = FlipperDistance2.getDistance(DistanceUnit.CM);
-        if (SensorVal <= 15) {
+        if (SensorVal <= 10) {
             haveGlyph = true;
         }
         return  haveGlyph;
@@ -1039,6 +1048,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void knockOffJewel(String AllianceColor, int startingPosition){
         JewelArm.setPosition(JewelServoDownPos);
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
+        knockedCryptoboxSideJewel = false;
         telemetry.addData("KnockingJewel", 10);
         telemetry.update();
         // sleep to allow the jewel arm to go down
@@ -1186,12 +1196,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         sleep(150);
         FlipperServo.setPosition(FlipperServoDownPos);
-        EncoderDrive(.15, 3.5, Forward, stayOnHeading, 1.5);
+        EncoderDrive(.15, 1.5, Forward, stayOnHeading, 1.5);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double startingRuntime = runtime.seconds();
         while ((DumperTouchSensorRight.getState() || DumperTouchSensorLeft.getState()) && runtime.seconds() - startingRuntime < .5 && opModeIsActive()) {
             DumpingMotor.setPower(dumpingPower);
-            moveBy(-.4, 0,0);
+            moveBy(-.3, 0,0);
         }
         DumpingMotor.setPower(0);
         stopDriveMotors();
@@ -1199,31 +1209,19 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void pushInFirstGlyph (){
         drive(.4, Reverse, .5);
     }
-    public void smartIntake(){
+    public void smartIntake() {
          double intakeValLeft = 20;
         double speed = 1;
         double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
-       /* if (SensorVal <= intakeValLeft && SensorVal > 6) {
-            ConveyorRight.setPower(speed);
-            ConveyorLeft.setPower(speed);
-        }else if(SensorVal > intakeValLeft){
-            ConveyorRight.setPower(speed);
-            ConveyorLeft.setPower(0);
-        }else if (SensorVal <= 5.5) {
-            ConveyorRight.setPower(0);
-            ConveyorLeft.setPower(speed);
-        }else {
-            ConveyorRight.setPower(speed);
-            ConveyorLeft.setPower(speed);
-        }*/
-       if(ConveyorRight.getCurrentDraw() > 4000 || ConveyorLeft.getCurrentDraw() > 4000){
+
+       if(ConveyorRight.getCurrentDraw() > 4500 || ConveyorLeft.getCurrentDraw() > 4500){
            ConveyorLeft.setPower(-1);
            ConveyorRight.setPower(-1);
-       }else if((ConveyorRight.getCurrentDraw() < 1000 && ConveyorLeft.getCurrentDraw() < 1000)){
+       }else if((ConveyorRight.getCurrentDraw() < 1250 && ConveyorLeft.getCurrentDraw() < 1250)){
            ConveyorRight.setPower(speed);
            ConveyorLeft.setPower(speed);
        }
-       sleep(15);
+       sleep(20);
         telemetry.addData("Left Vel", ConveyorLeft.getCurrentDraw());
         telemetry.addData("Right Vel", ConveyorRight.getCurrentDraw());
         telemetry.update();

@@ -11,9 +11,7 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         while(opModeIsActive()){
-            smartIntake();
-            telemetry.addData("Left Vel", ConveyorLeft.getCurrentDraw());
-            telemetry.addData("Right Vel", ConveyorRight.getCurrentDraw());
+            telemetry.addData("Distance", FlipperDistance2.getDistance(DistanceUnit.CM));
             telemetry.update();
         }
     }
