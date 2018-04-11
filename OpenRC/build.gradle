@@ -7,15 +7,11 @@ android {
         minSdkVersion 19
         //noinspection OldTargetApi
         targetSdkVersion 19
-<<<<<<< HEAD
 
-        versionCode 6
-        versionName "2.0b4 SS"
- /*e1d337085da762cf116f6384ed9290ce89ac209a*/
-=======
+        /*versionCode 6
+        versionName "2.0b4 SS"*/
         versionCode 6
         versionName "2.0b4"
->>>>>>> b8403f7368ce33afd2761eff250906301c92e7d4
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -39,11 +35,7 @@ repositories {
 }
 
 dependencies {
-<<<<<<< HEAD
 
+    //compileOnly(name: 'RobotCore-release', ext: 'aar')
     compileOnly(name: 'RobotCore-release', ext: 'aar')
-//>>>>>>> e1d337085da762cf116f6384ed9290ce89ac209a
-=======
-    compileOnly(name: 'RobotCore-release', ext: 'aar')
->>>>>>> b8403f7368ce33afd2761eff250906301c92e7d4
 }
