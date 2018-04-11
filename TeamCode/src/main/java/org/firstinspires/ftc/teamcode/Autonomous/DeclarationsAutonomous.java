@@ -925,7 +925,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         //Grab glyphs, this part needs work (also hardware side tho)
 
-        driveToGlyphs(0, 18, .35);
+        driveToGlyphs(0, 18, .3);
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
         if(!haveGlyph()){
@@ -935,7 +935,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }else{
                 gyroTurn(turningSpeed, rotationOfCryptobox - 35);
             }
-            driveToGlyphs(turningDirection, 24,.35);
+            driveToGlyphs(turningDirection, 36,.3);
             inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
             EncoderDriveWSmartIntake(-.25, Math.abs(inchesToDrive), Reverse, 0, .75);
         }
@@ -1207,10 +1207,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
             ConveyorLeft.setPower(speed);
 
         }*/
-       if(ConveyorRight.getCurrentDraw() > 4500 || ConveyorLeft.getCurrentDraw() > 4500){
+       if(ConveyorRight.getCurrentDraw() > 5000 || ConveyorLeft.getCurrentDraw() > 5000){
            ConveyorLeft.setPower(-1);
            ConveyorRight.setPower(-1);
-       }else if((ConveyorRight.getCurrentDraw() < 1000 && ConveyorLeft.getCurrentDraw() < 1000)){
+       }else if((ConveyorRight.getCurrentDraw() < 1250 && ConveyorLeft.getCurrentDraw() < 1250)){
            ConveyorRight.setPower(speed);
            ConveyorLeft.setPower(speed);
        }
