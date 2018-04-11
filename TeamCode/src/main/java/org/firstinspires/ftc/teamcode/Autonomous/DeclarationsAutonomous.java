@@ -979,43 +979,88 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double startingRotation = getHeading();
-        double angleMultiplier = cryptoboxPylonsToGo(-direction);
-        EncoderDrive(.175, 6, Forward, stayOnHeading, 2);
+        EncoderDrive(.175, 4, Forward, stayOnHeading, 2);
         double turningAngle = 0;
         if( startingPosition == 2){
-            turningAngle = -25 - 10*angleMultiplier;
+            turningAngle = -90;
         }else{
-            turningAngle =  -155 + 10*angleMultiplier;
+            turningAngle =  -90;
+        }
+        int startingDistance = BackDistance.getDistance();
+        gyroTurn(turningSpeed, turningAngle);
+        goToDistance(.3, 90, BackDistance, 2, 2);
+        if( startingPosition == 2){
+            turningAngle = -25;
+        }else{
+            turningAngle =  -155;
         }
         gyroTurn(turningSpeed, turningAngle);
-        EncoderDrive(.95, 30, Forward, stayOnHeading, 2.5);
-        Blocker.setPosition(BlockerServoUp);
-        CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        //driveToGlyphs(startingPosition, 6);
+        EncoderDrive(.95, 48, Forward, stayOnHeading, 2.5);
+
+
+        driveToGlyphs(0, 24, .25);
+        double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
+        EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
+        if(!haveGlyph()){
+            double rotationOfCryptobox = -getHeading();
+            if(startingPosition == 1) {
+                gyroTurn(turningSpeed, 0);
+            }else{
+                gyroTurn(turningSpeed, -180);
+            }
+            driveToGlyphs(0, 24,.3);
+            inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
+            EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
+        }
+
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
-        gyroTurn(turningSpeed, turningAngle);
-        int PylonsToFind = cryptoboxPylonsToGo(direction);
 
-        if(PylonsToFind == 2){
-            EncoderDrive(.85, 28, Reverse, stayOnHeading, 4);
-        }else {
-            EncoderDrive(.85, 24, 6, stayOnHeading, 4);
+        turnToCryptobox(startingPosition);
+
+        ConveyorRight.setPower(0);
+        ConveyorLeft.setPower(0);
+        FlipperServo.setPosition(FlipperServoUpPos);
+
+        findWall(-.5, 75, 1.5);
+        if(startingPosition == 2){
+            gyroTurn(turningSpeed, -90);
+        }else{
+            gyroTurn(turningSpeed, -90);
         }
-        turnToCryptobox(startingPosition);
-        driveWStrafe(-.15, 0, 0, .75);
+        FlipperServo.setPosition(FlipperServoDownPos);
+        if(startingPosition == 2) {
+            goToDistance(.3, startingDistance - 3, BackDistance, 2, 2);
+        }else{
+            goToDistance(.3, startingDistance + 3, BackDistance, 2, 2);
+
+        }
 
         turnToCryptobox(startingPosition);
+
+        //go to correct column - need some work, just strafeToColumn reliability/distances/power values
+        /*if(trips == 1){
+            turnToCryptobox(startingPosition);
+        }
+        strafeToColumnMG(direction);*/
+
+        //This section makes ure that we line up with the column we placed the first glyph in
+        ConveyorRight.setPower(1);
+        ConveyorLeft.setPower(1);
+        //turnToCryptobox(startingPosition);
+        findWallRevSensor(-.3, 100, 4);
+
+        FlipperServo.setPosition(FlipperServoUpPos);
+
         extendCryptoboxArmForFirstGlyph();
-        if(PylonsToFind == 0){
-            placeByFlippingSecondGlyph(3);
-        }else {
-            EncoderDrive(.15, 3.15, Reverse, stayOnHeading, 1);
-            findColumn(1.25);
-            stopDriveMotors();
-            placeByFlippingSecondGlyph(3);
-        }
-        // add if time < needed time go back
-        // else pick up another?
+        EncoderDrive(.2, 3, Reverse, stayOnHeading, .5);
+        //Find column and place glyphs - complete
+        ConveyorLeft.setPower(-1);
+        ConveyorRight.setPower(-1);
+        findColumn(1.5);
+        placeByFlippingSecondGlyph(2.25);
+        //no more glyphs, end auton
+        drive(.3, Reverse, 1.5);
+
     }
 
     public void driveToGlyphs(int turningDirection, int inchesToGo, double speed){
@@ -1207,7 +1252,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
             ConveyorLeft.setPower(speed);
 
         }
-        IntakeServo.setPower(1);
        /*if(ConveyorRight.getCurrentDraw() > 4500 || ConveyorLeft.getCurrentDraw() > 4500){
            ConveyorLeft.setPower(-1);
            ConveyorRight.setPower(-1);
