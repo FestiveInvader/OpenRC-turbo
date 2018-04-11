@@ -10,8 +10,15 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
-        while(opModeIsActive()){
-            moveBy(.25, 0,0);
+        double startingRotation = getHeading();
+        boolean foundGlyph = false;
+        while(opModeIsActive() && !foundGlyph){
+            if(IntakeDistance.getDistance(DistanceUnit.CM) > 10){
+                gyroTurn(turningSpeed, -startingRotation - 25);
+                foundGlyph = true;
+            }else {
+                moveBy(.2, 0, 0);
+            }
             smartIntake();
 
         }
