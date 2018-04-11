@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -45,7 +46,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public Servo Blocker = null;                  // Rev SRS  Heh, block-er
     public Servo JewelArm = null;                 // Rev SRS
     public Servo CryptoboxServo = null;           // Rev SRS
-    public Servo IntakeServo;
+    public CRServo IntakeServo;
     public Servo FlipperServo;
 
 
@@ -176,7 +177,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         Blocker = hardwareMap.servo.get("Blocker");
         JewelArm = hardwareMap.servo.get("JewelServo");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
-        IntakeServo = hardwareMap.servo.get("IntakeServo");
+        IntakeServo = hardwareMap.crservo.get("IntakeServo");
         FlipperServo = hardwareMap.servo.get("FlipperServo");
 
         // Initialize and hardware map Sensors
@@ -189,8 +190,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
         RevBackDistance = hardwareMap.get(DistanceSensor.class, "RevBackDistance");
 
-        //IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
-        IntakeDistance = hardwareMap.get(DistanceSensor.class, "FlipperSensor1");
+        IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
         FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");
 
         // Start Init IMU
@@ -925,7 +925,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         //Grab glyphs, this part needs work (also hardware side tho)
 
-        driveToGlyphs(0, 18, .3);
+        driveToGlyphs(0, 24, .25);
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
         if(!haveGlyph()){
@@ -935,9 +935,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }else{
                 gyroTurn(turningSpeed, rotationOfCryptobox - 35);
             }
-            driveToGlyphs(turningDirection, 36,.3);
+            driveToGlyphs(turningDirection, 30,.3);
             inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
-            EncoderDriveWSmartIntake(-.25, Math.abs(inchesToDrive), Reverse, 0, .75);
+            EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
         }
 
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
@@ -1195,25 +1195,26 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double speed = 1;
         double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
 
-        /*if(ConveyorRight.getCurrentDraw() > 2500){
+        if(ConveyorRight.getCurrentDraw() > 3500){
             ConveyorRight.setPower(-speed);
-        }else if (ConveyorRight.getCurrentDraw() < 1000){
+        }else if (ConveyorRight.getCurrentDraw() < 1250){
             ConveyorRight.setPower(speed);
 
         }
-        if(ConveyorLeft.getCurrentDraw() > 2500){
+        if(ConveyorLeft.getCurrentDraw() > 3500){
             ConveyorLeft.setPower(-speed);
-        }else if (ConveyorLeft.getCurrentDraw() < 1000){
+        }else if (ConveyorLeft.getCurrentDraw() < 1250){
             ConveyorLeft.setPower(speed);
 
-        }*/
-       if(ConveyorRight.getCurrentDraw() > 5000 || ConveyorLeft.getCurrentDraw() > 5000){
+        }
+        IntakeServo.setPower(1);
+       /*if(ConveyorRight.getCurrentDraw() > 4500 || ConveyorLeft.getCurrentDraw() > 4500){
            ConveyorLeft.setPower(-1);
            ConveyorRight.setPower(-1);
-       }else if((ConveyorRight.getCurrentDraw() < 1250 && ConveyorLeft.getCurrentDraw() < 1250)){
+       }else if((ConveyorRight.getCurrentDraw() < 2000 && ConveyorLeft.getCurrentDraw() < 2000)){
            ConveyorRight.setPower(speed);
            ConveyorLeft.setPower(speed);
-       }
+       }*/
        sleep(20);
         telemetry.addData("Left Vel", ConveyorLeft.getCurrentDraw());
         telemetry.addData("Right Vel", ConveyorRight.getCurrentDraw());
