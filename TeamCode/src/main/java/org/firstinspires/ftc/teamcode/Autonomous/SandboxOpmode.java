@@ -12,15 +12,8 @@ public class SandboxOpmode extends DeclarationsAutonomous {
         super.runOpMode();
         double startingRotation = getHeading();
         boolean foundGlyph = false;
-        while(opModeIsActive() && !foundGlyph){
-            if(IntakeDistance.getDistance(DistanceUnit.CM) > 10){
-                gyroTurn(turningSpeed, -startingRotation - 25);
-                foundGlyph = true;
-            }else {
-                moveBy(.2, 0, 0);
-            }
-            smartIntake();
-
+        while(opModeIsActive()){
+            FlipperServo.setPosition(FlipperServoDownPos);
         }
     }
 }
