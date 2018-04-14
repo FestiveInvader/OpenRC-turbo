@@ -927,17 +927,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         //Grab glyphs, this part needs work (also hardware side tho)
 
-        driveToGlyphs(0, .75, .25);
+        driveToGlyphs(0, 2.25, .225);
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
         if(!haveGlyph()){
             double rotationOfCryptobox = -getHeading();
             if(startingPosition == 1) {
-                gyroTurn(turningSpeed, rotationOfCryptobox + 35);
+                gyroTurn(turningSpeed, rotationOfCryptobox + 30);
             }else{
-                gyroTurn(turningSpeed, rotationOfCryptobox - 35);
+                gyroTurn(turningSpeed, rotationOfCryptobox - 30);
             }
-            driveToGlyphs(turningDirection, 1,.3);
+            driveToGlyphs(turningDirection, 1.5,.3);
             inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
             EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
         }
@@ -947,7 +947,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         ConveyorRight.setPower(0);
         ConveyorLeft.setPower(0);
         FlipperServo.setPosition(FlipperServoUpPos);
-        findWall(-.5, 70, 1.5);
+        double rotationOfCryptobox = -getHeading();
+        gyroTurn(turningSpeed, rotationOfCryptobox - 5);
+        findWallRevSensor(-.3, 100, 4);
         FlipperServo.setPosition(FlipperServoDownPos);
         //go to correct column - need some work, just strafeToColumn reliability/distances/power values
         /*if(trips == 1){
@@ -956,8 +958,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         strafeToColumnMG(direction);*/
 
         //This section makes ure that we line up with the column we placed the first glyph in
-        double rotationOfCryptobox = -getHeading();
-        gyroTurn(turningSpeed, rotationOfCryptobox - 10);
         ConveyorRight.setPower(1);
         ConveyorLeft.setPower(1);
         //turnToCryptobox(startingPosition);
@@ -1069,7 +1069,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double time = runtime.seconds() + timeout;
         //double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
         //&& Math.abs(limitEncoderCount) - Math.abs(FrontLeft.getCurrentPosition()) > 25
-        while(!haveGlyph() && runtime.seconds() < 25  && time > runtime.seconds() && opModeIsActive() )  {
+        while(!haveGlyph() && runtime.seconds() < 28  && time > runtime.seconds() && opModeIsActive() )  {
             gyroDrive(startingRotation, speed,Forward);
             smartIntake();
             telemetry.addData("Distance", FlipperDistance2.getDistance(DistanceUnit.CM));
@@ -1201,7 +1201,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FlipperServo.setPosition(FlipperServoUpPos);
         double startTime = runtime.seconds();
         boolean placed = false;
-        EncoderDrive(.35, 1, Forward, stayOnHeading, 2);
+        EncoderDrive(.35, 3, Forward, stayOnHeading, 2);
         CryptoboxServo.setPosition(CryptoboxServoMidPos);
         JewelArm.setPosition(JewelServoDistancePos);
         double dumpingPower = .65;
@@ -1215,14 +1215,14 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 telemetry.addData("Target Pos", DumpingMotor.getTargetPosition());
                 telemetry.addData("Difference for while", (Math.abs(DumpingMotor.getCurrentPosition())) - 1200);
                 telemetry.update();
-                moveBy(.05, 0, 0);
             }
             placed = true;
             stopDriveMotors();
         }
         sleep(150);
         FlipperServo.setPosition(FlipperServoDownPos);
-        EncoderDrive(.15, 1.5, Forward, stayOnHeading, 1.5);
+        EncoderDrive(.25, 1.5, Reverse, stayOnHeading, 1.5);
+        EncoderDrive(.25, 1.5, Forward, stayOnHeading, 1.5);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double startingRuntime = runtime.seconds();
         CryptoboxServo.setPosition(CryptoboxServoInPos);
