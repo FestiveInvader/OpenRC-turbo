@@ -13,7 +13,8 @@ public class SandboxOpmode extends DeclarationsAutonomous {
         double startingRotation = getHeading();
         boolean foundGlyph = false;
         while(opModeIsActive()){
-            FlipperServo.setPosition(FlipperServoDownPos);
+            driveToGlyphs(0,2.5,.25);
+            sleep(150000);
         }
     }
 }

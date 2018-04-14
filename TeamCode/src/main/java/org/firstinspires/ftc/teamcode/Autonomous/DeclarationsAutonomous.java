@@ -665,17 +665,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 2 || startingPosition == 3){
             if(Direction == Forward){
                 // Red side, far stone
-                goToDistance(.25, 62, BackDistance, 1.75, 2);
+                goToDistance(.2, 40, BackDistance, 1.75, 2);
             }else{
                 //blue side, far stone
-                goToDistance(.2, 62, BackDistance, 1.65, 2);
+                goToDistance(.2, 38 , BackDistance, 1.65, 2);
             }
         }
         driveToCrypotboxEncoders(Direction, startingPosition);
 
         stopDriveMotors();
         turnToCryptobox(startingPosition);
-        drive(.35, Reverse, 1);
+        findWallRevSensor(-.3, 100,1.5);
         extendCryptoboxArmForFirstGlyph();
         findColumn(2.25);
         stopDriveMotors();
@@ -793,11 +793,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         while (opModeIsActive() && !foundTarget && maxTime - runtime.seconds() > .1) {
             ThisLoopDistance = BackDistance.getDistance();
             double error = distance - ThisLoopDistance;
+            int Direction = (int) Range.clip(error, -1, 1);
+
             if(ThisLoopDistance > 500 || ThisLoopDistance < 21){
-                stopDriveMotors();
+                gyroDrive(startHeading, Range.clip(Math.abs(error/70), .135, targetSpeed), Direction);
                 //sensor val is bad, stop bot so it doesn't go too far
             }else if(ThisLoopDistance > distance + tolerance || ThisLoopDistance < distance - tolerance){
-                int Direction = (int) Range.clip(error, -1, 1);
                 gyroDrive(startHeading, Range.clip(Math.abs(error/70), .135, targetSpeed), Direction);
             }else{
                 stopDriveMotors();
@@ -926,7 +927,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         //Grab glyphs, this part needs work (also hardware side tho)
 
-        driveToGlyphs(0, 24, .25);
+        driveToGlyphs(0, .75, .25);
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
         if(!haveGlyph()){
@@ -936,7 +937,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }else{
                 gyroTurn(turningSpeed, rotationOfCryptobox - 35);
             }
-            driveToGlyphs(turningDirection, 30,.3);
+            driveToGlyphs(turningDirection, 1,.3);
             inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
             EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
         }
@@ -990,19 +991,20 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         gyroTurn(turningSpeed, turningAngle);
         int startingDistance = BackDistance.getDistance();
-        goToDistance(.2, 85, BackDistance, 1, 2);
+        goToDistance(.2, 70, BackDistance, 1, 2);
         if( startingPosition == 2){
             turningAngle = -35;
         }else{
-            turningAngle =  -145;
+            turningAngle =  -155;
         }
         gyroTurn(turningSpeed, turningAngle);
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
         EncoderDrive(.95, 44, Forward, stayOnHeading, 2.5);
+        sleep(500);
 
 
-        driveToGlyphs(0, 24, .25);
+        driveToGlyphs(0, .75, .25);
        /* double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
 */
@@ -1013,7 +1015,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FlipperServo.setPosition(FlipperServoUpPos);
         FlipperServo.setPosition(FlipperServoUpPos);
 
-        findWallRevSensor(-1, 150, .5);
 
         /*findWall(-.95, 110, .75);
         if(startingPosition == 2){
@@ -1038,11 +1039,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         //This section makes ure that we line up with the column we placed the first glyph in
         ConveyorRight.setPower(1);
         ConveyorLeft.setPower(1);
-        //turnToCryptobox(startingPosition);
+        EncoderDrive(.95, 36, Reverse, stayOnHeading, 1 );
+        turnToCryptobox(startingPosition);
         findWallRevSensor(-.25, 150, 2.5);
 
         FlipperServo.setPosition(FlipperServoUpPos);
-        turnToCryptobox(startingPosition);
         findWallRevSensor(-.25, 150, 2.5);
         extendCryptoboxArmForFirstGlyph();
         EncoderDrive(.2, 3, Reverse, stayOnHeading, .5);
@@ -1056,7 +1057,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     }
 
-    public void driveToGlyphs(int turningDirection, int inchesToGo, double speed){
+    public void driveToGlyphs(int turningDirection, double timeout, double speed){
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -1065,12 +1066,16 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
         double startingRotation = getHeading();
         double startingEncoderCount = FrontLeft.getCurrentPosition();
-        double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
-
-        while(!haveGlyph() && runtime.seconds() < 25 && Math.abs(limitEncoderCount) - Math.abs(FrontLeft.getCurrentPosition()) > 25 && opModeIsActive() )  {
+        double time = runtime.seconds() + timeout;
+        //double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
+        //&& Math.abs(limitEncoderCount) - Math.abs(FrontLeft.getCurrentPosition()) > 25
+        while(!haveGlyph() && runtime.seconds() < 25  && time > runtime.seconds() && opModeIsActive() )  {
             gyroDrive(startingRotation, speed,Forward);
             smartIntake();
+            telemetry.addData("Distance", FlipperDistance2.getDistance(DistanceUnit.CM));
+            telemetry.update();
         }
+        stopDriveMotors();
     }
     public boolean haveGlyph(){
         if (FlipperDistance2.getDistance(DistanceUnit.CM) <= 25) {

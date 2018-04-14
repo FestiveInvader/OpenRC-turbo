@@ -39,7 +39,6 @@ public class MecanumTeleop extends OpMode {
     public Servo RelicClaw;
     public Servo RelicYAxis;
     public Servo CryptoboxServo;
-    public Servo IntakeServo;
     public Servo FlipperServo;
     //Declare Sensors
     public DistanceSensor IntakeDistance;
@@ -135,7 +134,6 @@ public class MecanumTeleop extends OpMode {
         RelicClaw = hardwareMap.servo.get("RelicClaw");
         RelicYAxis = hardwareMap.servo.get("RelicYAxis");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
-        IntakeServo = hardwareMap.servo.get("IntakeServo");
         FlipperServo = hardwareMap.servo.get("FlipperServo");
 
         LinearSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -147,7 +145,6 @@ public class MecanumTeleop extends OpMode {
         DumperLimitSensorRight.setMode(DigitalChannel.Mode.INPUT);
         DumperLimitSensorLeft.setMode(DigitalChannel.Mode.INPUT);
         //IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
-        IntakeDistance = hardwareMap.get(DistanceSensor.class, "FlipperSensor1");
         FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");
     }
 
@@ -355,7 +352,6 @@ public class MecanumTeleop extends OpMode {
         // End Driving Code
         ConveyorLeft.setPower(LeftIntake);
         ConveyorRight.setPower(RightIntake);
-        telemetry.addData("Intake Distance", IntakeDistance.getDistance(DistanceUnit.CM));
         telemetry.addData("Flippersensor2", FlipperDistance2.getDistance(DistanceUnit.CM));
         telemetry.addData("FlipperTouchLeft", DumperLimitSensorLeft.getState());
         telemetry.addData("FlipperTouchRight", DumperLimitSensorRight.getState());
