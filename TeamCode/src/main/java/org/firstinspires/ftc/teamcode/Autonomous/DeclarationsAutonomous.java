@@ -112,7 +112,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     double RegularTurnSpeed = .165;
     double IntakeSpeed = -.7;
     double CryptoboxServoInPos = 0;
-    double CryptoboxServoOutPos = 1;
+    double CryptoboxServoOutPos = .85;
     double CryptoboxServoMidPos = .7;
     double programStartOrientation;
     double stayOnHeading = 84.17;
@@ -567,9 +567,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         if(startingPosition == 1 || startingPosition == 4) {
             if (Direction == Reverse) {
                 if (knockedCryptoboxSideJewel) {
-                    EncoderDriveAccelDecel(.35, 12 + DistanceToTravel, 12, Direction, stayOnHeading, 1.75);
+                    EncoderDriveAccelDecel(.35, 11 + DistanceToTravel, 12, Direction, stayOnHeading, 1.75);
                 } else {
-                    EncoderDriveAccelDecel(.35, 16 + DistanceToTravel, 12, Direction,stayOnHeading, 1.75);
+                    EncoderDriveAccelDecel(.35, 15 + DistanceToTravel, 12, Direction,stayOnHeading, 1.75);
                 }
             } else {
                 if (knockedCryptoboxSideJewel) {
@@ -708,7 +708,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
             if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6.5 ) {
                 moveBy(.015, .315, 0); //moveBy is a function that handles robot movement
-            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 7.15){
+            }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 7.25){
                 FoundPylon = true;
             }else {
                 moveBy(.015, -.315, 0); //moveBy is a function that handles robot movement
@@ -1216,7 +1216,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         sleep(150);
         FlipperServo.setPosition(FlipperServoDownPos);
-        EncoderDrive(.25, 1.5, Reverse, stayOnHeading, 1.5);
+        drive(.25, Reverse, 1);
         EncoderDrive(.25, 1.5, Forward, stayOnHeading, 1.5);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double startingRuntime = runtime.seconds();
