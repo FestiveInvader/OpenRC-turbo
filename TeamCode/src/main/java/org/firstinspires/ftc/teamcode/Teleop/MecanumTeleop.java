@@ -34,14 +34,12 @@ public class MecanumTeleop extends OpMode {
 
     // Declare Servos
     public CRServo RelicZAxis;                  // Rev SRS
-    public Servo Blocker;                       // Rev SRS  Heh, block-er, cause it keeps glyphs from falling out
     public Servo JewelArm;                      // Rev SRS
     public Servo RelicClaw;
     public Servo RelicYAxis;
     public Servo CryptoboxServo;
     public Servo FlipperServo;
     //Declare Sensors
-    public DistanceSensor IntakeDistance;
     public DistanceSensor FlipperDistance2;
     public DigitalChannel DumperLimitSensorRight;
     public DigitalChannel DumperLimitSensorLeft;
@@ -129,7 +127,6 @@ public class MecanumTeleop extends OpMode {
 
         // Hardware maps for servos
         RelicZAxis = hardwareMap.crservo.get("RelicZAxis");
-        Blocker = hardwareMap.servo.get("Blocker");
         JewelArm = hardwareMap.servo.get("JewelServo");
         RelicClaw = hardwareMap.servo.get("RelicClaw");
         RelicYAxis = hardwareMap.servo.get("RelicYAxis");
@@ -168,7 +165,7 @@ public class MecanumTeleop extends OpMode {
             }else{
                 LeftIntake = 1;
                 RightIntake = 1;
-                /*double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
+                /*double SensorVal =  .getDistance(DistanceUnit.CM);
                 if (SensorVal <= intakeValLeft && SensorVal > 6) {
                     LeftIntake = 1;
                     RightIntake = 1;

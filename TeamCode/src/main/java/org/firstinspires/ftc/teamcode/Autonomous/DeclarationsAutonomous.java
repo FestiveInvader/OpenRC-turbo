@@ -43,7 +43,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public DcMotor LinearSlideMotor = null;       // NeveRest 20
 
     // Declare Servos
-    public Servo Blocker = null;                  // Rev SRS  Heh, block-er
     public Servo JewelArm = null;                 // Rev SRS
     public Servo CryptoboxServo = null;           // Rev SRS
     public CRServo IntakeServo;
@@ -54,7 +53,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public ColorSensor JewelColor;
     public DigitalChannel DumperTouchSensorRight;
     public DigitalChannel DumperTouchSensorLeft;
-    public DistanceSensor IntakeDistance;
     public DistanceSensor FlipperDistance2;
     public DistanceSensor RevBackDistance;
     public BNO055IMU IMU;
@@ -174,10 +172,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         LinearSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Hardware maps for servos
-        Blocker = hardwareMap.servo.get("Blocker");
         JewelArm = hardwareMap.servo.get("JewelServo");
         CryptoboxServo = hardwareMap.servo.get("CryptoboxServo");
-        IntakeServo = hardwareMap.crservo.get("IntakeServo");
         FlipperServo = hardwareMap.servo.get("FlipperServo");
 
         // Initialize and hardware map Sensors
@@ -190,7 +186,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
         JewelColor = hardwareMap.get(ColorSensor.class, "JewelSensor");
         RevBackDistance = hardwareMap.get(DistanceSensor.class, "RevBackDistance");
 
-        IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
         FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");
 
         // Start Init IMU
@@ -1040,11 +1035,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         ConveyorRight.setPower(1);
         ConveyorLeft.setPower(1);
         EncoderDrive(.95, 36, Reverse, stayOnHeading, 1 );
-        turnToCryptobox(startingPosition);
-        findWallRevSensor(-.25, 150, 2.5);
-
         FlipperServo.setPosition(FlipperServoUpPos);
-        findWallRevSensor(-.25, 150, 2.5);
+        turnToCryptobox(startingPosition);
+        findWallRevSensor(-.25, 100, 2.5);
         extendCryptoboxArmForFirstGlyph();
         EncoderDrive(.2, 3, Reverse, stayOnHeading, .5);
         //Find column and place glyphs - complete
@@ -1053,6 +1046,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         findColumn(1.5);
         placeByFlippingSecondGlyph(2.25);
         //no more glyphs, end auton
+        drive(.3, Reverse, 1.5);
+        drive(.5, Forward, .75);
         drive(.3, Reverse, 1.5);
 
     }
@@ -1239,7 +1234,6 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void smartIntake() {
          double intakeValLeft = 20;
         double speed = 1;
-        double SensorVal = IntakeDistance.getDistance(DistanceUnit.CM);
 
         /*if(ConveyorRight.getCurrentDraw() > 3500){
             ConveyorRight.setPower(-speed);
