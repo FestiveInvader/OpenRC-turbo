@@ -9,7 +9,7 @@ public class BlueAutoTeamSideMG extends DeclarationsAutonomous {
     public void runOpMode() {
         super.runOpMode();
         knockOffJewel("BLUE", 2);
-        EncoderDrive(3, 18, Reverse,stayOnHeading, .75);
+        EncoderDrive(.25, 16, Reverse,stayOnHeading, .75);
         JewelArm.setPosition(JewelServoUpPos);
         gyroTurn(.225, -89);
         driveAndPlace(CryptoKey, Reverse, TeamSide, 0, 2);
