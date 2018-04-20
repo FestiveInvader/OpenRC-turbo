@@ -707,11 +707,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
         boolean FoundPylon = false;
         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
             if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6.5 ) {
-                moveBy(.015, .315, 0); //moveBy is a function that handles robot movement
+                moveBy(.015, .325, 0); //moveBy is a function that handles robot movement
             }else if(CryptoboxDistance.getDistance(DistanceUnit.CM) < 7.25){
                 FoundPylon = true;
             }else {
-                moveBy(.015, -.315, 0); //moveBy is a function that handles robot movement
+                moveBy(.015, -.325, 0); //moveBy is a function that handles robot movement
             }
         }
         /*double error;
