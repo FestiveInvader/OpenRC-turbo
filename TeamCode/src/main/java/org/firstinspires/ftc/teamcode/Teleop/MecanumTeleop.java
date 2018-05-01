@@ -68,6 +68,9 @@ public class MecanumTeleop extends OpMode {
     double JewelServoUpPos = .55;
     double CryptoboxServoInPos = 0;
     int DumpEncoderOffset = 0;
+    double dumpingPower = .5;
+    int flipperOffset = 100;
+
     public ElapsedTime runtime = new ElapsedTime();
 
     public void init() {
@@ -129,74 +132,81 @@ public class MecanumTeleop extends OpMode {
     public void loop() {
         JewelArm.setPosition(JewelServoUpPos);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
+        //If intake boolean is true
         if(intake){
+            //if gamepad 1b, or gamepad 2 y, reverse intake
             if (gamepad1.b || gamepad2.y) {
                 LeftIntake = -1;
                 RightIntake = -1;
+            //otherwise, intake as normal
             }else{
                 LeftIntake = 1;
                 RightIntake = 1;
             }
+        // If intake is false, stop intake motors
         }else{
             LeftIntake = 0;
             RightIntake = 0;
         }
-
+        //If the distance sensor in the flipper sees something,
+        // set the var to let us know we have glyphs
         if(FlipperDistance2.getDistance(DistanceUnit.CM) < 50){
             sensorsSeeTwo = true;
         }else{
             sensorsSeeTwo = false;
         }
-
+        //if gamepad 1 left bumper, start the intake, and put the flipper servo down
         if(gamepad1.left_bumper){
             intake = true;
-            //Put everything done
-            //haveGlyphs = false;
             FlipperServoUp = false;
+        //If GP1 right bumper, stop intake, and put the flipper servo up
         }else if(gamepad1.right_bumper){
-            //start the putting up sequence
             FlipperServoUp = true;
             intake = false;
-            /*haveGlyphs = true;
-            glyphsSeenTime = runtime.seconds();*/
         }
+        //if the flipperServoUp var is true, set the flipper pos to up.  Else, put it down
         if(FlipperServoUp){
             //Servo on flipper up
             FlipperServo.setPosition(FlipperServoUpPos);
         }else{//servo on flipper down
             FlipperServo.setPosition(FlipperServoDownPos);
         }
-        // Start Intake Code
-        // End Intake and Conveyor code
+        //If either of the flipper limit swithces are pressed, set a bool to true, else, false
         if(!DumperLimitSensorRight.getState() || !DumperLimitSensorLeft.getState()){
             //either touch sensors limit switches are pressed
             eitherArePressed = true;
         }else{
+            //neither are pressed
             eitherArePressed = false;
         }
-        // Start Dumping Code
-        Dump = gamepad1.right_trigger > .1;
-        double dumpingPower = .5;
-        //Helped with flipperOffset By Ethan from 12670 Eclipse
-        int flipperOffset = 100;
-        if (Dump && eitherArePressed) {
+        // Start Dumping Code-Helped with flipperOffset By Ethan from 12670 Eclipse
+
+        Dump = gamepad1.right_trigger > .1; //if trigger is pressed down, set dump to true
+        if (Dump && eitherArePressed) {//if we want to flip, and the flipper is down
+            //set the target pos, and the power to turn to
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - (1250+DumpEncoderOffset));
             DumpingMotor.setPower(-dumpingPower);
             intake = false;
         } else if (gamepad1.a) {
+            //if we want to adjust the flipper rotation, get the target position and minus
+            // (in this case flipperOffest = 100) from the current position
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setPower(-dumpingPower);
             DumpingMotor.setTargetPosition(DumpingMotor.getTargetPosition() - flipperOffset);
         } else if(gamepad1.y) {
+            //if we want to adjust the flipper rotation, get the target position and add
+            // (in this case flipperOffest = 100) from the current position
             DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             DumpingMotor.setPower(-dumpingPower);
             DumpingMotor.setTargetPosition(DumpingMotor.getTargetPosition() + flipperOffset);
         }else if (!Dump && !eitherArePressed) {
+            //if we aren't dumping, and neither are pressed, put the flipper back down
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(.25);
             FlipperServoUp = false;
         } else if (eitherArePressed) {
+            //if we aren't dumping, and one limit switch is pressed, set flipper power to 0
             DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             DumpingMotor.setPower(0);
             intake = true;
@@ -204,33 +214,34 @@ public class MecanumTeleop extends OpMode {
         // End Dumping Code
 
         // Start Linear Slide/Relic Code
-        LinearSlideSpeed = gamepad2.right_stick_y;
+        LinearSlideSpeed = gamepad2.right_stick_y;//this would work to control the slide, but we
+        //want to add failsafes (below) to make sure we don't go the wrong way and break something
         if (LinearSlideMotor.getCurrentPosition() < 50) {
+            //if the linear slide is closed, don't let the slide go in any further
             LinearSlideSpeed = Range.clip(LinearSlideSpeed, 0, 1);
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         }else{
+            //other wise, the slide speed is the right stick value
             LinearSlideSpeed = gamepad2.right_stick_y;
             LinearSlideMotor.setPower(LinearSlideSpeed*LinearSlideSpeedMultiplier);
         }
-
+        //if the linear slide is moving, stop the intake. If we move the slide, it's endgame, and
+        // we most likely don't need the intake anymore, so we keep them from using any current.
+        //We do include failsafes incase we want to score more glyphs though
         if(Math.abs(LinearSlideMotor.getPower()) > .01){
            intake = false;
         }
-
+        //if GP2 dpad up is pressed, we raise to relic to be able to place over the wall
+        //otherwise, if down is pressed, we set it to the down position
         if(gamepad2.dpad_up){
-            RelicYAxisUp = true;
-        }else if(gamepad2.dpad_down){
-            RelicYAxisUp = false;
-        }
-
-        if(RelicYAxisUp){
             RelicYAxis.setPosition(RelicYAxisUpPosition);
-        }else{
+        }else if(gamepad2.dpad_down){
             RelicYAxis.setPosition(RelicYAxisDownPosition);
         }
-
+        //rotation of the relic arm is controlled like the linear slide, but without limits
         RelicZAxis.setPower(-gamepad2.left_stick_x);
-
+        //a hold-to-use button.  if the GP2 left trigger is held, the relic claw closes.
+        // Otherwise, it opens
         if(gamepad2.left_trigger > .1){
             RelicClaw.setPosition(RelicClawClosedPos);
         }else{
@@ -240,11 +251,17 @@ public class MecanumTeleop extends OpMode {
 
         // Start Driving Code
         double DrivingMultiplier = 1;
+        //this allows for a "slow mode".  The driving multiplier is .35 while the trigger is held,
+        //otherwise, the multiplier is 1 (so it's only .35 if the trigger is held).  We use the
+        //multiplier down below, where we set speeds of the motor as well as the strafing multiplier
         if(gamepad1.left_trigger > .1){
             DrivingMultiplier = .35;
         }else{
             DrivingMultiplier = 1;
         }
+
+        //Math, trig, it works.  Don't mess with it
+
         double FrontLeftVal =
                 gamepad1.left_stick_y*DrivingMultiplier
                 - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
