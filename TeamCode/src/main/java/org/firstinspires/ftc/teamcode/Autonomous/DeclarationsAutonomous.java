@@ -234,7 +234,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     }
 
-    // Start Movement methods
+    // Start General movement functions
     public void drive(double speed, int direction, double time){
         double startingHeading = getHeading();
         double timeStarted = runtime.time();
@@ -242,13 +242,17 @@ public class DeclarationsAutonomous extends LinearOpMode {
         FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
+        //while running, and haven't timed-out, and
+        // while runtime < 29.75 (to make sure we don't keep going after auton ends)
         while(opModeIsActive() && runtime.time() - timeStarted < time && runtime.seconds() < 29.75) {
+            //use gyrodrive, so we can push stuff but stay on heading
             gyroDrive(startingHeading, speed, direction);
         }
         stopDriveMotors();
     }
     public void driveWStrafe(double yspeed, double xspeed, double rotation, double time){
+        //the above Drive function, but with strafe capabilities.
+        //Using the above uses gyroDrive to stay on heading, instead of here, just setting motor power
         double startingHeading = getHeading();
         double timeStarted = runtime.seconds();
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -263,10 +267,11 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
 
     public void EncoderDrive(double speed, double Inches, int direction, double heading, double timeout) {
-        //Here's the encoder drive Michael
         double startTime = runtime.seconds();
         double Heading = 0;
         boolean notAtTarget = true;
+        //if we give a very very specific value for our heading, than we stay on our current path
+        //otherwise, we get use the gyroDrive to correct to our desired heading
         if (heading == 84.17){
             Heading = getHeading();
         }else{
@@ -274,26 +279,28 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         double target;
         if (opModeIsActive() ) {
+            //make sure that the encoder on the front left motor (which, stupidly, is the only motor
+            //we use for distance in this function) is reset to 0
             FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
             FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             BackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
+            //find the amount of encoder ticks to travel based off of the Inches var
             target = FrontLeft.getCurrentPosition() + (int) (Inches * CountsPerInch * direction);
+            //while the opmode is still running, and we're not at our target yet, and we haven't timed out
             while(opModeIsActive() && notAtTarget && Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 25
                     && (startTime + timeout > runtime.seconds())) {
-
+                //use gyrodrive to set power to the motors.  We have the Heading Var decied earlier,
+                // and speed and direction change base off of speed and direciton given by the user
                 gyroDrive(Heading, speed, direction);
-                //smartIntake(); Conveyor/intake
-
             }
             stopDriveMotors();
         }
     }
     public void EncoderDriveWSmartIntake(double speed, double Inches, int direction, double heading, double timeout) {
-        //Here's the encoder drive Michael
+        //Encoder drive that just also runs the smart intake, used for MG and making sure we don't
+        //break the intake or intake motors
         double startTime = runtime.seconds();
         double Heading = 0;
         boolean notAtTarget = true;
@@ -321,6 +328,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double startTime = runtime.seconds();
         double Heading = 0;
         boolean notAtTarget = true;
+        //if we give a very very specific value for our heading, than we stay on our current path
+        //otherwise, we get use the gyroDrive to correct to our desired heading
         if (heading == 84.17){
             Heading = getHeading();
         }else{
@@ -328,10 +337,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         double target;
         if (opModeIsActive() ) {
+            //make sure that the encoder on the front left motor (which, stupidly, is the only motor
+            //we use for distance in this function) is reset to 0
             FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-
-
             FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -339,10 +347,13 @@ public class DeclarationsAutonomous extends LinearOpMode {
             double power = 0;
             double error;
 
-
             target = FrontLeft.getCurrentPosition() + (int) (inches * CountsPerInch * direction);
             double decelTicks = (int) (decelInches * CountsPerInch);
-
+            //while the absolute value of the target minus the AV of the FL encoder value > 25 {
+            //if(AV of FL ecnoders < decelTicks position) {drive normally}
+            //else{set drive motor powers to .15, so that momentum from full speed means we decel}
+            //It's dirty, and doesn't actually technically decel, but this was thrown together
+            //the day before we left for Houston, so sue me
             while(Math.abs(target) - Math.abs(FrontLeft.getCurrentPosition()) > 25 && runtime.seconds() < 28.5 && (startTime + timeout > runtime.seconds())) {
                 double motorPos = Math.abs(FrontLeft.getCurrentPosition());
                 error = Math.abs(target) - Math.abs(motorPos);
@@ -366,6 +377,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     public void gyroTurn(double speed, double angle) {
         // keep looping while we are still active, and not on heading.
+        //uses onHeading to actually turn the robot/figure out error
         while (opModeIsActive() && !onHeading(speed, -angle, P_TURN_COEFF)) {
             // Update telemetry & Allow time for other processes to run.
             telemetry.addData("Target Rot", angle);
@@ -373,14 +385,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
             telemetry.update();
         }
     }
-    public void gyroTurnNotNegative ( double speed, double angle) {
-        // keep looping while we are still active, and not on heading.
-        while (opModeIsActive() && !onHeading(speed, angle, P_TURN_COEFF)) {
-            // Update telemetry & Allow time for other processes to run.
-            telemetry.update();
-        }
-    }
     boolean onHeading(double speed, double angle, double PCoeff) {
+        //This function is a boolean, meaning it can be used in an if/while statement. For instance:
+        //while(!onHeading){} would run all this code, until onHeading returns true
         double   steer ;
         boolean  onTarget = false ;
         double leftSpeed;
@@ -421,7 +428,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return onTarget;
     }
     public double getError(double targetAngle) {
-
+        //This function compares the current heading to the target heading, and returns the error
         double robotError;
         // calculate error in -179 to +180 range  (
         robotError = targetAngle - getHeading();
@@ -433,7 +440,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return Range.clip(error * (2*PCoeff), -1, 1);
     }
     public void gyroDrive(double targetAngle, double targetSpeed, int direction) {
-        //Here's the drive code Michael
+        //For use with other functions, but lets us use the gyro to keep the robot on a certain heading
+        // it's proportional, so if for instance, a robot hits us, this will account for that, and
+        // correct the robot's heading.  It's not smart enough to oversteer to make sure we're on the exact
+        // same plain, but it's good enough for our use case since people can't cross over in RR1
         FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         FrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         BackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -443,25 +453,40 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double RightPower = 0;
         int Direction = -direction;
         double diff = -getError(targetAngle);
-        double PVal = 15/targetSpeed; // Play with this value
+        // Play with this value for different sensitivities depending on different speeds
+        double PVal = 15/targetSpeed;
         if(Direction == -1){
+            //if we're traveling backwards, we want to add the difference to the opposite as we
+            // would if we traveled forward
+            //We're getting the targetSpeed, and adding the (difference/PVal)
+            //The PVal is decided by dividing 15 (which is an arbitrary value) by the target speed.
+            // It was played around with, and decided on after testing.
+            // By including a second method of tuning our speed changes, we can have a more,
+            // or less, sensitive proportional drive depending not just on the error of our heading,
+            // but depending on our target speed as well.  This means when we're traveling fast,
+            // we change our values more, because it's actually a smaller percentage of it's overall
+            // speed.  In contrast, while driving slowly, we make smaller speed changes.
             LeftPower = Direction*(targetSpeed+diff/PVal);
             RightPower = Direction*(targetSpeed-diff/PVal);
         }else{
+            //same as above, but opposite
             LeftPower = Direction*(targetSpeed-diff/PVal);
             RightPower = Direction*(targetSpeed+diff/PVal);
         }
-
+        //Make sure the powers are between 1 and -1.  This doesn't do much, other than ensure
+        // stability of the code, and making sure it doesn't crash for a weird reason
         FrontLeft.setPower(Range.clip(LeftPower, -1, 1));
         FrontRight.setPower(Range.clip(RightPower, -1, 1));
         BackLeft.setPower(Range.clip(LeftPower, -1, 1));
         BackRight.setPower(Range.clip(RightPower, -1, 1));
     } //driveAdjust
     public double getHeading(){
+        //returns the Z axis (which is what you want if the Rev module is flat), for ease of use
         Orientation angles = IMU.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         return angles.firstAngle;
     }
     public void moveBy(double y, double X, double c) {
+        //Trigonomerty.  Complicated.  Just leave it, it works :P
         double x = -X;
         double FrontLeftVal = -y + x + c;
         double FrontRightVal = -y - x - c;
@@ -477,7 +502,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
             BackLeftVal /= wheelPowers[3];
             BackRightVal /= wheelPowers[3];
         }
-
+        //set powers
         FrontLeft.setPower(FrontLeftVal);
         FrontRight.setPower(FrontRightVal);
         BackLeft.setPower(BackLeftVal);
@@ -485,6 +510,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     }
     public void moveByWithRotation(double y, double x, double C) {
+        //Trig math, it's complicated.  But basically, this lets us strafe in any direciton,
+        //and through experimentation, we could strafe and turn at the same time
         double c = getError(C);
         double FrontLeftVal = -y  +x + c;
         double FrontRightVal = -y - x - c;
@@ -499,50 +526,206 @@ public class DeclarationsAutonomous extends LinearOpMode {
             BackLeftVal /= wheelPowers[3];
             BackRightVal /= wheelPowers[3];
         }
+        //set power to motors
         FrontLeft.setPower(FrontLeftVal);
         FrontRight.setPower(FrontRightVal);
         BackLeft.setPower(BackLeftVal);
         BackRight.setPower(BackRightVal);
     }
     public void stopDriveMotors(){
+        //just makes it easier to stop the motors, instead of having to write it out all the time
         FrontLeft.setPower(0);
         FrontRight.setPower(0);
         BackLeft.setPower(0);
         BackRight.setPower(0);
     }
+    public void findWall(double speed, double distance, double Timeout){
+        int badLoopTimer = 0;
+        double startHeading = getHeading();
+        boolean foundWall = false;
+        double timeout = runtime.seconds() + Timeout;
+        int ThisLoopDistance;
+        while (opModeIsActive() && !foundWall && (runtime.seconds() < timeout)) {
+            //we can tell if the sensor value is bad, but in this case we don't do anything with it
+            ThisLoopDistance = BackDistance.getDistance();
+            if(ThisLoopDistance > 200 || ThisLoopDistance < 21){
+                //sensor val is bad, skip this loop
+                moveBy(speed, 0, 0);
+                badLoopTimer++;
+            }else if(ThisLoopDistance > distance){
+                moveBy(speed, 0, 0);
+            }else{
+                stopDriveMotors();
+                foundWall = true;
+            }
+            telemetry.addData("Distance", BackDistance.getDistance());
+            telemetry.update();
+            smartIntake();
+        }
+    }
+    public void findWallRevSensor(double speed, double distance, double Timeout){
+        int badLoopTimer = 0;
+        double startHeading = getHeading();
+        boolean foundWall = false;
+        double timeout = runtime.seconds() + Timeout;
+        //while auton is running, we haven't found the wall, and we haven't timed-out
+        while (opModeIsActive() && !foundWall && (runtime.seconds() < timeout)) {
+            if(RevBackDistance.getDistance(DistanceUnit.CM) < distance){
+                //if the rev sensor senses anything, basically, we have found the wall
+                stopDriveMotors();
+                //set this bool to true so the while loop stops
+                foundWall = true;
+            }else{
+                moveBy(speed, 0, 0);
+            }
+            telemetry.addData("Distance", BackDistance.getDistance());
+            telemetry.update();
+            smartIntake();
+        }
+    }
+    public void goToDistance(double targetSpeed, double distance,  I2CXLv2 distanceSensor, double timeout, int tolerance){
+        double startTime = runtime.seconds();
+        double maxTime = startTime + timeout;
+        double startHeading = getHeading();
+        boolean foundTarget = false;
+        int ThisLoopDistance;
+        while (opModeIsActive() && !foundTarget && maxTime - runtime.seconds() > .1) {
+            ThisLoopDistance = BackDistance.getDistance();
+            double error = distance - ThisLoopDistance;
+            int Direction = (int) Range.clip(error, -1, 1);
 
-    //This year's specific movement and logic functions
+            if(ThisLoopDistance > 500 || ThisLoopDistance < 21){
+                gyroDrive(startHeading, Range.clip(Math.abs(error/70), .135, targetSpeed), Direction);
+                //sensor val is bad, stop bot so it doesn't go too far
+            }else if(ThisLoopDistance > distance + tolerance || ThisLoopDistance < distance - tolerance){
+                gyroDrive(startHeading, Range.clip(Math.abs(error/70), .135, targetSpeed), Direction);
+            }else{
+                stopDriveMotors();
+                foundTarget = true;
+            }
+            telemetry.addData("Distance", ThisLoopDistance);
+            telemetry.addData("error", error);
+            telemetry.addData("speed", FrontLeft.getPower());
+            telemetry.update();
+        }
+        stopDriveMotors();
+    }
+    //End General movement functions
+
+    //Start Relic Recovery specific movement and logic functions
+        //Start Regular 85 point functions
+    public void knockOffJewel(String AllianceColor, int startingPosition){
+        JewelArm.setPosition(JewelServoDownPos);
+        CryptoboxServo.setPosition(CryptoboxServoOutPos);
+        knockedCryptoboxSideJewel = false;
+        telemetry.addData("KnockingJewel", 10);
+        telemetry.update();
+        // sleep to allow the jewel arm to go down
+        sleep(750);
+        //Knock off the jewel.  If the jewel is the way we go to get the cryptobox, we drive forward
+        // To knock off, otherwise we turn.  This is to
+        int Direction = jewelDirection(AllianceColor);
+        int turningAmount = 7;
+        if(startingPosition == 1){
+            //If we're on the relic side stone, so we might drive while knocking off
+            if(Direction == Forward) {
+                knockedCryptoboxSideJewel = true;
+                EncoderDrive(.5, 5, Reverse, stayOnHeading, 1.25);
+            }else{
+                double TurningAngle = turningAmount * Direction;
+                gyroTurn(turningSpeed, TurningAngle);
+            }
+        }else if (startingPosition == 4){
+            //if we're on the relic side Red stone, we might drive while knocking off
+            if(Direction == Reverse) {
+                knockedCryptoboxSideJewel = true;
+                EncoderDrive(.5, 5, Forward, stayOnHeading, 1.25);
+            }else{
+                double TurningAngle = turningAmount * Direction;
+                gyroTurn(turningSpeed, TurningAngle);
+            }
+        }else{
+            //if we're not on relic side stones, we just knock jewel off by turning
+            double TurningAngle = turningAmount * Direction;
+            gyroTurn(turningSpeed, TurningAngle);
+        }
+        JewelArm.setPosition(JewelServoUpPos);
+        // Turn back to the original robot orientation
+        gyroTurn(turningSpeed, 0);
+        CryptoboxServo.setPosition(CryptoboxServoInPos);
+    }
+    public int jewelDirection(String AllianceColor){
+        int Blue = JewelColor.blue();
+        int Red = JewelColor.red();
+        int Direction = 0;
+        if(Red > Blue){
+            //Jewel that sensor is pointing at is red, means that the robot will need to move
+            Direction = -1;
+        }else{
+            //Jewel that sensor is pointing at is blue
+            Direction = 1;
+        }
+        if (AllianceColor.equals("RED")){
+            //if the alliance is red, then we flip directions (which jewel we knock off) we turn
+            Direction = -Direction;
+        }
+        return Direction;
+    }
+
+    public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset, int startingPosition){
+        // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
+        // and while knocking the jewel off
+        if(startingPosition == 2 || startingPosition == 3){
+            if(Direction == Forward){
+                // Red side, far stone - distance was found through testing
+                goToDistance(.2, 40, BackDistance, 1.75, 2);
+            }else{
+                //blue side, far stone - distance was found through testing
+                goToDistance(.2, 38 , BackDistance, 1.65, 2);
+            }
+        }
+        //Drive a amount of distance using encoders as a guide.  This works for both red and blue,
+        //since I'm able to tell it where it starts.
+        driveToCrypotboxEncoders(Direction, startingPosition);
+        stopDriveMotors();
+        turnToCryptobox(startingPosition);
+        //find wall rev sensor means we always get to the same distance from the wall each time
+        //we run this, because the distance sensor is extremely limited in it's range.
+        findWallRevSensor(-.3, 100,1.5);
+        //Extends the arm (in a pre-configured movement pattern) so it doesn't get caught on any pylons
+        extendCryptoboxArmForFirstGlyph();
+        findColumn(2.25);
+        stopDriveMotors();
+        placeByFlippingFirstGlyph(3);
+    }
     public void driveToCrypotboxEncoders(int Direction, int startingPosition) {
         int PylonsToFind = cryptoboxPylonsToGo(Direction);
         double DistanceToTravel = 0;
-        // Blue side
         if(startingPosition == 1 || startingPosition == 4){
+            //Starting on the relic side/close stones, with pos 1 being blue, and 4 being red
             if(Direction == Reverse){
+                //This is Blue side, because we come reverse off the stone
                 if (PylonsToFind == 0) {
                     DistanceToTravel = 2;
-                    //4?
                 } else if (PylonsToFind == 1) {
                     DistanceToTravel = 10;
-
                 } else if (PylonsToFind == 2) {
-                    //18?
                     DistanceToTravel = 18;
                 }
             }else{
+                //This is the red side, because coming off the stone we go forward (robot relative)
                 if (PylonsToFind == 0) {
                     DistanceToTravel = 5;
-                    //4?
                 } else if (PylonsToFind == 1) {
                     DistanceToTravel = 13;
-
                 } else if (PylonsToFind == 2) {
-                    //18?
                     DistanceToTravel = 21;
                 }
             }
         }else{
+            //Now, we know we're either on the 2, or 3 stones.  2 being Blue far, 3 being red far
             if(Direction == Forward){
-                //red
+                //Red side (starting pos 3)
                 if (PylonsToFind == 0) {
                     DistanceToTravel = 2;
                 } else if (PylonsToFind == 1) {
@@ -553,18 +736,21 @@ public class DeclarationsAutonomous extends LinearOpMode {
             }else{
                 if (PylonsToFind == 0) {
                     DistanceToTravel = 0;
-                    //4?
                 } else if (PylonsToFind == 1) {
                     DistanceToTravel = 8;
-
                 } else if (PylonsToFind == 2) {
-                    //18?
                     DistanceToTravel = 16;
                 }
             }
         }
-
+        //All that above just set the distanceToTravel variable.  Depending on which stone we're on,
+        // We'll have an amount of distance to add to that, which is a static amount that gets us to
+        //the first column in the cryptobox.  Doing it this way makes it easier to math-out the distance
+        //traveled by the robot, and makes it easier to mess with distance values
         if(startingPosition == 1 || startingPosition == 4) {
+            //If we're on the relic side stones, we might knock the jewel hard against the cryptobox,
+            //so it doesn't get stuck in the column.  This means that we'd have slightly less
+            // distance to travel, and 4" is the amount (through testing)
             if (Direction == Reverse) {
                 if (knockedCryptoboxSideJewel) {
                     EncoderDriveAccelDecel(.35, 11 + DistanceToTravel, 12, Direction, stayOnHeading, 1.75);
@@ -579,8 +765,10 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 }
             }
         }else{
+            //If we're not on the relic side stones, we're just rotating the robot to knock the jewel
             EncoderDrive(.25,  DistanceToTravel,  Forward, stayOnHeading, 1.5);
         }
+        //Set the proper array-position to true, so MG can tell which columns have glyphs
         if(Direction == Reverse) {
             //blue side
             if (PylonsToFind == 0) {
@@ -633,6 +821,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     public void turnToCryptobox (int startingPosition){
         int heading = 0;
+        //Turn to a different (tried and tested) starting heading depending on the stone we start on
         if(startingPosition == 1){
             heading = -87;
         }
@@ -647,64 +836,16 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }
         gyroTurn(turningSpeed, heading);
     }
-
     public void extendCryptoboxArmForFirstGlyph(){
         CryptoboxServo.setPosition(CryptoboxServoOutPos);
         EncoderDrive(.175, 6.5, Forward, stayOnHeading, 5);
         EncoderDrive(.2, 3.75, Reverse, stayOnHeading, 2);
     }
-
-    public void driveAndPlace(RelicRecoveryVuMark CryptoKey, int Direction, int Placement, double gyroOffset, int startingPosition){
-        // Tolerance +- of the beginning distance, to account for small mistakes when setting robot up
-        // and while knocking the jewel off
-        if(startingPosition == 2 || startingPosition == 3){
-            if(Direction == Forward){
-                // Red side, far stone
-                goToDistance(.2, 40, BackDistance, 1.75, 2);
-            }else{
-                //blue side, far stone
-                goToDistance(.2, 38 , BackDistance, 1.65, 2);
-            }
-        }
-        driveToCrypotboxEncoders(Direction, startingPosition);
-
-        stopDriveMotors();
-        turnToCryptobox(startingPosition);
-        findWallRevSensor(-.3, 100,1.5);
-        extendCryptoboxArmForFirstGlyph();
-        findColumn(2.25);
-        stopDriveMotors();
-        placeByFlippingFirstGlyph(3);
-
-
-    }
-    public void endAuto(){
-        JewelArm.setPosition(JewelServoDistancePos);
-        EncoderDrive(.35, 6, Forward, stayOnHeading, 2);
-        CryptoboxServo.setPosition(CryptoboxServoInPos);
-        drive(.2, Forward, .5);
-        drive(.2, Reverse, .75);
-        drive(.2, Forward, .5);
-        JewelArm.setPosition(JewelServoUpPos);
-        telemetry.addData("Vumark", CryptoKey);
-        telemetry.addData("Color", color);
-        telemetry.addData("No Glyphs", glyphs);
-        telemetry.addData("KnockedCryptoboxJewl", knockedCryptoboxSideJewel);
-        telemetry.update();
-        sleep(2500);
-
-    }
     public void findColumn(double timeout){
         double startTime = runtime.seconds();
         double Timeout = startTime + timeout;
-        //outdated:
-        // Set the FoundPylon boolean to false, for the next part of the program in which we use
-        // similar methodology as we have to far, but strafing instead of front-to-back motion
-        // There's no tolerance code this time because we're pressed right up against the cryptobox
-        // and since we have a flat back on our robot, we can just strafe from side to side and so
-        // whenever a distance value is less than what the distance is to the wall, that means there's
-        // a pylon in that location, and we can a ssume our position from there
         boolean FoundPylon = false;
+        //If the distance is greater than our desired range, strafe one direction or the other (depending on distance)
         while(opModeIsActive() && !FoundPylon && Timeout - runtime.seconds() > .1){
             if (CryptoboxDistance.getDistance(DistanceUnit.CM) < 6.5 ) {
                 moveBy(.015, .325, 0); //moveBy is a function that handles robot movement
@@ -714,6 +855,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
                 moveBy(.015, -.325, 0); //moveBy is a function that handles robot movement
             }
         }
+        //Proportional speed strafe code for similar task, however no time to tune b4 worlds
         /*double error;
         double StrafingPSpeed = 0;
         double targetVal = 6.5;
@@ -735,165 +877,31 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
         }*/
 
-        //
-        stopDriveMotors();
-    }
-    public void findWall(double speed, double distance, double Timeout){
-        int badLoopTimer = 0;
-        double startHeading = getHeading();
-        boolean foundWall = false;
-        double timeout = runtime.seconds() + Timeout;
-        int ThisLoopDistance;
-        while (opModeIsActive() && !foundWall && (runtime.seconds() < timeout)) {
-            ThisLoopDistance = BackDistance.getDistance();
-            if(ThisLoopDistance > 200 || ThisLoopDistance < 21){
-                //sensor val is bad, skip this loop
-                moveBy(speed, 0, 0);
-                badLoopTimer++;
-            }else if(ThisLoopDistance > distance){
-                moveBy(speed, 0, 0);
-            }else{
-                stopDriveMotors();
-                foundWall = true;
-            }
-            telemetry.addData("Distance", BackDistance.getDistance());
-            telemetry.update();
-            smartIntake();
-        }
-    }
-    public void findWallRevSensor(double speed, double distance, double Timeout){
-        int badLoopTimer = 0;
-        double startHeading = getHeading();
-        boolean foundWall = false;
-        double timeout = runtime.seconds() + Timeout;
-        while (opModeIsActive() && !foundWall && (runtime.seconds() < timeout)) {
-            if(RevBackDistance.getDistance(DistanceUnit.CM) < distance){
-                stopDriveMotors();
-                foundWall = true;
-            }else{
-                moveBy(speed, 0, 0);
-            }
-            telemetry.addData("Distance", BackDistance.getDistance());
-            telemetry.update();
-            smartIntake();
-        }
-    }
-
-    public void goToDistance(double targetSpeed, double distance,  I2CXLv2 distanceSensor, double timeout, int tolerance){
-        double startTime = runtime.seconds();
-        double maxTime = startTime + timeout;
-        double startHeading = getHeading();
-        boolean foundTarget = false;
-        int ThisLoopDistance;
-        while (opModeIsActive() && !foundTarget && maxTime - runtime.seconds() > .1) {
-            ThisLoopDistance = BackDistance.getDistance();
-            double error = distance - ThisLoopDistance;
-            int Direction = (int) Range.clip(error, -1, 1);
-
-            if(ThisLoopDistance > 500 || ThisLoopDistance < 21){
-                gyroDrive(startHeading, Range.clip(Math.abs(error/70), .135, targetSpeed), Direction);
-                //sensor val is bad, stop bot so it doesn't go too far
-            }else if(ThisLoopDistance > distance + tolerance || ThisLoopDistance < distance - tolerance){
-                gyroDrive(startHeading, Range.clip(Math.abs(error/70), .135, targetSpeed), Direction);
-            }else{
-                stopDriveMotors();
-                foundTarget = true;
-            }
-            telemetry.addData("Distance", ThisLoopDistance);
-            telemetry.addData("error", error);
-            telemetry.addData("speed", FrontLeft.getPower());
-            telemetry.update();
-        }
+        //stop motors to make sure robot stops after we've found the column
         stopDriveMotors();
     }
 
-    public int getColumnsToTravelMG(){
-        telemetry.addData("started get column", 1);
-        telemetry.update();
-        int columnToGoTo = 0;
-        int columnsToTravel = 2;
-        boolean foundColumnToGoTo = false;
-        int c = 0;
-        /*for(int i = 0; !columnsPlaced[i]; i++){
-            columnToGoTo = i;
-        }*/
-        if(trips == 0){
-            columnToGoTo = currentColumn;
-        }else {
-            if (!columnsPlaced[0]) {
-                columnToGoTo = 0;
-            } else if (!columnsPlaced[1]) {
-                columnToGoTo = 1;
-            } else if (!columnsPlaced[2]) {
-                columnToGoTo = 2;
-            } else {
-                //nowhere left to place
-            }
-        }
-        /*for(boolean e : columnsPlaced) {
-            if(e) {
-                columnToGoTo = c;
-                telemetry.addData("Column that's free", columnToGoTo);
-                telemetry.update();
-            }
-            c++;
-        }*/
-        columnsToTravel = currentColumn - columnToGoTo;
-        telemetry.addData("Columns to go", columnsToTravel);
-        telemetry.update();
-        currentColumn = columnToGoTo;
-        return columnsToTravel;
-    }
-    public void strafeToColumnMG(int direction){
-        int columnsToGo = getColumnsToTravelMG();
-        boolean strafingLeft = false;
-        int strafingDirectionMultiplier = 1;
-        if(columnsToGo > 0){
-            strafingDirectionMultiplier = 1;
-        }else{
-            strafingDirectionMultiplier = -1;
-        }
-        double strafeTime = 1;
-
-
-        if(columnsToGo == 0){
-            //do nothing, there's no places left to place.  Or maybe place in right column?, chances
-            //are, we'll never get this far but it's possible
-	    //I mean, we made it to this point, so maybe just end up placing the glyphs anyway?
-        }else{
-            if(columnsToGo > 0){
-                strafingLeft = false;
-            }else{
-                strafingLeft = true;
-            }
-            //blue side
-            if(strafingLeft){
-                strafeTime = .8;
-            }else {
-                strafeTime = 1.2;
-            }
-        }
-            //}
-            //Put in other function, just to see if it's the movement that's handled by this function that's out of whack
-            //Y speed, x speed, rotation speed, time
-        driveWStrafe(0, .4*columnsToGo, 0, 1);
-
-        telemetry.addData("Strafe Time", strafeTime);
-        telemetry.addData("Strafing Left?", strafingLeft);
-        telemetry.addData("Strafing Multiplier", strafingDirectionMultiplier);
-        telemetry.addData("Columns To Go", columnsToGo);
-        telemetry.addData("Columns placed", columnsPlaced);
+    public void endAuto(){
+        //These three lines make sure that the jewel and cryptobox servos get reset for tele-op
+        JewelArm.setPosition(JewelServoDistancePos);
+        EncoderDrive(.35, 6, Forward, stayOnHeading, 2);
+        CryptoboxServo.setPosition(CryptoboxServoInPos);
+        //These drive methods just smush the glyphs into the cryptobox, and make sure that they
+        // aren't leaning on the robot
+        drive(.2, Forward, .5);
+        drive(.2, Reverse, .75);
+        drive(.2, Forward, .5);
+        JewelArm.setPosition(JewelServoUpPos);
+        //telemetry for autonomous testing to see any factors that may have went wrong
+        telemetry.addData("Vumark", CryptoKey);
+        telemetry.addData("Color", color);
+        telemetry.addData("No Glyphs", glyphs);
+        telemetry.addData("KnockedCryptoboxJewl", knockedCryptoboxSideJewel);
         telemetry.update();
     }
-    public void MGAutoRelicSide(int startingPosition, int direction, int noOfTrips){
-        while (trips < noOfTrips){
-            ramThePitRelicSide(startingPosition,direction);
-            trips++;
-            telemetry.addData("Trips:", trips);
-            telemetry.update();
-        }
-        endAuto();
-    }
+        // End Regular 85 point functions
+
+        // Start Multi-glyph functions
     public void ramThePitRelicSide(int startingPosition, int direction) {
         double startingHeading = getHeading();
         //Drive forward to pit
@@ -920,11 +928,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         }else{
             turningDirection = -1;
         }
-        //Grab glyphs, this part needs work (also hardware side tho)
-
+        //drive to glyph pit the first time
         driveToGlyphs(0, 2.25, .225);
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDriveWSmartIntake(-.5, Math.abs(inchesToDrive), Reverse, 0, .75);
+        //if we don't have two glyphs, turn to pick up another.  This is buggy for some reason, and
+        //for some reason the driveToGlyphs doesn't always work.  I can't find anything wrong
         if(!haveGlyph()){
             double rotationOfCryptobox = -getHeading();
             if(startingPosition == 1) {
@@ -947,6 +956,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         findWallRevSensor(-.3, 100, 4);
         FlipperServo.setPosition(FlipperServoDownPos);
         //go to correct column - need some work, just strafeToColumn reliability/distances/power values
+        //this is the 5 glyph part, but it's unneeded.  We'd rather put the glyphs we get into the
+        //same column, to get 3 (or 2) in a stack, instead of maybe 1&1, making no real difference
+        //in time to cipher
         /*if(trips == 1){
             turnToCryptobox(startingPosition);
         }
@@ -971,8 +983,8 @@ public class DeclarationsAutonomous extends LinearOpMode {
         //no more glyphs, end auton
         drive(.3, Reverse, 1.5);
     }
-
     public void ramThePitTeamSide(int startingPosition, int direction){
+        //basically the same as above, but for the far stone
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double startingRotation = getHeading();
@@ -1052,6 +1064,94 @@ public class DeclarationsAutonomous extends LinearOpMode {
 
     }
 
+    public void MGAutoRelicSide(int startingPosition, int direction, int noOfTrips){
+        while (trips < noOfTrips){
+            ramThePitRelicSide(startingPosition,direction);
+            trips++;
+            telemetry.addData("Trips:", trips);
+            telemetry.update();
+        }
+        endAuto();
+    }
+    public int getColumnsToTravelMG(){
+        telemetry.addData("started get column", 1);
+        telemetry.update();
+        int columnToGoTo = 0;
+        int columnsToTravel = 2;
+        boolean foundColumnToGoTo = false;
+        int c = 0;
+        /*for(int i = 0; !columnsPlaced[i]; i++){
+            columnToGoTo = i;
+        }*/
+        if(trips == 0){
+            columnToGoTo = currentColumn;
+        }else {
+            if (!columnsPlaced[0]) {
+                columnToGoTo = 0;
+            } else if (!columnsPlaced[1]) {
+                columnToGoTo = 1;
+            } else if (!columnsPlaced[2]) {
+                columnToGoTo = 2;
+            } else {
+                //nowhere left to place
+            }
+        }
+        /*for(boolean e : columnsPlaced) {
+            if(e) {
+                columnToGoTo = c;
+                telemetry.addData("Column that's free", columnToGoTo);
+                telemetry.update();
+            }
+            c++;
+        }*/
+        columnsToTravel = currentColumn - columnToGoTo;
+        telemetry.addData("Columns to go", columnsToTravel);
+        telemetry.update();
+        currentColumn = columnToGoTo;
+        return columnsToTravel;
+    }
+    public void strafeToColumnMG(int direction){
+        int columnsToGo = getColumnsToTravelMG();
+        boolean strafingLeft = false;
+        int strafingDirectionMultiplier = 1;
+        if(columnsToGo > 0){
+            strafingDirectionMultiplier = 1;
+        }else{
+            strafingDirectionMultiplier = -1;
+        }
+        double strafeTime = 1;
+
+
+        if(columnsToGo == 0){
+            //do nothing, there's no places left to place.  Or maybe place in right column?, chances
+            //are, we'll never get this far but it's possible
+	    //I mean, we made it to this point, so maybe just end up placing the glyphs anyway?
+        }else{
+            if(columnsToGo > 0){
+                strafingLeft = false;
+            }else{
+                strafingLeft = true;
+            }
+            //blue side
+            if(strafingLeft){
+                strafeTime = .8;
+            }else {
+                strafeTime = 1.2;
+            }
+        }
+            //}
+            //Put in other function, just to see if it's the movement that's handled by this function that's out of whack
+            //Y speed, x speed, rotation speed, time
+        driveWStrafe(0, .4*columnsToGo, 0, 1);
+
+        telemetry.addData("Strafe Time", strafeTime);
+        telemetry.addData("Strafing Left?", strafingLeft);
+        telemetry.addData("Strafing Multiplier", strafingDirectionMultiplier);
+        telemetry.addData("Columns To Go", columnsToGo);
+        telemetry.addData("Columns placed", columnsPlaced);
+        telemetry.update();
+    }
+
     public void driveToGlyphs(int turningDirection, double timeout, double speed){
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -1062,17 +1162,21 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double startingRotation = getHeading();
         double startingEncoderCount = FrontLeft.getCurrentPosition();
         double time = runtime.seconds() + timeout;
-        //double limitEncoderCount = startingEncoderCount + inchesToGo*CountsPerInch;
-        //&& Math.abs(limitEncoderCount) - Math.abs(FrontLeft.getCurrentPosition()) > 25
+        //while we don't have a glyp (that's function btw) and runtime is less than 28 seconds
+        // (so we get to the safe zone still) and auton is still running
         while(!haveGlyph() && runtime.seconds() < 28  && time > runtime.seconds() && opModeIsActive() )  {
+            //gyrodrive to stay on heading while running into glyphs
             gyroDrive(startingRotation, speed,Forward);
+            //set intake motors speeds, make sure they don't jam using the smartIntake function
             smartIntake();
+            //telemetry to see if we have two glyphs
             telemetry.addData("Distance", FlipperDistance2.getDistance(DistanceUnit.CM));
             telemetry.update();
         }
         stopDriveMotors();
     }
     public boolean haveGlyph(){
+        //if the distance sensor on our flipper sees anthing close, we know we have two glyphs
         if (FlipperDistance2.getDistance(DistanceUnit.CM) <= 25) {
             haveGlyph = true;
         }else{
@@ -1081,7 +1185,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         return  haveGlyph;
     }
     public void intakeGlyph() {
-        //Used with old bot
+        //Used with old bot, deprecated
         boolean haveGlyph = false;
         FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -1089,6 +1193,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double limitEncoderCount = startingEncoderCount + 8*CountsPerInch;
         ConveyorLeft.setPower(1);
         ConveyorRight.setPower(1);
+
         while(!haveGlyph && (Math.abs(FrontLeft.getCurrentPosition()) < Math.abs(limitEncoderCount)) && runtime.seconds() <= 25){
             if(FlipperDistance2.getDistance(DistanceUnit.CM) > 1){
                 stopDriveMotors();
@@ -1103,63 +1208,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double inchesToDrive = FrontLeft.getCurrentPosition()/CountsPerInch;
         EncoderDrive(1, Math.abs(inchesToDrive), Reverse, stayOnHeading, 1.5);
     }
- // End movement methods
-    // Motor and servo methods
-    public void knockOffJewel(String AllianceColor, int startingPosition){
-        JewelArm.setPosition(JewelServoDownPos);
-        CryptoboxServo.setPosition(CryptoboxServoOutPos);
-        knockedCryptoboxSideJewel = false;
-        telemetry.addData("KnockingJewel", 10);
-        telemetry.update();
-        // sleep to allow the jewel arm to go down
-        sleep(750);
-        //Knock off the jewel.  If the jewel is the way we go to get the cryptobox, we drive forward
-        // To knock off, otherwise we turn.  This is to
-        int Direction = jewelDirection(AllianceColor);
-        int turningAmount = 7;
-        if(startingPosition == 1){
-            if(Direction == Forward) {
-                knockedCryptoboxSideJewel = true;
-                EncoderDrive(.5, 5, Reverse, stayOnHeading, 1.25);
-            }else{
-                double TurningAngle = turningAmount * Direction;
-                gyroTurn(turningSpeed, TurningAngle);
-            }
-        }else if (startingPosition == 4){
-            if(Direction == Reverse) {
-                knockedCryptoboxSideJewel = true;
-                EncoderDrive(.5, 5, Forward, stayOnHeading, 1.25);
-            }else{
-                double TurningAngle = turningAmount * Direction;
-                gyroTurn(turningSpeed, TurningAngle);
-            }
-        }else{
-            double TurningAngle = turningAmount * Direction;
-            gyroTurn(turningSpeed, TurningAngle);
-        }
-        JewelArm.setPosition(JewelServoUpPos);
-        // Turn back to the original robot orientation
-        gyroTurn(turningSpeed, 0);
-        CryptoboxServo.setPosition(CryptoboxServoInPos);
-    }
-    public int jewelDirection(String AllianceColor){
-        int Blue = JewelColor.blue();
-        int Red = JewelColor.red();
-        int Direction = 0;
-        if(Red > Blue){
-            //Jewel that sensor is pointing at is red, means that the robot will need to move
-            Direction = -1;
-        }else{
-            //Jewel that sensor is pointing at is blue
-            Direction = 1;
-        }
-        if (AllianceColor.equals("RED")){
-            //if the alliance
-            Direction = -Direction;
-        }
-        return Direction;
-    }
+        //End Multi-Glyph functions
 
+        // Start Misc functions
     public void placeByFlippingFirstGlyph(double timeout){
         FlipperServo.setPosition(FlipperServoUpPos);
         double startTime = runtime.seconds();
@@ -1168,9 +1219,12 @@ public class DeclarationsAutonomous extends LinearOpMode {
         double dumpingPower = .65;
         DumpingMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //while we haven't placed (which is controlled by time), and we haven't timed out
         while(!placed && startTime + 1 > runtime.seconds()) {
+            //set the position of the dumping motor to straight up
             DumpingMotor.setTargetPosition(DumpingMotor.getCurrentPosition() - EncoderTicksToDump);
             while (DumpingMotor.isBusy()) {
+                //while the dumping motor hasn't reached it's target
                 DumpingMotor.setPower(-dumpingPower);
                 telemetry.addData("Current Pos", DumpingMotor.getCurrentPosition());
                 telemetry.addData("Target Pos", DumpingMotor.getTargetPosition());
@@ -1186,6 +1240,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         EncoderDrive(.15, 5, Forward, stayOnHeading, 1.5);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double startingRuntime = runtime.seconds();
+        //set the flipper back down, while driving backwards making sure the glyph is in the cryptobox
         while ((DumperTouchSensorRight.getState() || DumperTouchSensorLeft.getState()) && runtime.seconds() - startingRuntime < .5 && opModeIsActive()) {
             DumpingMotor.setPower(dumpingPower);
             moveBy(-.3, 0,0);
@@ -1193,6 +1248,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
         DumpingMotor.setPower(0);
     }
     public void placeByFlippingSecondGlyph(double timeout){
+        //same as above, with minor adjustments for two glyphs (make sure they stay stacked)
         FlipperServo.setPosition(FlipperServoUpPos);
         double startTime = runtime.seconds();
         boolean placed = false;
@@ -1231,6 +1287,7 @@ public class DeclarationsAutonomous extends LinearOpMode {
     public void pushInFirstGlyph (){
         drive(.4, Reverse, .5);
     }
+
     public void smartIntake() {
          double intakeValLeft = 20;
         double speed = 1;
@@ -1247,6 +1304,9 @@ public class DeclarationsAutonomous extends LinearOpMode {
             ConveyorLeft.setPower(speed);
 
         }*/
+        //Use the OpenRCExtensions to ge the current draw, (in MilliAmps)
+        //we can see if the motors are stalling, because they'll pull more current.
+        // This means that we can see if a glyph is jammed in the intake.   If so, reverse the intake
        if(ConveyorRight.getCurrentDraw() > 4500 || ConveyorLeft.getCurrentDraw() > 4500){
            ConveyorLeft.setPower(-1);
            ConveyorRight.setPower(-1);
@@ -1254,10 +1314,15 @@ public class DeclarationsAutonomous extends LinearOpMode {
            ConveyorRight.setPower(speed);
            ConveyorLeft.setPower(speed);
        }
+       //sleep, otherwise this stops and starts too quickly, because switching directions pulls
+        //current, so it's a catch-22 without this sleep
        sleep(20);
         telemetry.addData("Left Vel", ConveyorLeft.getCurrentDraw());
         telemetry.addData("Right Vel", ConveyorRight.getCurrentDraw());
         telemetry.update();
     }
+        //End Misc functions
+    //End Relic Recovery Functions
+
 
 }
