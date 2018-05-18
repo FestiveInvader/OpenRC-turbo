@@ -1323,6 +1323,4 @@ public class DeclarationsAutonomous extends LinearOpMode {
     }
         //End Misc functions
     //End Relic Recovery Functions
-
-
 }

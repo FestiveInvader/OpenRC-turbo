@@ -10,11 +10,9 @@ public class SandboxOpmode extends DeclarationsAutonomous {
     @Override
     public void runOpMode() {
         super.runOpMode();
-        double startingRotation = getHeading();
-        boolean foundGlyph = false;
+        knockOffJewel("BLUE",2);
         while(opModeIsActive()){
-            driveToGlyphs(0,2.5,.25);
-            sleep(150000);
+            //loop so we don't try to knock off the jewel again
         }
     }
 }
