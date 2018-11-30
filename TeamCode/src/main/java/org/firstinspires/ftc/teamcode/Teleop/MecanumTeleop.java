@@ -27,7 +27,7 @@ public class MecanumTeleop extends OpMode {
     public DcMotor BackLeft = null;               // NeveRest Orbital 20
     public DcMotor FrontRight = null;             // NeveRest Orbital 20
     public DcMotor BackRight = null;              // NeveRest Orbital 20
-    public DcMotor ConveyorLeft = null;           // Rev HD Hex Motor
+    /*public DcMotor ConveyorLeft = null;           // Rev HD Hex Motor
     public DcMotor ConveyorRight = null;          // Rev HD Hex Motor
     public DcMotor DumpingMotor = null;           // NeveRest 60
     public DcMotor LinearSlideMotor = null;       // NeveRest 20
@@ -71,7 +71,7 @@ public class MecanumTeleop extends OpMode {
     double dumpingPower = .5;
     int flipperOffset = 100;
 
-    public ElapsedTime runtime = new ElapsedTime();
+    public ElapsedTime runtime = new ElapsedTime();*/
 
     public void init() {
         // This section gets the hardware maps
@@ -79,18 +79,18 @@ public class MecanumTeleop extends OpMode {
         FrontRight = hardwareMap.dcMotor.get("FrontRight");
         BackLeft = hardwareMap.dcMotor.get("BackLeft");
         BackRight = hardwareMap.dcMotor.get("BackRight");
-        ConveyorLeft = hardwareMap.dcMotor.get("ConveyorLeft");
+       /* ConveyorLeft = hardwareMap.dcMotor.get("ConveyorLeft");
         ConveyorRight = hardwareMap.dcMotor.get("ConveyorRight");
         DumpingMotor = hardwareMap.dcMotor.get("DumpingMotor");
         LinearSlideMotor = hardwareMap.dcMotor.get("LinearSlideMotor");
-
+*/
         FrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         BackLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        DumpingMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+       /* DumpingMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         DumpingMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         ConveyorLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         ConveyorRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -116,7 +116,7 @@ public class MecanumTeleop extends OpMode {
         DumperLimitSensorRight.setMode(DigitalChannel.Mode.INPUT);
         DumperLimitSensorLeft.setMode(DigitalChannel.Mode.INPUT);
         //IntakeDistance = hardwareMap.get(DistanceSensor.class, "IntakeSensor");
-        FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");
+        FlipperDistance2 = hardwareMap.get(DistanceSensor.class, "FlipperSensor2");*/
     }
 
     @Override
@@ -124,13 +124,12 @@ public class MecanumTeleop extends OpMode {
     }
 
     @Override
-    public void start() {
-        runtime.reset();
+    public void start(){
     }
 
     @Override
     public void loop() {
-        JewelArm.setPosition(JewelServoUpPos);
+       /* JewelArm.setPosition(JewelServoUpPos);
         CryptoboxServo.setPosition(CryptoboxServoInPos);
         //If intake boolean is true
         if(intake){
@@ -258,25 +257,25 @@ public class MecanumTeleop extends OpMode {
             DrivingMultiplier = .35;
         }else{
             DrivingMultiplier = 1;
-        }
+        }*/
 
         //Math, trig, it works.  Don't mess with it
 
         double FrontLeftVal =
-                gamepad1.left_stick_y*DrivingMultiplier
-                - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
-                + -gamepad1.right_stick_x*DrivingMultiplier;
+                gamepad1.left_stick_y
+                - (gamepad1.left_stick_x)
+                + -gamepad1.right_stick_x;
         double FrontRightVal =
-                gamepad1.left_stick_y*DrivingMultiplier
-                + (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
-                - -gamepad1.right_stick_x*DrivingMultiplier;
+                gamepad1.left_stick_y
+                + (gamepad1.left_stick_x)
+                - -gamepad1.right_stick_x;
         double BackLeftVal =
-                gamepad1.left_stick_y*DrivingMultiplier
-                + (gamepad1.left_stick_x*StrafingMultiplier)
-                + -gamepad1.right_stick_x*DrivingMultiplier;
-        double BackRightVal = gamepad1.left_stick_y*DrivingMultiplier
-                - (gamepad1.left_stick_x*StrafingMultiplier*DrivingMultiplier)
-                - -gamepad1.right_stick_x*DrivingMultiplier;
+                gamepad1.left_stick_y
+                + (gamepad1.left_stick_x)
+                + -gamepad1.right_stick_x;
+        double BackRightVal = gamepad1.left_stick_y
+                - (gamepad1.left_stick_x)
+                - -gamepad1.right_stick_x;
 
         //Move range to between 0 and +1, if not already
         double[] wheelPowers = {FrontRightVal, FrontLeftVal, BackLeftVal, BackRightVal};
@@ -292,7 +291,7 @@ public class MecanumTeleop extends OpMode {
         BackLeft.setPower(BackLeftVal);
         BackRight.setPower(BackRightVal);
         // End Driving Code
-        ConveyorLeft.setPower(LeftIntake);
-        ConveyorRight.setPower(RightIntake);
+        /*ConveyorLeft.setPower(LeftIntake);
+        ConveyorRight.setPower(RightIntake);*/
     }
 }
